@@ -40,7 +40,7 @@ const PageLayout = ({ children }: PageLayoutProps) => {
               <NavigationMenuList>
                 {navigation.map((item) => (
                   <NavigationMenuItem key={item.name}>
-                    <Link to={item.href} legacyBehavior passHref>
+                    <Link to={item.href}>
                       <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                         {item.name}
                       </NavigationMenuLink>
