@@ -25,6 +25,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -43,6 +44,7 @@ const DashboardLayout = ({ children, userType }: DashboardLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, profile, signOut } = useAuth();
 
   const navItems: NavItemType[] = [
     {
@@ -93,16 +95,22 @@ const DashboardLayout = ({ children, userType }: DashboardLayoutProps) => {
     item.userTypes.includes(userType)
   );
 
-  const handleLogout = () => {
-    // This would be replaced with actual logout logic when connected to a backend
-    toast({
-      title: "Logged out successfully",
-      description: "Redirecting to home page...",
-    });
-    
-    setTimeout(() => {
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Logged out successfully",
+        description: "Redirecting to home page...",
+      });
       navigate("/");
-    }, 1500);
+    } catch (error) {
+      console.error("Error logging out:", error);
+      toast({
+        title: "Error",
+        description: "Failed to log out. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -223,7 +231,9 @@ const DashboardLayout = ({ children, userType }: DashboardLayoutProps) => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuLabel>
+                    {profile?.full_name || user?.email || 'My Account'}
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>Profile</DropdownMenuItem>
                   <DropdownMenuItem>Settings</DropdownMenuItem>

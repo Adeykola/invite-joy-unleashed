@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -5,22 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, ArrowLeft } from "lucide-react";
-import { createClient } from '@supabase/supabase-js';
-
-// Initialize Supabase client with proper error handling
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// Check if environment variables are defined
-if (!supabaseUrl || !supabaseKey) {
-  console.error("Missing Supabase environment variables. Please make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.");
-}
-
-const supabase = createClient(
-  supabaseUrl || 'https://placeholder-url.supabase.co',  // Fallback URL to prevent immediate crash
-  supabaseKey || 'placeholder-key' // Fallback key to prevent immediate crash
-);
+import { Mail, ArrowLeft, AlertCircle } from "lucide-react";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 const ResetPassword = () => {
   const [email, setEmail] = useState("");
@@ -28,8 +15,20 @@ const ResetPassword = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
 
+  // Check if Supabase is configured properly
+  const supabaseConfigured = isSupabaseConfigured();
+
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!supabaseConfigured) {
+      toast({
+        title: "Configuration Error",
+        description: "Supabase environment variables are not configured properly.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (!email) {
       toast({
@@ -78,6 +77,12 @@ const ResetPassword = () => {
               ? "Enter your email address and we'll send you a link to reset your password" 
               : "Password reset email sent. Check your inbox for further instructions."}
           </CardDescription>
+          {!supabaseConfigured && !isSuccess && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-md p-3 mt-2 flex items-center text-sm">
+              <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span>Supabase environment variables are not configured. Reset password functionality will be limited.</span>
+            </div>
+          )}
         </CardHeader>
         
         {!isSuccess ? (

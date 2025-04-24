@@ -5,23 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, User, AlertCircle } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { createClient } from '@supabase/supabase-js';
-
-// Initialize Supabase client with proper error handling
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// Check if environment variables are defined
-if (!supabaseUrl || !supabaseKey) {
-  console.error("Missing Supabase environment variables. Please make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.");
-}
-
-const supabase = createClient(
-  supabaseUrl || 'https://placeholder-url.supabase.co',  // Fallback URL to prevent immediate crash
-  supabaseKey || 'placeholder-key' // Fallback key to prevent immediate crash
-);
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 const Signup = () => {
   const [name, setName] = useState("");
@@ -33,8 +19,20 @@ const Signup = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const supabaseConfigured = isSupabaseConfigured();
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!supabaseConfigured) {
+      toast({
+        title: "Configuration Error",
+        description: "Supabase environment variables are not configured properly.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
     
     if (password.length < 8) {
@@ -105,6 +103,15 @@ const Signup = () => {
   };
 
   const handleGoogleSignup = async () => {
+    if (!supabaseConfigured) {
+      toast({
+        title: "Configuration Error",
+        description: "Supabase environment variables are not configured properly.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -134,6 +141,12 @@ const Signup = () => {
           <CardDescription>
             Enter your information to get started
           </CardDescription>
+          {!supabaseConfigured && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-md p-3 mt-2 flex items-center text-sm">
+              <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span>Supabase environment variables are not configured. Signup functionality will be limited.</span>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignup}>

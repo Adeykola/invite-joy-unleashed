@@ -5,22 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Lock, Mail } from "lucide-react";
-import { createClient } from '@supabase/supabase-js';
-
-// Initialize Supabase client with proper error handling
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// Check if environment variables are defined
-if (!supabaseUrl || !supabaseKey) {
-  console.error("Missing Supabase environment variables. Please make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.");
-}
-
-const supabase = createClient(
-  supabaseUrl || 'https://placeholder-url.supabase.co',  // Fallback URL to prevent immediate crash
-  supabaseKey || 'placeholder-key' // Fallback key to prevent immediate crash
-);
+import { Eye, EyeOff, Lock, Mail, AlertCircle } from "lucide-react";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -30,8 +16,20 @@ const Login = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const supabaseConfigured = isSupabaseConfigured();
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!supabaseConfigured) {
+      toast({
+        title: "Configuration Error",
+        description: "Supabase environment variables are not configured properly.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -49,9 +47,6 @@ const Login = () => {
         description: "Redirecting you to the dashboard...",
       });
       
-      // Check user role and redirect accordingly
-      // This is a simplified example - you would typically store user roles in your Supabase database
-      // and check them here to determine where to redirect
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
@@ -66,7 +61,7 @@ const Login = () => {
         navigate('/user-dashboard');
       }
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
       toast({
         title: "Login failed",
@@ -79,6 +74,15 @@ const Login = () => {
   };
 
   const handleGoogleLogin = async () => {
+    if (!supabaseConfigured) {
+      toast({
+        title: "Configuration Error",
+        description: "Supabase environment variables are not configured properly.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -108,6 +112,12 @@ const Login = () => {
           <CardDescription>
             Enter your credentials to access your account
           </CardDescription>
+          {!supabaseConfigured && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-md p-3 mt-2 flex items-center text-sm">
+              <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span>Supabase environment variables are not configured. Login functionality will be limited.</span>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin}>
