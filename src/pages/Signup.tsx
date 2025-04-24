@@ -1,13 +1,19 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle2, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const Signup = () => {
   const [name, setName] = useState("");
@@ -17,34 +23,98 @@ const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
+    if (password.length < 8) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 8 characters long",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+    
     try {
-      // This would be replaced with actual registration logic when connected to a backend
-      console.log("Signing up with:", { name, email, password, userRole });
+      // Sign up user with Supabase
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+            role: userRole,
+          }
+        }
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data.user) {
+        // Create a profile record in the profiles table
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            { 
+              id: data.user.id, 
+              full_name: name, 
+              email, 
+              role: userRole 
+            }
+          ]);
+          
+        if (profileError) {
+          throw profileError;
+        }
+      }
       
       toast({
         title: "Account created successfully!",
         description: "Please check your email to verify your account.",
       });
       
-      // Simulate signup delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Wait a moment and redirect to login
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
       
-      // Redirect to login page
-      window.location.href = "/login";
-    } catch (error) {
+    } catch (error: any) {
       console.error("Signup error:", error);
       toast({
         title: "Signup failed",
-        description: "There was a problem creating your account. Please try again.",
+        description: error.message || "There was a problem creating your account. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/user-dashboard`
+        }
+      });
+      
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error("Google signup error:", error);
+      toast({
+        title: "Signup failed",
+        description: "Could not sign up with Google. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -144,7 +214,7 @@ const Signup = () => {
             <span className="mx-4 flex-shrink text-gray-400 text-sm">OR</span>
             <div className="flex-grow border-t border-gray-300"></div>
           </div>
-          <Button variant="outline" className="w-full">
+          <Button variant="outline" className="w-full" onClick={handleGoogleSignup}>
             Sign up with Google
           </Button>
           <p className="text-center text-sm text-gray-600">

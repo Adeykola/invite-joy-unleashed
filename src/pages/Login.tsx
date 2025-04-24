@@ -1,12 +1,18 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -14,26 +20,44 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
-      // This would be replaced with actual authentication logic when connected to a backend
-      console.log("Logging in with:", { email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        throw error;
+      }
       
       toast({
         title: "Login successful!",
         description: "Redirecting you to the dashboard...",
       });
       
-      // Simulate login delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Check user role and redirect accordingly
+      // This is a simplified example - you would typically store user roles in your Supabase database
+      // and check them here to determine where to redirect
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
       
-      // Redirect based on user role (would be determined by your auth system)
-      // For now, we'll just redirect to the admin dashboard for demo purposes
-      window.location.href = "/admin-dashboard";
+      if (profile?.role === 'admin') {
+        navigate('/admin-dashboard');
+      } else if (profile?.role === 'host') {
+        navigate('/host-dashboard');
+      } else {
+        navigate('/user-dashboard');
+      }
+      
     } catch (error) {
       console.error("Login error:", error);
       toast({
@@ -43,6 +67,28 @@ const Login = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/user-dashboard`
+        }
+      });
+      
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error("Google login error:", error);
+      toast({
+        title: "Login failed",
+        description: "Could not sign in with Google. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -76,7 +122,7 @@ const Login = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                  <Link to="/forgot-password" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                  <Link to="/reset-password" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
                     Forgot your password?
                   </Link>
                 </div>
@@ -115,7 +161,7 @@ const Login = () => {
             <span className="mx-4 flex-shrink text-gray-400 text-sm">OR</span>
             <div className="flex-grow border-t border-gray-300"></div>
           </div>
-          <Button variant="outline" className="w-full">
+          <Button variant="outline" className="w-full" onClick={handleGoogleLogin}>
             Continue with Google
           </Button>
           <p className="text-center text-sm text-gray-600">
