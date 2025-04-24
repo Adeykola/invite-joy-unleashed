@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,10 +9,19 @@ import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client
+// Initialize Supabase client with proper error handling
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Check if environment variables are defined
+if (!supabaseUrl || !supabaseKey) {
+  console.error("Missing Supabase environment variables. Please make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.");
+}
+
+const supabase = createClient(
+  supabaseUrl || 'https://placeholder-url.supabase.co',  // Fallback URL to prevent immediate crash
+  supabaseKey || 'placeholder-key' // Fallback key to prevent immediate crash
+);
 
 const Signup = () => {
   const [name, setName] = useState("");
