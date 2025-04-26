@@ -20,6 +20,26 @@ const Index = () => {
         return "/user-dashboard";
     }
   };
+
+  // Features for the feature section
+  const featureData = {
+    title: "Key Features",
+    description: "Everything you need to create memorable events",
+    features: [
+      {
+        title: "Easy RSVP Management",
+        description: "Track responses in real-time with our intuitive dashboard"
+      },
+      {
+        title: "Customizable Event Pages",
+        description: "Create beautiful event pages that match your vision and style"
+      },
+      {
+        title: "Guest Communications",
+        description: "Send updates, reminders, and messages to your attendees"
+      }
+    ]
+  };
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-indigo-50">
@@ -86,7 +106,11 @@ const Index = () => {
         </section>
 
         {/* Features Section */}
-        <FeatureSection />
+        <FeatureSection 
+          title={featureData.title}
+          description={featureData.description}
+          features={featureData.features}
+        />
 
         {/* CTA Section */}
         <section className="bg-gradient-to-r from-indigo-600 to-purple-600 py-16 text-white text-center">
