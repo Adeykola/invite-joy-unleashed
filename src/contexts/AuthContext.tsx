@@ -20,7 +20,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+      
+      // Using setTimeout to prevent potential deadlocks
+      if (newSession?.user?.id) {
+        setTimeout(async () => {
+          try {
+            const { data } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', newSession.user.id)
+              .single();
+              
+            setProfile(data);
+          } catch (error) {
+            console.error('Error fetching profile:', error);
+          }
+        }, 0);
+      } else {
+        setProfile(null);
+      }
+    });
+
+    // THEN check for existing session
     const getInitialSession = async () => {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
@@ -46,26 +71,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     getInitialSession();
 
-    // Set up auth listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
-      
-      if (newSession?.user?.id) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', newSession.user.id)
-          .single();
-          
-        setProfile(data);
-      } else {
-        setProfile(null);
-      }
-      
-      setLoading(false);
-    });
-
     return () => {
       subscription.unsubscribe();
     };
@@ -74,6 +79,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      setProfile(null);
     } catch (error) {
       console.error('Error signing out:', error);
     }

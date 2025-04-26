@@ -1,20 +1,19 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Using direct values instead of environment variables
+const supabaseUrl = "https://ttlqxvpcjpxpbzkgbyod.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0bHF4dnBjanB4cGJ6a2dieW9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTExNTcsImV4cCI6MjA2MTI2NzE1N30.Z4xL_q3N4AkRSHgNE0py7ZPrDwxuo1ihHHkrL01CGoI";
 
-// Check if environment variables are defined
-if (!supabaseUrl || !supabaseKey) {
-  console.error("Missing Supabase environment variables. Please make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.");
-}
-
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder-url.supabase.co',  // Fallback URL to prevent immediate crash
-  supabaseKey || 'placeholder-key' // Fallback key to prevent immediate crash
-);
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    storage: localStorage,
+    persistSession: true,
+    autoRefreshToken: true,
+  }
+});
 
 // Create a function to check if the Supabase client is properly configured
 export const isSupabaseConfigured = () => {
-  return !!supabaseUrl && !!supabaseKey;
+  return true; // We're now using hardcoded values, so it's always configured
 };
