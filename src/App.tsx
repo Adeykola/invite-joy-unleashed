@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,9 +13,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import HostDashboard from "./pages/HostDashboard";
 import UserDashboard from "./pages/UserDashboard";
 import ResetPassword from "./pages/ResetPassword";
-
-// Create wrapper components for protected routes
-import { useAuth } from "./contexts/AuthContext";
+import Event from "./pages/Event";
 
 const ProtectedRoute = ({ children, allowedRoles = ["admin", "host", "user"] }: { children: JSX.Element, allowedRoles?: string[] }) => {
   const { user, profile, loading } = useAuth();
@@ -35,7 +32,6 @@ const ProtectedRoute = ({ children, allowedRoles = ["admin", "host", "user"] }: 
   }
   
   if (profile && !allowedRoles.includes(profile.role)) {
-    // Redirect to appropriate dashboard based on role
     if (profile.role === "admin") {
       return <Navigate to="/admin-dashboard" replace />;
     } else if (profile.role === "host") {
@@ -75,13 +71,12 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/event/:id" element={<Event />} />
             
-            {/* Protected Dashboard Routes */}
             <Route path="/admin-dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path="/host-dashboard" element={<HostRoute><HostDashboard /></HostRoute>} />
             <Route path="/user-dashboard" element={<UserRoute><UserDashboard /></UserRoute>} />
             
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

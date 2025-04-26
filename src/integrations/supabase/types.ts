@@ -9,6 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      events: {
+        Row: {
+          capacity: number | null
+          created_at: string | null
+          date: string
+          description: string | null
+          host_id: string | null
+          id: string
+          location: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          capacity?: number | null
+          created_at?: string | null
+          date: string
+          description?: string | null
+          host_id?: string | null
+          id?: string
+          location: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          capacity?: number | null
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          host_id?: string | null
+          id?: string
+          location?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -32,6 +68,44 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"] | null
         }
         Relationships: []
+      }
+      rsvps: {
+        Row: {
+          comments: string | null
+          created_at: string | null
+          event_id: string | null
+          guest_email: string
+          guest_name: string
+          id: string
+          response_status: string
+        }
+        Insert: {
+          comments?: string | null
+          created_at?: string | null
+          event_id?: string | null
+          guest_email: string
+          guest_name: string
+          id?: string
+          response_status: string
+        }
+        Update: {
+          comments?: string | null
+          created_at?: string | null
+          event_id?: string | null
+          guest_email?: string
+          guest_name?: string
+          id?: string
+          response_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rsvps_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
