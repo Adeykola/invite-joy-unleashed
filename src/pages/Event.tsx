@@ -22,11 +22,23 @@ const EventPage = () => {
   });
 
   if (isLoading) {
-    return <div>Loading event details...</div>;
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto"></div>
+          <p className="mt-3 text-gray-600">Loading event details...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!event) {
-    return <div>Event not found</div>;
+    return (
+      <div className="container mx-auto py-8 px-4 text-center">
+        <h1 className="text-2xl font-bold text-gray-800">Event not found</h1>
+        <p className="mt-2 text-gray-600">The event you're looking for doesn't exist or has been removed.</p>
+      </div>
+    );
   }
 
   return (
