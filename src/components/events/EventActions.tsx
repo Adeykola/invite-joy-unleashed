@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { EventForm } from "../EventForm";
 import { Edit, Trash2, ChevronDown } from "lucide-react";
 
 interface EventActionsProps {
@@ -17,6 +25,7 @@ interface EventActionsProps {
 
 export function EventActions({ eventId, onDelete }: EventActionsProps) {
   const { toast } = useToast();
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handleDeleteEvent = async () => {
     try {
@@ -51,25 +60,42 @@ export function EventActions({ eventId, onDelete }: EventActionsProps) {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <ChevronDown className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem>
-          <Edit className="h-4 w-4 mr-2" />
-          Edit Event
-        </DropdownMenuItem>
-        <DropdownMenuItem 
-          className="text-red-500"
-          onClick={handleDeleteEvent}
-        >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Delete Event
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm">
+            <ChevronDown className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+            <Edit className="h-4 w-4 mr-2" />
+            Edit Event
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            className="text-red-500"
+            onClick={handleDeleteEvent}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete Event
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Event</DialogTitle>
+          </DialogHeader>
+          <EventForm 
+            eventId={eventId} 
+            onSuccess={() => {
+              setIsEditDialogOpen(false);
+              onDelete(); // Refetch events after edit
+            }} 
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

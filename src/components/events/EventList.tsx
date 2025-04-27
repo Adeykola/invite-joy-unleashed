@@ -15,17 +15,32 @@ import { format } from "date-fns";
 import { RsvpDialog } from "./RsvpDialog";
 import { EventActions } from "./EventActions";
 
-export function EventList() {
+type EventListProps = {
+  filter?: "upcoming" | "past" | "all";
+};
+
+export function EventList({ filter = "all" }: EventListProps) {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isViewingRsvps, setIsViewingRsvps] = useState(false);
 
   const { data: events, isLoading, refetch } = useQuery({
-    queryKey: ["events"],
+    queryKey: ["events", filter],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .order("date", { ascending: true });
+      let query = supabase.from("events").select("*");
+      
+      // Apply filter
+      const today = new Date().toISOString();
+      if (filter === "upcoming") {
+        query = query.gt("date", today);
+      } else if (filter === "past") {
+        query = query.lte("date", today);
+      }
+      
+      // Sort events
+      const sortOrder = filter === "past" ? { ascending: false } : { ascending: true };
+      query = query.order("date", sortOrder);
+      
+      const { data, error } = await query;
 
       if (error) throw error;
       return data;
@@ -33,7 +48,15 @@ export function EventList() {
   });
 
   if (isLoading) {
-    return <div>Loading events...</div>;
+    return <div className="flex justify-center py-8">Loading events...</div>;
+  }
+
+  if (events?.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        No {filter !== "all" ? filter : ""} events found.
+      </div>
+    );
   }
 
   return (
