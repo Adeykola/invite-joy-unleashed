@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { EventForm } from "../EventForm";
+import { EventWizard } from "./EventWizard";
 
 export function CreateEventDialog() {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,11 +18,11 @@ export function CreateEventDialog() {
       <DialogTrigger asChild>
         <Button>Create Event</Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[800px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Event</DialogTitle>
         </DialogHeader>
-        <EventForm onSuccess={() => setIsOpen(false)} />
+        <EventWizard onSuccess={() => setIsOpen(false)} />
       </DialogContent>
     </Dialog>
   );

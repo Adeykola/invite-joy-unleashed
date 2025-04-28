@@ -1,0 +1,157 @@
+
+import { useFormContext, Controller } from "react-hook-form";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { FormItem, FormLabel, FormControl, FormDescription } from "@/components/ui/form";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Slider } from "@/components/ui/slider";
+import { EventFormData } from "../EventWizard";
+
+const inviteOptions = [
+  { id: "email", label: "Email" },
+  { id: "sms", label: "SMS/Text" },
+  { id: "link", label: "Shareable Link" },
+  { id: "qr", label: "QR Code" }
+];
+
+export function CommunicationStep() {
+  const { control, watch } = useFormContext<EventFormData>();
+  const sendReminders = watch("sendReminders");
+  const reminderDays = watch("reminderDays");
+  
+  return (
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Communication Settings</h3>
+        <p className="text-sm text-muted-foreground">
+          Choose how to invite guests and manage communication.
+        </p>
+      </div>
+
+      <div className="space-y-6">
+        <div className="space-y-4">
+          <Label>Invitation Methods</Label>
+          <Controller
+            name="inviteMethod"
+            control={control}
+            render={({ field }) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {inviteOptions.map((option) => (
+                  <FormItem
+                    key={option.id}
+                    className="flex items-center space-x-3 space-y-0 rounded-md border p-4"
+                  >
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value?.includes(option.id)}
+                        onCheckedChange={(checked) => {
+                          const updatedValue = checked
+                            ? [...(field.value || []), option.id]
+                            : (field.value || []).filter(
+                                (value) => value !== option.id
+                              );
+                          field.onChange(updatedValue);
+                        }}
+                      />
+                    </FormControl>
+                    <FormLabel className="cursor-pointer font-normal">
+                      {option.label}
+                    </FormLabel>
+                  </FormItem>
+                ))}
+              </div>
+            )}
+          />
+          <p className="text-sm text-muted-foreground">
+            Select all the ways you want to invite guests to your event.
+          </p>
+        </div>
+
+        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+          <div className="space-y-0.5">
+            <FormLabel className="text-base">Send Reminders</FormLabel>
+            <FormDescription>
+              Automatically send reminders to guests before the event
+            </FormDescription>
+          </div>
+          <FormControl>
+            <Controller
+              name="sendReminders"
+              control={control}
+              render={({ field }) => (
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              )}
+            />
+          </FormControl>
+        </FormItem>
+
+        {sendReminders && (
+          <div className="space-y-4">
+            <Label>Days Before Event</Label>
+            <Controller
+              name="reminderDays"
+              control={control}
+              render={({ field }) => (
+                <div className="space-y-2">
+                  <Slider
+                    value={[field.value]}
+                    min={1}
+                    max={14}
+                    step={1}
+                    onValueChange={(vals) => field.onChange(vals[0])}
+                  />
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>1 day</span>
+                    <span>{reminderDays} {reminderDays === 1 ? 'day' : 'days'}</span>
+                    <span>14 days</span>
+                  </div>
+                </div>
+              )}
+            />
+            <p className="text-sm text-muted-foreground">
+              Send reminders {reminderDays} {reminderDays === 1 ? 'day' : 'days'} before the event.
+            </p>
+          </div>
+        )}
+
+        <Accordion type="single" collapsible>
+          <AccordionItem value="advanced-options">
+            <AccordionTrigger>Advanced Options</AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-4 pt-2">
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Send Thank You</FormLabel>
+                    <FormDescription>
+                      Automatically send thank you emails after the event
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch />
+                  </FormControl>
+                </FormItem>
+
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Collect Feedback</FormLabel>
+                    <FormDescription>
+                      Send a survey to attendees after the event
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch />
+                  </FormControl>
+                </FormItem>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </div>
+    </div>
+  );
+}

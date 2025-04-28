@@ -2,8 +2,15 @@
 import { EventManagement } from "@/components/EventManagement";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Card } from "@/components/ui/card";
+import { useEffect } from "react";
+import { initStorageBuckets } from "@/lib/storage";
 
 const HostEvents = () => {
+  // Initialize storage buckets for event images when page loads
+  useEffect(() => {
+    initStorageBuckets();
+  }, []);
+  
   return (
     <DashboardLayout userType="host">
       <div className="space-y-8">
