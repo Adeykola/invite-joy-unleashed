@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -82,6 +82,9 @@ export function EventForm({ eventId, onSuccess }: EventFormProps) {
 
     setIsSubmitting(true);
     try {
+      console.log("Creating event with user ID:", user.id);
+      console.log("Event data:", data);
+      
       if (eventId) {
         // Update existing event
         const { error } = await supabase
@@ -93,7 +96,10 @@ export function EventForm({ eventId, onSuccess }: EventFormProps) {
           })
           .eq("id", eventId);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error updating event:", error);
+          throw error;
+        }
 
         toast({
           title: "Event Updated",
@@ -101,7 +107,8 @@ export function EventForm({ eventId, onSuccess }: EventFormProps) {
         });
       } else {
         // Create new event
-        const { error } = await supabase
+        console.log("Inserting new event with host_id:", user.id);
+        const { data: newEvent, error } = await supabase
           .from("events")
           .insert([{
             ...data,
@@ -109,8 +116,12 @@ export function EventForm({ eventId, onSuccess }: EventFormProps) {
             capacity: Number(data.capacity) || null
           }]);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error creating event:", error);
+          throw error;
+        }
 
+        console.log("Event created successfully:", newEvent);
         toast({
           title: "Event Created",
           description: "Your event has been created successfully!",
