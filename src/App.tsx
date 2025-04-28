@@ -57,6 +57,11 @@ const HostRoute = ({ children }: { children: JSX.Element }) => (
   <ProtectedRoute allowedRoles={["host"]}>{children}</ProtectedRoute>
 );
 
+// Add the UserRoute component
+const UserRoute = ({ children }: { children: JSX.Element }) => (
+  <ProtectedRoute allowedRoles={["user"]}>{children}</ProtectedRoute>
+);
+
 const queryClient = new QueryClient();
 
 const App = () => (

@@ -1,53 +1,48 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/lib/supabase";
+import { Calendar as CalendarIcon, Clock, Info, MapPin } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
-import { format, isSameDay } from "date-fns";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-
-interface Event {
-  id: string;
-  title: string;
-  date: string;
-  location: string;
-  description?: string;
-}
+import { format, isToday, parseISO } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
 
 const HostCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [isEventDetailsOpen, setIsEventDetailsOpen] = useState(false);
-
-  const { data: events } = useQuery({
-    queryKey: ["calendar-events"],
+  
+  const { data: events, isLoading } = useQuery({
+    queryKey: ["host-events"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("events")
         .select("*")
         .order("date", { ascending: true });
-
+        
       if (error) throw error;
-      return data as Event[];
-    },
+      return data || [];
+    }
   });
-
-  // Find events for the selected date
-  const eventsForSelectedDate = events?.filter((event) => {
+  
+  // Filter events for the selected date
+  const eventsForSelectedDate = events?.filter(event => {
     const eventDate = new Date(event.date);
-    return selectedDate && isSameDay(eventDate, selectedDate);
+    const selected = selectedDate || new Date();
+    
+    return (
+      eventDate.getDate() === selected.getDate() &&
+      eventDate.getMonth() === selected.getMonth() &&
+      eventDate.getFullYear() === selected.getFullYear()
+    );
   });
-
-  // Function to highlight dates with events
-  const isDayWithEvent = (day: Date): boolean => {
-    return events?.some((event) => {
-      const eventDate = new Date(event.date);
-      return isSameDay(eventDate, day);
-    }) || false;
-  };
-
+  
+  // Get all dates that have events
+  const eventDates = events?.map(event => new Date(event.date)) || [];
+  
   return (
     <DashboardLayout userType="host">
       <div className="space-y-8">
@@ -56,24 +51,22 @@ const HostCalendar = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="md:col-span-1">
             <CardHeader>
-              <CardTitle>Calendar View</CardTitle>
+              <CardTitle>Calendar</CardTitle>
             </CardHeader>
-            <CardContent className="pb-6">
+            <CardContent>
               <Calendar
                 mode="single"
                 selected={selectedDate}
                 onSelect={setSelectedDate}
                 className="rounded-md border"
-                modifiersStyles={{
-                  selected: { backgroundColor: 'hsl(var(--primary))' }
-                }}
                 modifiers={{
-                  event: (date) => isDayWithEvent(date)
+                  event: eventDates
                 }}
-                styles={{
-                  day_event: { 
-                    backgroundColor: 'rgba(var(--primary), 0.1)',
-                    borderBottom: '2px solid hsl(var(--primary))'
+                modifiersStyles={{
+                  event: {
+                    fontWeight: 'bold',
+                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                    borderRadius: '100%'
                   }
                 }}
               />
@@ -83,62 +76,84 @@ const HostCalendar = () => {
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle>
-                {selectedDate ? `Events on ${format(selectedDate, 'PPP')}` : 'Events'}
+                {selectedDate ? (
+                  <span className="flex items-center">
+                    <CalendarIcon className="mr-2 h-5 w-5" />
+                    {isToday(selectedDate) ? (
+                      <span>Today's Events</span>
+                    ) : (
+                      <span>Events for {format(selectedDate, "MMMM d, yyyy")}</span>
+                    )}
+                  </span>
+                ) : (
+                  <span>No Date Selected</span>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {eventsForSelectedDate && eventsForSelectedDate.length > 0 ? (
+              {isLoading ? (
+                <div className="flex justify-center py-6">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+                </div>
+              ) : eventsForSelectedDate && eventsForSelectedDate.length > 0 ? (
                 <div className="space-y-4">
                   {eventsForSelectedDate.map((event) => (
-                    <div 
-                      key={event.id} 
-                      className="p-4 border rounded-lg cursor-pointer hover:bg-muted/50"
-                      onClick={() => {
-                        setSelectedEvent(event);
-                        setIsEventDetailsOpen(true);
-                      }}
-                    >
-                      <h3 className="font-semibold">{event.title}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(event.date), 'p')} • {event.location}
-                      </p>
+                    <div key={event.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start">
+                        <h3 className="text-lg font-medium">{event.title}</h3>
+                        <Badge variant={event.status === 'active' ? "default" : "secondary"}>
+                          {event.status === 'active' ? 'Active' : 'Draft'}
+                        </Badge>
+                      </div>
+                      
+                      <div className="mt-2 space-y-2 text-sm text-gray-600">
+                        <div className="flex items-center">
+                          <Clock className="mr-2 h-4 w-4" />
+                          {format(parseISO(event.date), "h:mm a")}
+                        </div>
+                        <div className="flex items-center">
+                          <MapPin className="mr-2 h-4 w-4" />
+                          {event.location}
+                        </div>
+                        {event.capacity && (
+                          <div className="flex items-center">
+                            <Info className="mr-2 h-4 w-4" />
+                            Capacity: {event.capacity} guests
+                          </div>
+                        )}
+                      </div>
+                      
+                      <Separator className="my-3" />
+                      
+                      <div className="flex justify-end">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="outline" size="sm" className="mr-2">Manage RSVPs</Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>View and manage guest responses</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        
+                        <Button size="sm">Edit Event</Button>
+                      </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground">
-                  No events scheduled for this date.
-                </p>
+                <div className="text-center py-8 text-gray-500">
+                  <p>No events scheduled for this date.</p>
+                  <Button variant="outline" className="mt-4">
+                    Create New Event
+                  </Button>
+                </div>
               )}
             </CardContent>
           </Card>
         </div>
       </div>
-
-      {/* Event details dialog */}
-      <Dialog open={isEventDetailsOpen} onOpenChange={setIsEventDetailsOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{selectedEvent?.title}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <h4 className="font-semibold text-sm">Date and Time</h4>
-              <p>{selectedEvent && format(new Date(selectedEvent.date), 'PPP p')}</p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-sm">Location</h4>
-              <p>{selectedEvent?.location}</p>
-            </div>
-            {selectedEvent?.description && (
-              <div>
-                <h4 className="font-semibold text-sm">Description</h4>
-                <p>{selectedEvent.description}</p>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </DashboardLayout>
   );
 };
