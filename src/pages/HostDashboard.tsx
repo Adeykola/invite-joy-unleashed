@@ -2,10 +2,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EventManagement } from "@/components/EventManagement";
+import { Button } from "@/components/ui/button";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { format } from "date-fns";
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Calendar, Users, Activity } from "lucide-react";
 
 const HostDashboard = () => {
   const [summary, setSummary] = useState({
@@ -58,13 +60,85 @@ const HostDashboard = () => {
     },
   });
 
+  // Query to get event statistics
+  const { data: eventStats } = useQuery({
+    queryKey: ["event-stats"],
+    queryFn: async () => {
+      const { data: events, error } = await supabase
+        .from("events")
+        .select("*");
+
+      if (error) throw error;
+      
+      // Calculate stats
+      const today = new Date();
+      const total = events?.length || 0;
+      const upcoming = events?.filter(event => new Date(event.date) > today).length || 0;
+      const past = events?.filter(event => new Date(event.date) <= today).length || 0;
+      
+      return { total, upcoming, past };
+    },
+  });
+
   return (
     <DashboardLayout userType="host">
       <div className="space-y-8">
-        {/* RSVP Summary Cards */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Host Dashboard</h2>
+          <Link to="/host-dashboard/events">
+            <Button>Manage Events</Button>
+          </Link>
+        </div>
+        
+        {/* Event Statistics */}
         <div>
-          <h2 className="text-2xl font-bold mb-6">Host Dashboard</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <Activity className="mr-2 h-5 w-5" />
+            Event Statistics
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total Events
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{eventStats?.total || 0}</div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Upcoming Events
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">{eventStats?.upcoming || 0}</div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Past Events
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-gray-500">{eventStats?.past || 0}</div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+        
+        {/* RSVP Summary */}
+        <div>
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <Users className="mr-2 h-5 w-5" />
+            RSVP Summary
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -111,29 +185,80 @@ const HostDashboard = () => {
           </div>
         </div>
         
-        {/* Upcoming Events Quick View */}
-        {upcomingEvents && upcomingEvents.length > 0 && (
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Your Next Events</h3>
+        {/* Upcoming Events */}
+        <div>
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <Calendar className="mr-2 h-5 w-5" />
+            Upcoming Events
+          </h3>
+          {upcomingEvents && upcomingEvents.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {upcomingEvents.map(event => (
-                <Card key={event.id} className="bg-muted/50">
-                  <CardContent className="p-4">
-                    <p className="font-semibold truncate">{event.title}</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {format(new Date(event.date), "PPP")}
-                    </p>
-                  </CardContent>
-                </Card>
+                <Link to={`/event/${event.id}`} key={event.id}>
+                  <Card className="bg-muted/50 hover:bg-muted transition-colors">
+                    <CardContent className="p-4">
+                      <p className="font-semibold truncate">{event.title}</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {format(new Date(event.date), "PPP")}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Location: {event.location}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <p className="text-muted-foreground">No upcoming events scheduled.</p>
+                <Link to="/host-dashboard/events">
+                  <Button variant="outline" className="mt-4">Create Your First Event</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+        </div>
         
-        {/* Main Event Management Section */}
-        <Card className="p-6">
-          <EventManagement />
-        </Card>
+        {/* Quick Links */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Link to="/host-dashboard/events">
+            <Card className="hover:bg-muted/50 transition-colors">
+              <CardContent className="p-6 flex flex-col items-center text-center">
+                <Calendar className="h-8 w-8 mb-2" />
+                <h4 className="font-semibold text-lg">Manage Events</h4>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Create, edit, and delete your events
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+          
+          <Link to="/host-dashboard/guests">
+            <Card className="hover:bg-muted/50 transition-colors">
+              <CardContent className="p-6 flex flex-col items-center text-center">
+                <Users className="h-8 w-8 mb-2" />
+                <h4 className="font-semibold text-lg">Guest Lists</h4>
+                <p className="text-sm text-muted-foreground mt-1">
+                  View and manage your event attendees
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+          
+          <Link to="/host-dashboard/calendar">
+            <Card className="hover:bg-muted/50 transition-colors">
+              <CardContent className="p-6 flex flex-col items-center text-center">
+                <Calendar className="h-8 w-8 mb-2" />
+                <h4 className="font-semibold text-lg">Calendar View</h4>
+                <p className="text-sm text-muted-foreground mt-1">
+                  See all your events in a calendar format
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
       </div>
     </DashboardLayout>
   );

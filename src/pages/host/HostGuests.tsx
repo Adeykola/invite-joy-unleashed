@@ -1,0 +1,136 @@
+
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { RsvpDialog } from "@/components/events/RsvpDialog";
+
+const HostGuests = () => {
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [isRsvpDialogOpen, setIsRsvpDialogOpen] = useState(false);
+
+  const { data: events } = useQuery({
+    queryKey: ["host-events"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .order("date", { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: rsvpStats } = useQuery({
+    queryKey: ["rsvp-stats"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("rsvps")
+        .select("event_id, response_status");
+
+      if (error) throw error;
+      
+      // Group RSVPs by event and count responses
+      const stats = (data || []).reduce((acc: Record<string, any>, rsvp) => {
+        if (!acc[rsvp.event_id]) {
+          acc[rsvp.event_id] = { confirmed: 0, declined: 0, maybe: 0, total: 0 };
+        }
+        
+        acc[rsvp.event_id][rsvp.response_status] += 1;
+        acc[rsvp.event_id].total += 1;
+        
+        return acc;
+      }, {});
+      
+      return stats;
+    },
+  });
+
+  return (
+    <DashboardLayout userType="host">
+      <div className="space-y-8">
+        <h2 className="text-2xl font-bold">Guest Lists</h2>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Event Guest Lists</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="all">
+              <TabsList>
+                <TabsTrigger value="all">All Events</TabsTrigger>
+                <TabsTrigger value="upcoming">Upcoming Events</TabsTrigger>
+                <TabsTrigger value="past">Past Events</TabsTrigger>
+              </TabsList>
+              <TabsContent value="all" className="mt-4">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Event</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Total Guests</TableHead>
+                      <TableHead>Confirmed</TableHead>
+                      <TableHead>Declined</TableHead>
+                      <TableHead>Guest List</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {events?.map((event) => (
+                      <TableRow key={event.id}>
+                        <TableCell>{event.title}</TableCell>
+                        <TableCell>{new Date(event.date).toLocaleDateString()}</TableCell>
+                        <TableCell>{rsvpStats?.[event.id]?.total || 0}</TableCell>
+                        <TableCell className="text-green-600">{rsvpStats?.[event.id]?.confirmed || 0}</TableCell>
+                        <TableCell className="text-red-600">{rsvpStats?.[event.id]?.declined || 0}</TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedEventId(event.id);
+                              setIsRsvpDialogOpen(true);
+                            }}
+                          >
+                            View Guests
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TabsContent>
+              <TabsContent value="upcoming" className="mt-4">
+                {/* Similar table for upcoming events */}
+                <p className="text-muted-foreground">Filter for upcoming events</p>
+              </TabsContent>
+              <TabsContent value="past" className="mt-4">
+                {/* Similar table for past events */}
+                <p className="text-muted-foreground">Filter for past events</p>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
+
+      <RsvpDialog
+        eventId={selectedEventId}
+        isOpen={isRsvpDialogOpen}
+        onOpenChange={setIsRsvpDialogOpen}
+      />
+    </DashboardLayout>
+  );
+};
+
+export default HostGuests;

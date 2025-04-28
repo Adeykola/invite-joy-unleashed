@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +12,10 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import AdminDashboard from "./pages/AdminDashboard";
 import HostDashboard from "./pages/HostDashboard";
+import HostEvents from "./pages/host/HostEvents";
+import HostGuests from "./pages/host/HostGuests";
+import HostCalendar from "./pages/host/HostCalendar";
+import HostSettings from "./pages/host/HostSettings";
 import UserDashboard from "./pages/UserDashboard";
 import ResetPassword from "./pages/ResetPassword";
 import Event from "./pages/Event";
@@ -52,10 +57,6 @@ const HostRoute = ({ children }: { children: JSX.Element }) => (
   <ProtectedRoute allowedRoles={["host"]}>{children}</ProtectedRoute>
 );
 
-const UserRoute = ({ children }: { children: JSX.Element }) => (
-  <ProtectedRoute allowedRoles={["user"]}>{children}</ProtectedRoute>
-);
-
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -75,6 +76,10 @@ const App = () => (
             
             <Route path="/admin-dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path="/host-dashboard" element={<HostRoute><HostDashboard /></HostRoute>} />
+            <Route path="/host-dashboard/events" element={<HostRoute><HostEvents /></HostRoute>} />
+            <Route path="/host-dashboard/guests" element={<HostRoute><HostGuests /></HostRoute>} />
+            <Route path="/host-dashboard/calendar" element={<HostRoute><HostCalendar /></HostRoute>} />
+            <Route path="/host-dashboard/settings" element={<HostRoute><HostSettings /></HostRoute>} />
             <Route path="/user-dashboard" element={<UserRoute><UserDashboard /></UserRoute>} />
             
             <Route path="*" element={<NotFound />} />
