@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
 
 type EventFormData = {
   title: string;
@@ -26,6 +27,7 @@ export function EventForm({ eventId, onSuccess }: EventFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { register, handleSubmit, reset, setValue } = useForm<EventFormData>();
+  const { user } = useAuth();
   
   // Load event data if eventId is provided (edit mode)
   useEffect(() => {
@@ -69,6 +71,15 @@ export function EventForm({ eventId, onSuccess }: EventFormProps) {
   }, [eventId, setValue, toast]);
 
   const onSubmit = async (data: EventFormData) => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create or edit events.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       if (eventId) {
@@ -94,6 +105,7 @@ export function EventForm({ eventId, onSuccess }: EventFormProps) {
           .from("events")
           .insert([{
             ...data,
+            host_id: user.id,
             capacity: Number(data.capacity) || null
           }]);
 
