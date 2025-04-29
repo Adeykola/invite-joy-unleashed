@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
@@ -163,14 +162,20 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
     }
   }, [eventId, setValue, toast]);
 
-  const handleNext = async () => {
+  const handleNext = async (e?: React.MouseEvent) => {
+    // Prevent default form submission behavior
+    if (e) e.preventDefault();
+    
     const isValid = await methods.trigger(getCurrentStepFields());
     if (isValid) {
       setCurrentStep(prev => Math.min(prev + 1, STEPS.length - 1));
     }
   };
 
-  const handleBack = () => {
+  const handleBack = (e?: React.MouseEvent) => {
+    // Prevent default form submission behavior
+    if (e) e.preventDefault();
+    
     setCurrentStep(prev => Math.max(prev - 1, 0));
   };
   
@@ -361,7 +366,7 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
 
   return (
     <FormProvider {...methods}>
-      <form className="space-y-6">
+      <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div>
@@ -404,6 +409,7 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
               variant="outline" 
               onClick={handleBack}
               disabled={currentStep === 0}
+              type="button"
             >
               <ChevronLeft className="mr-2 h-4 w-4" /> Back
             </Button>
@@ -412,11 +418,15 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
               <Button 
                 onClick={methods.handleSubmit(onSubmit)}
                 disabled={isSubmitting}
+                type="button"
               >
                 {isSubmitting ? (eventId ? "Updating..." : "Creating...") : (eventId ? "Update Event" : "Create Event")}
               </Button>
             ) : (
-              <Button onClick={handleNext}>
+              <Button 
+                onClick={handleNext}
+                type="button"
+              >
                 Next <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             )}
