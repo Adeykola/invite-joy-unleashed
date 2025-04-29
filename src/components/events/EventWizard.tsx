@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
@@ -235,10 +234,18 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       // Upload to storage
       const { data, error } = await supabase.storage
         .from(bucket)
-        .upload(fileName, file);
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
       
       if (error) {
         console.error(`Storage upload error:`, error);
+        toast({
+          title: `Upload Failed: ${bucket}`,
+          description: `Error: ${error.message}`,
+          variant: "destructive",
+        });
         throw error;
       }
       
@@ -252,11 +259,20 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       console.log(`Public URL generated:`, publicUrlData);
       
       return publicUrlData.publicUrl;
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error uploading ${bucket} file:`, error);
+      
+      // Provide more detailed error messages
+      let errorMessage = `Failed to upload your ${bucket} file.`;
+      if (error?.statusCode === 400) {
+        errorMessage = "Storage bucket not found or access denied.";
+      } else if (error?.statusCode === 413) {
+        errorMessage = "File too large. Maximum size is 10MB.";
+      }
+      
       toast({
         title: "Upload Failed",
-        description: `Failed to upload your ${bucket} file.`,
+        description: errorMessage,
         variant: "destructive",
       });
       return null;
@@ -285,12 +301,30 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       // Only upload new files if they've been selected
       if (data.customLogo) {
         console.log("Uploading custom logo...");
-        customLogoUrl = await uploadFile(data.customLogo, "event-logos");
+        try {
+          customLogoUrl = await uploadFile(data.customLogo, "event-logos");
+          if (!customLogoUrl) {
+            throw new Error("Logo upload failed");
+          }
+        } catch (error) {
+          console.error("Logo upload error:", error);
+          setIsSubmitting(false);
+          return;
+        }
       }
       
       if (data.customBanner) {
         console.log("Uploading custom banner...");
-        customBannerUrl = await uploadFile(data.customBanner, "event-banners");
+        try {
+          customBannerUrl = await uploadFile(data.customBanner, "event-banners");
+          if (!customBannerUrl) {
+            throw new Error("Banner upload failed");
+          }
+        } catch (error) {
+          console.error("Banner upload error:", error);
+          setIsSubmitting(false);
+          return;
+        }
       }
       
       // Prepare meta data to store additional fields
