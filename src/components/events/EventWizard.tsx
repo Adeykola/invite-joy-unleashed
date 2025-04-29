@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
@@ -5,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
-import { ChevronLeft, ChevronRight, Upload, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { BasicInfoStep } from "./wizard-steps/BasicInfoStep";
 import { GuestSettingsStep } from "./wizard-steps/GuestSettingsStep";
 import { CommunicationStep } from "./wizard-steps/CommunicationStep";
@@ -205,17 +206,26 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       
+      console.log(`Uploading file to ${bucket}/${fileName}`, file);
+      
       // Upload to storage
       const { data, error } = await supabase.storage
         .from(bucket)
         .upload(fileName, file);
       
-      if (error) throw error;
+      if (error) {
+        console.error(`Storage upload error:`, error);
+        throw error;
+      }
+      
+      console.log(`File uploaded successfully:`, data);
       
       // Get public URL
       const { data: publicUrlData } = supabase.storage
         .from(bucket)
         .getPublicUrl(fileName);
+      
+      console.log(`Public URL generated:`, publicUrlData);
       
       return publicUrlData.publicUrl;
     } catch (error) {
@@ -230,7 +240,10 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
   };
 
   const onSubmit = async (data: EventFormData) => {
+    console.log("Form submission started with data:", data);
+    
     if (!user) {
+      console.error("No authenticated user found");
       toast({
         title: "Error",
         description: "You must be logged in to create or edit events.",
@@ -247,10 +260,12 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       
       // Only upload new files if they've been selected
       if (data.customLogo) {
+        console.log("Uploading custom logo...");
         customLogoUrl = await uploadFile(data.customLogo, "event-logos");
       }
       
       if (data.customBanner) {
+        console.log("Uploading custom banner...");
         customBannerUrl = await uploadFile(data.customBanner, "event-banners");
       }
       
@@ -280,9 +295,11 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       };
       
       console.log("Submitting event with data:", eventData);
+      console.log("User ID:", user.id);
       
       if (eventId) {
         // Update existing event
+        console.log("Updating existing event:", eventId);
         const { error } = await supabase
           .from("events")
           .update({
@@ -296,6 +313,7 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
           throw error;
         }
 
+        console.log("Event updated successfully");
         toast({
           title: "Event Updated",
           description: "Your event has been updated successfully!",
@@ -323,7 +341,10 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
         methods.reset();
       }
       
-      onSuccess?.();
+      if (onSuccess) {
+        console.log("Calling onSuccess callback");
+        onSuccess();
+      }
     } catch (error) {
       console.error("Error saving event:", error);
       toast({

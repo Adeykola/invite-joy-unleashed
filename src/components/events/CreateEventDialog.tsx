@@ -9,9 +9,19 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { EventWizard } from "./EventWizard";
+import { useToast } from "@/hooks/use-toast";
 
 export function CreateEventDialog() {
   const [isOpen, setIsOpen] = useState(false);
+  const { toast } = useToast();
+
+  const handleSuccess = () => {
+    setIsOpen(false);
+    toast({
+      title: "Event Created",
+      description: "Your event has been created successfully!",
+    });
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -22,7 +32,7 @@ export function CreateEventDialog() {
         <DialogHeader>
           <DialogTitle>Create New Event</DialogTitle>
         </DialogHeader>
-        <EventWizard onSuccess={() => setIsOpen(false)} />
+        <EventWizard onSuccess={handleSuccess} />
       </DialogContent>
     </Dialog>
   );

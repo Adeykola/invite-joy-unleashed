@@ -1,34 +1,55 @@
 
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
-// Create storage buckets if they don't exist
 export const initStorageBuckets = async () => {
-  try {
-    // Check if event-logos bucket exists, if not create it
-    const { data: logosExist } = await supabase.storage.getBucket("event-logos");
-    
-    if (!logosExist) {
-      await supabase.storage.createBucket("event-logos", {
-        public: true,
-        fileSizeLimit: 1024 * 1024 * 2, // 2MB limit
-      });
-      console.log("Created event-logos bucket");
+  console.log("Initializing storage buckets...");
+  
+  const buckets = [
+    {
+      id: 'event-logos',
+      name: 'Event Logos',
+      public: true
+    },
+    {
+      id: 'event-banners',
+      name: 'Event Banners',
+      public: true
     }
-    
-    // Check if event-banners bucket exists, if not create it
-    const { data: bannersExist } = await supabase.storage.getBucket("event-banners");
-    
-    if (!bannersExist) {
-      await supabase.storage.createBucket("event-banners", {
-        public: true,
-        fileSizeLimit: 1024 * 1024 * 5, // 5MB limit
-      });
-      console.log("Created event-banners bucket");
+  ];
+  
+  for (const bucket of buckets) {
+    try {
+      // Check if bucket exists
+      const { data, error } = await supabase.storage.getBucket(bucket.id);
+      
+      if (error && error.message.includes('not found')) {
+        console.log(`Creating bucket: ${bucket.id}`);
+        // Create the bucket if it doesn't exist
+        const { data: newBucket, error: createError } = await supabase.storage.createBucket(
+          bucket.id,
+          {
+            public: bucket.public,
+            fileSizeLimit: 10485760, // 10MB
+          }
+        );
+        
+        if (createError) {
+          console.error(`Error creating bucket ${bucket.id}:`, createError);
+          throw createError;
+        }
+        
+        console.log(`Bucket ${bucket.id} created successfully:`, newBucket);
+      } else if (error) {
+        console.error(`Error checking bucket ${bucket.id}:`, error);
+        throw error;
+      } else {
+        console.log(`Bucket ${bucket.id} already exists:`, data);
+      }
+    } catch (err) {
+      console.error(`Bucket setup error for ${bucket.id}:`, err);
+      throw err;
     }
-    
-    return true;
-  } catch (error) {
-    console.error("Error initializing storage buckets:", error);
-    return false;
   }
+  
+  console.log("Storage buckets initialization complete");
 };
