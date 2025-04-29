@@ -114,6 +114,8 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
           if (error) throw error;
           
           if (data) {
+            console.log("Fetched event data:", data);
+            
             // Format the date to match the datetime-local input
             const dateObj = new Date(data.date);
             const formattedDate = format(dateObj, "yyyy-MM-dd'T'HH:mm");
@@ -125,25 +127,26 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
             setValue("location", data.location);
             setValue("capacity", data.capacity || 0);
             
-            // If we have template data in meta field
-            if (data.meta) {
+            // Check if we have meta data as a string and try to parse it
+            if (data.description && data.description.startsWith('{') && data.description.endsWith('}')) {
               try {
-                const meta = JSON.parse(data.meta);
-                if (meta.templateId) setValue("templateId", meta.templateId);
-                if (meta.primaryColor) setValue("primaryColor", meta.primaryColor);
-                if (meta.accentColor) setValue("accentColor", meta.accentColor);
-                if (meta.rsvpDeadline) setValue("rsvpDeadline", meta.rsvpDeadline);
-                if (meta.allowPlusOnes !== undefined) setValue("allowPlusOnes", meta.allowPlusOnes);
-                if (meta.inviteMethod) setValue("inviteMethod", meta.inviteMethod);
-                if (meta.sendReminders !== undefined) setValue("sendReminders", meta.sendReminders);
-                if (meta.reminderDays) setValue("reminderDays", meta.reminderDays);
-                if (meta.eventType) setValue("eventType", meta.eventType);
-                
-                // Handle existing custom images if there are any
-                if (meta.customLogoUrl) setCustomLogo(meta.customLogoUrl);
-                if (meta.customBannerUrl) setCustomBanner(meta.customBannerUrl);
+                // Try to parse meta from description as a fallback
+                const metaData = JSON.parse(data.description);
+                processMetaData(metaData);
               } catch (e) {
-                console.error("Error parsing event meta data:", e);
+                console.error("Error parsing meta data from description:", e);
+              }
+            } else {
+              // Check if data has a meta property that's a string
+              const metaField = (data as any).meta;
+              if (metaField) {
+                try {
+                  // If meta is a string, parse it as JSON
+                  const metaData = typeof metaField === 'string' ? JSON.parse(metaField) : metaField;
+                  processMetaData(metaData);
+                } catch (e) {
+                  console.error("Error parsing event meta data:", e);
+                }
               }
             }
           }
@@ -162,6 +165,27 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       fetchEvent();
     }
   }, [eventId, setValue, toast]);
+
+  // Helper function to process meta data from various sources
+  const processMetaData = (meta: any) => {
+    if (!meta) return;
+    
+    console.log("Processing meta data:", meta);
+    
+    if (meta.templateId) setValue("templateId", meta.templateId);
+    if (meta.primaryColor) setValue("primaryColor", meta.primaryColor);
+    if (meta.accentColor) setValue("accentColor", meta.accentColor);
+    if (meta.rsvpDeadline) setValue("rsvpDeadline", meta.rsvpDeadline);
+    if (meta.allowPlusOnes !== undefined) setValue("allowPlusOnes", meta.allowPlusOnes);
+    if (meta.inviteMethod) setValue("inviteMethod", meta.inviteMethod);
+    if (meta.sendReminders !== undefined) setValue("sendReminders", meta.sendReminders);
+    if (meta.reminderDays) setValue("reminderDays", meta.reminderDays);
+    if (meta.eventType) setValue("eventType", meta.eventType);
+    
+    // Handle existing custom images if there are any
+    if (meta.customLogoUrl) setCustomLogo(meta.customLogoUrl);
+    if (meta.customBannerUrl) setCustomBanner(meta.customBannerUrl);
+  };
 
   const handleNext = async (e?: React.MouseEvent) => {
     // Prevent default form submission behavior
