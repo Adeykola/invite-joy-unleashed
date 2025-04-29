@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
@@ -8,13 +9,14 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { BasicInfoStep } from "./wizard-steps/BasicInfoStep";
 import { GuestSettingsStep } from "./wizard-steps/GuestSettingsStep";
 import { CommunicationStep } from "./wizard-steps/CommunicationStep";
 import { CustomizationStep } from "./wizard-steps/CustomizationStep";
 import { ReviewStep } from "./wizard-steps/ReviewStep";
 import { EventTemplate, eventTemplates } from "./EventTemplates";
+import { validateImageFile } from "@/lib/storage";
 
 export type EventFormData = {
   // Basic Info
@@ -61,6 +63,7 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [customLogo, setCustomLogo] = useState<string | null>(null);
   const [customBanner, setCustomBanner] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState({ logo: 0, banner: 0 });
   const { toast } = useToast();
   const { user } = useAuth();
   
@@ -126,27 +129,33 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
             setValue("location", data.location);
             setValue("capacity", data.capacity || 0);
             
-            // Check if we have meta data as a string and try to parse it
-            if (data.description && data.description.startsWith('{') && data.description.endsWith('}')) {
+            // Check if we have meta data 
+            let metaData: any = null;
+            
+            // Try to parse meta from the meta field if it exists
+            if ((data as any).meta) {
               try {
-                // Try to parse meta from description as a fallback
-                const metaData = JSON.parse(data.description);
-                processMetaData(metaData);
+                const metaField = (data as any).meta;
+                metaData = typeof metaField === 'string' ? JSON.parse(metaField) : metaField;
+                console.log("Found meta data:", metaData);
+              } catch (e) {
+                console.error("Error parsing meta data:", e);
+              }
+            }
+            
+            // If we couldn't get meta from the meta field, try to parse from description as fallback
+            if (!metaData && data.description && data.description.startsWith('{') && data.description.endsWith('}')) {
+              try {
+                metaData = JSON.parse(data.description);
+                console.log("Parsed meta data from description:", metaData);
               } catch (e) {
                 console.error("Error parsing meta data from description:", e);
               }
-            } else {
-              // Check if data has a meta property that's a string
-              const metaField = (data as any).meta;
-              if (metaField) {
-                try {
-                  // If meta is a string, parse it as JSON
-                  const metaData = typeof metaField === 'string' ? JSON.parse(metaField) : metaField;
-                  processMetaData(metaData);
-                } catch (e) {
-                  console.error("Error parsing event meta data:", e);
-                }
-              }
+            }
+            
+            // Process the meta data if we have it
+            if (metaData) {
+              processMetaData(metaData);
             }
           }
         } catch (error) {
@@ -220,16 +229,32 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
     }
   };
   
-  // Handle file uploads
+  // Improved file upload function with better error handling and progress tracking
   const uploadFile = async (file: File, bucket: string): Promise<string | null> => {
     if (!file) return null;
     
+    // Reset progress
+    setUploadProgress(prev => ({ ...prev, [bucket === 'event-logos' ? 'logo' : 'banner']: 0 }));
+    
     try {
+      // Validate file before upload
+      if (!validateImageFile(file)) {
+        throw new Error(`Invalid file: ${file.name}. Must be an image under 10MB.`);
+      }
+      
       // Create a unique file name
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       
       console.log(`Uploading file to ${bucket}/${fileName}`, file);
+      
+      // Try to check if bucket exists first
+      const { data: bucketData, error: bucketError } = await supabase.storage.getBucket(bucket);
+      
+      if (bucketError) {
+        console.error(`Bucket check error for ${bucket}:`, bucketError);
+        throw new Error(`Storage bucket ${bucket} does not exist or is not accessible.`);
+      }
       
       // Upload to storage
       const { data, error } = await supabase.storage
@@ -241,33 +266,37 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       
       if (error) {
         console.error(`Storage upload error:`, error);
-        toast({
-          title: `Upload Failed: ${bucket}`,
-          description: `Error: ${error.message}`,
-          variant: "destructive",
-        });
         throw error;
       }
       
       console.log(`File uploaded successfully:`, data);
+      
+      // Update progress
+      setUploadProgress(prev => ({ ...prev, [bucket === 'event-logos' ? 'logo' : 'banner']: 100 }));
       
       // Get public URL
       const { data: publicUrlData } = supabase.storage
         .from(bucket)
         .getPublicUrl(fileName);
       
-      console.log(`Public URL generated:`, publicUrlData);
+      if (!publicUrlData || !publicUrlData.publicUrl) {
+        throw new Error("Failed to get public URL for uploaded file");
+      }
+      
+      console.log(`Public URL generated:`, publicUrlData.publicUrl);
       
       return publicUrlData.publicUrl;
     } catch (error: any) {
       console.error(`Error uploading ${bucket} file:`, error);
       
       // Provide more detailed error messages
-      let errorMessage = `Failed to upload your ${bucket} file.`;
+      let errorMessage = `Failed to upload your ${bucket === 'event-logos' ? 'logo' : 'banner'} file.`;
       if (error?.statusCode === 400) {
         errorMessage = "Storage bucket not found or access denied.";
       } else if (error?.statusCode === 413) {
         errorMessage = "File too large. Maximum size is 10MB.";
+      } else if (error?.message) {
+        errorMessage = error.message;
       }
       
       toast({
@@ -275,6 +304,7 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
         description: errorMessage,
         variant: "destructive",
       });
+      
       return null;
     }
   };
@@ -403,11 +433,20 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
         console.log("Calling onSuccess callback");
         onSuccess();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving event:", error);
+      
+      // Provide a more specific error message
+      let errorMessage = `Failed to ${eventId ? "update" : "create"} event.`;
+      if (error?.message) {
+        errorMessage += ` Error: ${error.message}`;
+      } else {
+        errorMessage += " Please try again.";
+      }
+      
       toast({
         title: "Error",
-        description: `Failed to ${eventId ? "update" : "create"} event. Please try again.`,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -497,9 +536,16 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
               <Button 
                 onClick={methods.handleSubmit(onSubmit)}
                 disabled={isSubmitting}
-                type="button"
+                type="submit"
               >
-                {isSubmitting ? (eventId ? "Updating..." : "Creating...") : (eventId ? "Update Event" : "Create Event")}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {eventId ? "Updating..." : "Creating..."}
+                  </>
+                ) : (
+                  eventId ? "Update Event" : "Create Event"
+                )}
               </Button>
             ) : (
               <Button 

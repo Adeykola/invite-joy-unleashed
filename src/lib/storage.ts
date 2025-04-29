@@ -1,6 +1,31 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+// Improved function to check if storage buckets exist and are properly configured
+export const checkStorageAvailability = async () => {
+  console.log("Checking storage availability...");
+  try {
+    const { data: buckets, error } = await supabase.storage.listBuckets();
+    
+    if (error) {
+      console.error("Storage availability check error:", error);
+      return false;
+    }
+    
+    const requiredBuckets = ['event-logos', 'event-banners'];
+    const foundBuckets = buckets?.filter(b => requiredBuckets.includes(b.id)) || [];
+    
+    console.log(`Found ${foundBuckets.length} of ${requiredBuckets.length} required buckets:`, 
+      foundBuckets.map(b => b.id));
+    
+    return foundBuckets.length === requiredBuckets.length;
+  } catch (err) {
+    console.error("Storage check error:", err);
+    return false;
+  }
+};
+
+// Improved function to initialize storage buckets with better error handling
 export const initStorageBuckets = async () => {
   console.log("Initializing storage buckets...");
   
@@ -16,6 +41,8 @@ export const initStorageBuckets = async () => {
       public: true
     }
   ];
+  
+  const results = [];
   
   for (const bucket of buckets) {
     try {
@@ -36,48 +63,81 @@ export const initStorageBuckets = async () => {
         
         if (createError) {
           console.error(`Error creating bucket ${bucket.id}:`, createError);
-          throw createError;
+          results.push({ bucket: bucket.id, success: false, error: createError });
+          continue;
         }
         
-        console.log(`Bucket ${bucket.id} created successfully:`, newBucket);
+        console.log(`Bucket ${bucket.id} created successfully`);
         
-        // Add a public policy to the bucket
-        const { error: policyError } = await supabase.storage.from(bucket.id).createSignedUrl('dummy.png', 1);
-        if (policyError && !policyError.message.includes('not found')) {
-          console.error(`Error testing bucket ${bucket.id} policy:`, policyError);
+        // Try to update the public policy for the bucket
+        try {
+          const { data: policy, error: policyError } = await supabase.storage.updateBucket(
+            bucket.id,
+            { public: true }
+          );
+          
+          if (policyError) {
+            console.error(`Error setting public policy for bucket ${bucket.id}:`, policyError);
+          } else {
+            console.log(`Public policy set for bucket ${bucket.id}`);
+          }
+        } catch (policyErr) {
+          console.error(`Error updating bucket policy: ${bucket.id}`, policyErr);
         }
+        
+        results.push({ bucket: bucket.id, success: true });
       } else if (error) {
         console.error(`Error checking bucket ${bucket.id}:`, error);
-        throw error;
+        results.push({ bucket: bucket.id, success: false, error });
       } else {
-        console.log(`Bucket ${bucket.id} already exists:`, data);
+        console.log(`Bucket ${bucket.id} already exists`);
+        
+        // Make sure the bucket is public
+        try {
+          const { data: updateData, error: updateError } = await supabase.storage.updateBucket(
+            bucket.id,
+            { public: true }
+          );
+          
+          if (updateError) {
+            console.error(`Error updating bucket ${bucket.id}:`, updateError);
+          } else {
+            console.log(`Bucket ${bucket.id} updated to public`);
+          }
+        } catch (updateErr) {
+          console.error(`Error ensuring bucket is public: ${bucket.id}`, updateErr);
+        }
+        
+        results.push({ bucket: bucket.id, success: true });
       }
     } catch (err) {
       console.error(`Bucket setup error for ${bucket.id}:`, err);
-      throw err;
+      results.push({ bucket: bucket.id, success: false, error: err });
     }
   }
   
-  console.log("Storage buckets initialization complete");
-  return true;
+  // Check if all buckets were created successfully
+  const allSuccessful = results.every(r => r.success);
+  console.log("Storage buckets initialization complete. All successful:", allSuccessful);
+  
+  return allSuccessful;
 };
 
-// Helper function to check if storage is ready
-export const checkStorageAvailability = async () => {
-  try {
-    const { data: buckets, error } = await supabase.storage.listBuckets();
-    
-    if (error) {
-      console.error("Storage availability check error:", error);
-      return false;
-    }
-    
-    const requiredBuckets = ['event-logos', 'event-banners'];
-    const foundBuckets = buckets?.filter(b => requiredBuckets.includes(b.name)) || [];
-    
-    return foundBuckets.length === requiredBuckets.length;
-  } catch (err) {
-    console.error("Storage check error:", err);
+// Helper function to validate an image file before upload
+export const validateImageFile = (file: File): boolean => {
+  // Check file type
+  const validTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp'];
+  if (!validTypes.includes(file.type)) {
+    console.error(`Invalid file type: ${file.type}. Allowed types: ${validTypes.join(', ')}`);
     return false;
   }
+  
+  // Check file size (10MB limit)
+  const maxSize = 10 * 1024 * 1024; // 10MB
+  if (file.size > maxSize) {
+    console.error(`File too large: ${file.size} bytes. Max size: ${maxSize} bytes`);
+    return false;
+  }
+  
+  return true;
 };

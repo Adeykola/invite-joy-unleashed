@@ -3,8 +3,9 @@ import { EventManagement } from "@/components/EventManagement";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState } from "react";
-import { initStorageBuckets } from "@/lib/storage";
+import { initStorageBuckets, checkStorageAvailability } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 const HostEvents = () => {
   const { toast } = useToast();
@@ -16,10 +17,24 @@ const HostEvents = () => {
     const initStorage = async () => {
       try {
         setIsInitializing(true);
-        console.log("Starting storage bucket initialization...");
-        await initStorageBuckets();
-        console.log("Storage buckets initialized successfully");
-        setStorageInitialized(true);
+        console.log("Starting storage bucket initialization from HostEvents page...");
+        
+        // First check if buckets already exist
+        const isAvailable = await checkStorageAvailability();
+        
+        if (!isAvailable) {
+          console.log("Storage buckets not found, initializing...");
+          const success = await initStorageBuckets();
+          if (success) {
+            console.log("Storage buckets initialized successfully");
+            setStorageInitialized(true);
+          } else {
+            throw new Error("Failed to initialize storage buckets");
+          }
+        } else {
+          console.log("Storage buckets already available");
+          setStorageInitialized(true);
+        }
       } catch (error) {
         console.error("Error initializing storage buckets:", error);
         toast({
@@ -45,8 +60,9 @@ const HostEvents = () => {
         </Card>
         
         {!storageInitialized && isInitializing && (
-          <div className="text-xs text-gray-500 mt-2">
-            Setting up file storage...
+          <div className="flex items-center space-x-2 text-xs text-gray-500 mt-2">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            <span>Setting up file storage...</span>
           </div>
         )}
       </div>
