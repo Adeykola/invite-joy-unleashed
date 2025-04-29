@@ -64,6 +64,7 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
   const [customLogo, setCustomLogo] = useState<string | null>(null);
   const [customBanner, setCustomBanner] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState({ logo: 0, banner: 0 });
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   
@@ -132,10 +133,11 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
             // Check if we have meta data 
             let metaData: any = null;
             
-            // Try to parse meta from the meta field if it exists
-            if ((data as any).meta) {
+            // Try to parse meta data
+            if (data.meta) {
               try {
-                const metaField = (data as any).meta;
+                // Handle string or object meta
+                const metaField = data.meta;
                 metaData = typeof metaField === 'string' ? JSON.parse(metaField) : metaField;
                 console.log("Found meta data:", metaData);
               } catch (e) {
@@ -202,6 +204,8 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
     const isValid = await methods.trigger(getCurrentStepFields());
     if (isValid) {
       setCurrentStep(prev => Math.min(prev + 1, STEPS.length - 1));
+      // Clear any previous upload errors when moving forward
+      setUploadError(null);
     }
   };
 
@@ -210,6 +214,8 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
     if (e) e.preventDefault();
     
     setCurrentStep(prev => Math.max(prev - 1, 0));
+    // Clear any previous upload errors when moving back
+    setUploadError(null);
   };
   
   const getCurrentStepFields = (): (keyof EventFormData)[] => {
@@ -230,16 +236,22 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
   };
   
   // Improved file upload function with better error handling and progress tracking
-  const uploadFile = async (file: File, bucket: string): Promise<string | null> => {
-    if (!file) return null;
+  const uploadFile = async (file: File | null | undefined, bucket: string): Promise<string | null> => {
+    if (!file) {
+      console.log(`No file provided for ${bucket}`);
+      return null;
+    }
     
-    // Reset progress
+    // Reset progress and errors
     setUploadProgress(prev => ({ ...prev, [bucket === 'event-logos' ? 'logo' : 'banner']: 0 }));
+    setUploadError(null);
     
     try {
       // Validate file before upload
       if (!validateImageFile(file)) {
-        throw new Error(`Invalid file: ${file.name}. Must be an image under 10MB.`);
+        const errorMsg = `Invalid file: ${file.name}. Must be an image under 10MB.`;
+        setUploadError(errorMsg);
+        throw new Error(errorMsg);
       }
       
       // Create a unique file name
@@ -248,11 +260,12 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       
       console.log(`Uploading file to ${bucket}/${fileName}`, file);
       
-      // Try to check if bucket exists first
+      // First verify bucket exists and is accessible
       const { data: bucketData, error: bucketError } = await supabase.storage.getBucket(bucket);
       
       if (bucketError) {
         console.error(`Bucket check error for ${bucket}:`, bucketError);
+        setUploadError(`Storage bucket ${bucket} is not accessible. Please try again later.`);
         throw new Error(`Storage bucket ${bucket} does not exist or is not accessible.`);
       }
       
@@ -266,6 +279,7 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       
       if (error) {
         console.error(`Storage upload error:`, error);
+        setUploadError(`Failed to upload your ${bucket === 'event-logos' ? 'logo' : 'banner'} file. ${error.message}`);
         throw error;
       }
       
@@ -280,7 +294,9 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
         .getPublicUrl(fileName);
       
       if (!publicUrlData || !publicUrlData.publicUrl) {
-        throw new Error("Failed to get public URL for uploaded file");
+        const errorMsg = "Failed to get public URL for uploaded file";
+        setUploadError(errorMsg);
+        throw new Error(errorMsg);
       }
       
       console.log(`Public URL generated:`, publicUrlData.publicUrl);
@@ -290,14 +306,7 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       console.error(`Error uploading ${bucket} file:`, error);
       
       // Provide more detailed error messages
-      let errorMessage = `Failed to upload your ${bucket === 'event-logos' ? 'logo' : 'banner'} file.`;
-      if (error?.statusCode === 400) {
-        errorMessage = "Storage bucket not found or access denied.";
-      } else if (error?.statusCode === 413) {
-        errorMessage = "File too large. Maximum size is 10MB.";
-      } else if (error?.message) {
-        errorMessage = error.message;
-      }
+      const errorMessage = error?.message || `Failed to upload your ${bucket === 'event-logos' ? 'logo' : 'banner'} file.`;
       
       toast({
         title: "Upload Failed",
@@ -311,6 +320,7 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
 
   const onSubmit = async (data: EventFormData) => {
     console.log("Form submission started with data:", data);
+    setUploadError(null);
     
     if (!user) {
       console.error("No authenticated user found");
@@ -327,6 +337,7 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       // Upload custom files if any
       let customLogoUrl = customLogo;
       let customBannerUrl = customBanner;
+      let uploadFailed = false;
       
       // Only upload new files if they've been selected
       if (data.customLogo) {
@@ -334,27 +345,34 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
         try {
           customLogoUrl = await uploadFile(data.customLogo, "event-logos");
           if (!customLogoUrl) {
-            throw new Error("Logo upload failed");
+            setUploadError("Logo upload failed. Please check the file type and size.");
+            uploadFailed = true;
           }
         } catch (error) {
           console.error("Logo upload error:", error);
-          setIsSubmitting(false);
-          return;
+          setUploadError("Logo upload failed. Please try again.");
+          uploadFailed = true;
         }
       }
       
-      if (data.customBanner) {
+      if (data.customBanner && !uploadFailed) {
         console.log("Uploading custom banner...");
         try {
           customBannerUrl = await uploadFile(data.customBanner, "event-banners");
           if (!customBannerUrl) {
-            throw new Error("Banner upload failed");
+            setUploadError("Banner upload failed. Please check the file type and size.");
+            uploadFailed = true;
           }
         } catch (error) {
           console.error("Banner upload error:", error);
-          setIsSubmitting(false);
-          return;
+          setUploadError("Banner upload failed. Please try again.");
+          uploadFailed = true;
         }
+      }
+      
+      if (uploadFailed) {
+        setIsSubmitting(false);
+        return;
       }
       
       // Prepare meta data to store additional fields
@@ -437,16 +455,12 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       console.error("Error saving event:", error);
       
       // Provide a more specific error message
-      let errorMessage = `Failed to ${eventId ? "update" : "create"} event.`;
-      if (error?.message) {
-        errorMessage += ` Error: ${error.message}`;
-      } else {
-        errorMessage += " Please try again.";
-      }
+      const errorMessage = error?.message || `Failed to ${eventId ? "update" : "create"} event. Please try again.`;
+      setUploadError(`Error: ${errorMessage}`);
       
       toast({
         title: "Error",
-        description: errorMessage,
+        description: `Failed to ${eventId ? "update" : "create"} event: ${errorMessage}`,
         variant: "destructive",
       });
     } finally {
@@ -521,6 +535,12 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
         <Card>
           <CardContent className="pt-6 md:min-h-[400px]">
             {renderStepContent()}
+            
+            {uploadError && (
+              <div className="mt-4 p-3 text-sm border border-red-300 bg-red-50 text-red-800 rounded-md">
+                <strong>Error:</strong> {uploadError}
+              </div>
+            )}
           </CardContent>
           <CardFooter className="flex justify-between border-t p-4">
             <Button 

@@ -5,22 +5,38 @@ import { supabase } from "@/integrations/supabase/client";
 export const checkStorageAvailability = async () => {
   console.log("Checking storage availability...");
   try {
-    const { data: buckets, error } = await supabase.storage.listBuckets();
+    // First check if we can even access the storage API
+    const { data: bucketsList, error: listError } = await supabase.storage.listBuckets();
     
-    if (error) {
-      console.error("Storage availability check error:", error);
+    if (listError) {
+      console.error("Storage API access error:", listError);
+      return false;
+    }
+    
+    if (!bucketsList || bucketsList.length === 0) {
+      console.log("No storage buckets found");
       return false;
     }
     
     const requiredBuckets = ['event-logos', 'event-banners'];
-    const foundBuckets = buckets?.filter(b => requiredBuckets.includes(b.id)) || [];
+    const foundBuckets = bucketsList.filter(b => requiredBuckets.includes(b.id));
     
     console.log(`Found ${foundBuckets.length} of ${requiredBuckets.length} required buckets:`, 
       foundBuckets.map(b => b.id));
     
+    // Check if all the required buckets exist AND are public
+    for (const bucket of foundBuckets) {
+      const { data, error } = await supabase.storage.getBucket(bucket.id);
+      
+      if (error || !data?.public) {
+        console.log(`Bucket ${bucket.id} exists but is not properly configured:`, data, error);
+        return false;
+      }
+    }
+    
     return foundBuckets.length === requiredBuckets.length;
   } catch (err) {
-    console.error("Storage check error:", err);
+    console.error("Storage check critical error:", err);
     return false;
   }
 };
@@ -30,103 +46,88 @@ export const initStorageBuckets = async () => {
   console.log("Initializing storage buckets...");
   
   const buckets = [
-    {
-      id: 'event-logos',
-      name: 'Event Logos',
-      public: true
-    },
-    {
-      id: 'event-banners',
-      name: 'Event Banners',
-      public: true
-    }
+    { id: 'event-logos', name: 'Event Logos', public: true },
+    { id: 'event-banners', name: 'Event Banners', public: true }
   ];
   
-  const results = [];
-  
-  for (const bucket of buckets) {
-    try {
-      // Check if bucket exists
-      const { data, error } = await supabase.storage.getBucket(bucket.id);
-      
-      if (error && error.message.includes('not found')) {
-        console.log(`Creating bucket: ${bucket.id}`);
-        // Create the bucket if it doesn't exist
-        const { data: newBucket, error: createError } = await supabase.storage.createBucket(
-          bucket.id,
-          {
-            public: bucket.public,
-            fileSizeLimit: 10485760, // 10MB
-            allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp']
-          }
-        );
+  try {
+    // Verify storage access first
+    const { data: testBuckets, error: testError } = await supabase.storage.listBuckets();
+    
+    if (testError) {
+      console.error("Storage API access error on init:", testError);
+      return false;
+    }
+    
+    console.log("Storage API access verified");
+    
+    // Create each bucket and set to public
+    for (const bucket of buckets) {
+      try {
+        // Check if bucket exists
+        const { data, error: checkError } = await supabase.storage.getBucket(bucket.id);
         
-        if (createError) {
-          console.error(`Error creating bucket ${bucket.id}:`, createError);
-          results.push({ bucket: bucket.id, success: false, error: createError });
-          continue;
-        }
-        
-        console.log(`Bucket ${bucket.id} created successfully`);
-        
-        // Try to update the public policy for the bucket
-        try {
-          const { data: policy, error: policyError } = await supabase.storage.updateBucket(
+        if (checkError && checkError.message.includes('not found')) {
+          console.log(`Creating bucket: ${bucket.id}`);
+          // Create the bucket if it doesn't exist
+          const { data: newBucket, error: createError } = await supabase.storage.createBucket(
             bucket.id,
-            { public: true }
+            {
+              public: true,
+              fileSizeLimit: 10485760, // 10MB
+              allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp']
+            }
           );
           
-          if (policyError) {
-            console.error(`Error setting public policy for bucket ${bucket.id}:`, policyError);
-          } else {
-            console.log(`Public policy set for bucket ${bucket.id}`);
+          if (createError) {
+            console.error(`Error creating bucket ${bucket.id}:`, createError);
+            return false;
           }
-        } catch (policyErr) {
-          console.error(`Error updating bucket policy: ${bucket.id}`, policyErr);
-        }
-        
-        results.push({ bucket: bucket.id, success: true });
-      } else if (error) {
-        console.error(`Error checking bucket ${bucket.id}:`, error);
-        results.push({ bucket: bucket.id, success: false, error });
-      } else {
-        console.log(`Bucket ${bucket.id} already exists`);
-        
-        // Make sure the bucket is public
-        try {
+          
+          console.log(`Bucket ${bucket.id} created successfully`);
+        } else if (checkError) {
+          console.error(`Error checking bucket ${bucket.id}:`, checkError);
+          return false;
+        } else {
+          console.log(`Bucket ${bucket.id} already exists`);
+          
+          // Make sure the bucket is public
           const { data: updateData, error: updateError } = await supabase.storage.updateBucket(
             bucket.id,
             { public: true }
           );
           
           if (updateError) {
-            console.error(`Error updating bucket ${bucket.id}:`, updateError);
+            console.error(`Error updating bucket ${bucket.id} to public:`, updateError);
+            return false;
           } else {
             console.log(`Bucket ${bucket.id} updated to public`);
           }
-        } catch (updateErr) {
-          console.error(`Error ensuring bucket is public: ${bucket.id}`, updateErr);
         }
-        
-        results.push({ bucket: bucket.id, success: true });
+      } catch (err) {
+        console.error(`Bucket setup error for ${bucket.id}:`, err);
+        return false;
       }
-    } catch (err) {
-      console.error(`Bucket setup error for ${bucket.id}:`, err);
-      results.push({ bucket: bucket.id, success: false, error: err });
     }
+    
+    // Verify all buckets were created successfully
+    return await checkStorageAvailability();
+    
+  } catch (error) {
+    console.error("Critical error during storage initialization:", error);
+    return false;
   }
-  
-  // Check if all buckets were created successfully
-  const allSuccessful = results.every(r => r.success);
-  console.log("Storage buckets initialization complete. All successful:", allSuccessful);
-  
-  return allSuccessful;
 };
 
 // Helper function to validate an image file before upload
 export const validateImageFile = (file: File): boolean => {
+  if (!file) {
+    console.error("No file provided for validation");
+    return false;
+  }
+  
   // Check file type
-  const validTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp'];
+  const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/svg+xml', 'image/webp'];
   if (!validTypes.includes(file.type)) {
     console.error(`Invalid file type: ${file.type}. Allowed types: ${validTypes.join(', ')}`);
     return false;
