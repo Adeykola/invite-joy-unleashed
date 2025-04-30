@@ -62,7 +62,7 @@ const STEPS = [
   { id: "review", label: "Review" }
 ];
 
-export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
+export function EventWizard({ eventId: initialEventId, onSuccess }: EventWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -110,14 +110,14 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
   
   // Load event data if eventId is provided (edit mode)
   useEffect(() => {
-    if (eventId) {
+    if (initialEventId) {
       setIsLoading(true);
       const fetchEvent = async () => {
         try {
           const { data, error } = await supabase
             .from("events")
             .select("*")
-            .eq("id", eventId)
+            .eq("id", initialEventId)
             .single();
             
           if (error) throw error;
@@ -167,7 +167,7 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
             }
             
             // Fetch guest list if editing an existing event
-            fetchGuestList(eventId);
+            fetchGuestList(initialEventId);
           }
         } catch (error) {
           console.error("Error fetching event:", error);
@@ -183,7 +183,7 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       
       fetchEvent();
     }
-  }, [eventId, setValue, toast]);
+  }, [initialEventId, setValue, toast]);
   
   // Fetch guest list for an existing event
   const fetchGuestList = async (eventId: string) => {
@@ -435,18 +435,18 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       console.log("Submitting event with data:", eventData);
       console.log("User ID:", user.id);
       
-      let eventId = eventId;
+      let newEventId = initialEventId;
       
-      if (eventId) {
+      if (initialEventId) {
         // Update existing event
-        console.log("Updating existing event:", eventId);
+        console.log("Updating existing event:", initialEventId);
         const { error } = await supabase
           .from("events")
           .update({
             ...eventData,
             updated_at: new Date().toISOString()
           })
-          .eq("id", eventId);
+          .eq("id", initialEventId);
 
         if (error) {
           console.error("Error updating event:", error);
@@ -471,19 +471,19 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
         }
 
         console.log("Event created successfully:", newEvent);
-        eventId = newEvent?.[0]?.id;
+        newEventId = newEvent?.[0]?.id;
       }
       
       // If we have a valid eventId, save the guest list
-      if (eventId && data.guests && data.guests.length > 0) {
-        console.log("Saving guest list for event:", eventId);
+      if (newEventId && data.guests && data.guests.length > 0) {
+        console.log("Saving guest list for event:", newEventId);
         
         // First, if we're updating an existing event, remove old guests
-        if (eventId) {
+        if (initialEventId) {
           const { error: deleteError } = await supabase
             .from("event_guests")
             .delete()
-            .eq("event_id", eventId);
+            .eq("event_id", initialEventId);
           
           if (deleteError) {
             console.error("Error removing old guests:", deleteError);
@@ -493,7 +493,7 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
         
         // Prepare guest data for insertion
         const guestData = data.guests.map(guest => ({
-          event_id: eventId,
+          event_id: newEventId,
           name: guest.name,
           email: guest.email
         }));
@@ -516,11 +516,11 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       }
       
       toast({
-        title: eventId ? "Event Updated" : "Event Created",
-        description: `Your event has been ${eventId ? "updated" : "created"} successfully!`,
+        title: initialEventId ? "Event Updated" : "Event Created",
+        description: `Your event has been ${initialEventId ? "updated" : "created"} successfully!`,
       });
       
-      if (!eventId) {
+      if (!initialEventId) {
         methods.reset();
       }
       
@@ -532,12 +532,12 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       console.error("Error saving event:", error);
       
       // Provide a more specific error message
-      const errorMessage = error?.message || `Failed to ${eventId ? "update" : "create"} event. Please try again.`;
+      const errorMessage = error?.message || `Failed to ${initialEventId ? "update" : "create"} event. Please try again.`;
       setUploadError(`Error: ${errorMessage}`);
       
       toast({
         title: "Error",
-        description: `Failed to ${eventId ? "update" : "create"} event: ${errorMessage}`,
+        description: `Failed to ${initialEventId ? "update" : "create"} event: ${errorMessage}`,
         variant: "destructive",
       });
     } finally {
@@ -582,7 +582,7 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-medium">
-                {eventId ? "Edit Event" : "Create New Event"}
+                {initialEventId ? "Edit Event" : "Create New Event"}
               </h2>
               <p className="text-sm text-muted-foreground">
                 Step {currentStep + 1} of {STEPS.length}: {STEPS[currentStep].label}
@@ -640,10 +640,10 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {eventId ? "Updating..." : "Creating..."}
+                    {initialEventId ? "Updating..." : "Creating..."}
                   </>
                 ) : (
-                  eventId ? "Update Event" : "Create Event"
+                  initialEventId ? "Update Event" : "Create Event"
                 )}
               </Button>
             ) : (
