@@ -7,7 +7,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 
-export function EventManagement() {
+interface EventManagementProps {
+  storageInitialized?: boolean;
+}
+
+export function EventManagement({ storageInitialized = false }: EventManagementProps) {
   const [activeTab, setActiveTab] = useState("upcoming");
 
   // Fetch event stats for the host
@@ -33,7 +37,7 @@ export function EventManagement() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Event Management</h2>
-        <CreateEventDialog />
+        <CreateEventDialog storageInitialized={storageInitialized} />
       </div>
       
       {/* Event Statistics */}

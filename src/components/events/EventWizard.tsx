@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
@@ -133,8 +132,8 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
             // Check if we have meta data 
             let metaData: any = null;
             
-            // Try to parse meta data
-            if (data.meta) {
+            // Try to parse meta data from the meta field if it exists
+            if (data.meta !== undefined) {
               try {
                 // Handle string or object meta
                 const metaField = data.meta;

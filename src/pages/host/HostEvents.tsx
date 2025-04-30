@@ -17,7 +17,7 @@ const HostEvents = () => {
   // Initialize storage buckets for event images when page loads
   useEffect(() => {
     initStorage();
-  }, [toast]);
+  }, []);
 
   const initStorage = async () => {
     try {
@@ -34,6 +34,10 @@ const HostEvents = () => {
         if (success) {
           console.log("Storage buckets initialized successfully");
           setStorageInitialized(true);
+          toast({
+            title: "Storage Ready",
+            description: "File storage for event images has been successfully set up.",
+          });
         } else {
           throw new Error("Failed to initialize storage buckets");
         }
@@ -93,7 +97,7 @@ const HostEvents = () => {
         )}
         
         <Card className="p-6">
-          <EventManagement />
+          <EventManagement storageInitialized={storageInitialized} />
         </Card>
       </div>
     </DashboardLayout>
