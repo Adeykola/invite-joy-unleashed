@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Plus, Mail, Users } from "lucide-react";
 import { FormLabel } from "@/components/ui/form";
+import { ImportGuestsDialog } from "./ImportGuestsDialog";
 
 export interface Guest {
   id?: string;
@@ -79,10 +80,14 @@ export function GuestListStep() {
     setValue("guests", updatedGuests);
   };
   
-  const importGuests = () => {
-    // This is a placeholder for future functionality
-    // Could implement CSV import or contact integration
-    alert("Guest import functionality will be available soon!");
+  const handleImportGuests = (importedGuests: Guest[]) => {
+    // Filter out duplicates by email
+    const existingEmails = new Set(guests.map(guest => guest.email.toLowerCase()));
+    const newGuests = importedGuests.filter(guest => !existingEmails.has(guest.email.toLowerCase()));
+    
+    if (newGuests.length > 0) {
+      setValue("guests", [...guests, ...newGuests]);
+    }
   };
 
   const isValidEmail = (email: string) => {
@@ -135,9 +140,7 @@ export function GuestListStep() {
           <Users className="mr-2 h-4 w-4" />
           Guest List ({guests.length})
         </h4>
-        <Button variant="outline" size="sm" onClick={importGuests}>
-          <Mail className="h-4 w-4 mr-1" /> Import Guests
-        </Button>
+        <ImportGuestsDialog onImport={handleImportGuests} />
       </div>
       
       {guests.length === 0 ? (

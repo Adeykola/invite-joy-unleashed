@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +16,7 @@ import HostEvents from "./pages/host/HostEvents";
 import HostGuests from "./pages/host/HostGuests";
 import HostCalendar from "./pages/host/HostCalendar";
 import HostSettings from "./pages/host/HostSettings";
+import CheckIn from "./pages/host/CheckIn";
 import UserDashboard from "./pages/UserDashboard";
 import ResetPassword from "./pages/ResetPassword";
 import Event from "./pages/Event";
@@ -83,6 +85,7 @@ const App = () => (
             <Route path="/host-dashboard/guests" element={<HostRoute><HostGuests /></HostRoute>} />
             <Route path="/host-dashboard/calendar" element={<HostRoute><HostCalendar /></HostRoute>} />
             <Route path="/host-dashboard/settings" element={<HostRoute><HostSettings /></HostRoute>} />
+            <Route path="/host-dashboard/check-in/:eventId" element={<HostRoute><CheckIn /></HostRoute>} />
             <Route path="/user-dashboard" element={<UserRoute><UserDashboard /></UserRoute>} />
             
             <Route path="*" element={<NotFound />} />

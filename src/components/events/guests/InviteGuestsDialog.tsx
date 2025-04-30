@@ -26,6 +26,8 @@ import {
 interface InviteGuestsDialogProps {
   eventId: string;
   eventTitle: string;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 type Guest = {
@@ -36,11 +38,27 @@ type Guest = {
   invite_sent: boolean;
 };
 
-export function InviteGuestsDialog({ eventId, eventTitle }: InviteGuestsDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function InviteGuestsDialog({ 
+  eventId, 
+  eventTitle, 
+  isOpen: externalIsOpen, 
+  onOpenChange: externalOnOpenChange 
+}: InviteGuestsDialogProps) {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
   const [selectedGuests, setSelectedGuests] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
+
+  // Use controlled or uncontrolled open state based on props
+  const isControlled = externalIsOpen !== undefined && externalOnOpenChange !== undefined;
+  const isOpen = isControlled ? externalIsOpen : internalIsOpen;
+  const setIsOpen = (open: boolean) => {
+    if (isControlled) {
+      externalOnOpenChange!(open);
+    } else {
+      setInternalIsOpen(open);
+    }
+  };
 
   // Fetch guests for this event
   const { data: guests, isLoading, refetch } = useQuery({
@@ -125,12 +143,14 @@ export function InviteGuestsDialog({ eventId, eventTitle }: InviteGuestsDialogPr
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="default" size="sm">
-          <Mail className="mr-2 h-4 w-4" />
-          Manage Invites
-        </Button>
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button variant="default" size="sm">
+            <Mail className="mr-2 h-4 w-4" />
+            Manage Invites
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle>Manage Guest Invitations</DialogTitle>
