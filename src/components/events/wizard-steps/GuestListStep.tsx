@@ -1,0 +1,180 @@
+
+import React, { useState } from "react";
+import { useFormContext, useWatch } from "react-hook-form";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { X, Plus, Mail, Users } from "lucide-react";
+import { FormLabel } from "@/components/ui/form";
+
+export interface Guest {
+  id?: string;
+  name: string;
+  email: string;
+}
+
+export function GuestListStep() {
+  const { setValue, getValues } = useFormContext();
+  const [newGuestName, setNewGuestName] = useState("");
+  const [newGuestEmail, setNewGuestEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  
+  // Get current guests list
+  const guests = useWatch({
+    name: "guests",
+    defaultValue: [],
+  }) as Guest[];
+
+  const addGuest = () => {
+    setError(null);
+    
+    if (!newGuestName.trim()) {
+      setError("Guest name is required");
+      return;
+    }
+    
+    if (!newGuestEmail.trim()) {
+      setError("Guest email is required");
+      return;
+    }
+    
+    if (!isValidEmail(newGuestEmail)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+    
+    // Check if guest with this email already exists
+    const existingGuestWithEmail = guests.find(
+      guest => guest.email.toLowerCase() === newGuestEmail.toLowerCase()
+    );
+    
+    if (existingGuestWithEmail) {
+      setError("A guest with this email already exists");
+      return;
+    }
+    
+    const newGuest: Guest = {
+      id: crypto.randomUUID(), // This will be replaced when saved to database
+      name: newGuestName,
+      email: newGuestEmail,
+    };
+    
+    setValue("guests", [...guests, newGuest]);
+    
+    // Clear input fields
+    setNewGuestName("");
+    setNewGuestEmail("");
+  };
+  
+  const removeGuest = (index: number) => {
+    const updatedGuests = [...guests];
+    updatedGuests.splice(index, 1);
+    setValue("guests", updatedGuests);
+  };
+  
+  const importGuests = () => {
+    // This is a placeholder for future functionality
+    // Could implement CSV import or contact integration
+    alert("Guest import functionality will be available soon!");
+  };
+
+  const isValidEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium">Guest List</h3>
+        <p className="text-sm text-muted-foreground">
+          Add guests who should receive invitations to your event
+        </p>
+      </div>
+      
+      <div className="flex items-end gap-3">
+        <div className="space-y-2 flex-1">
+          <FormLabel htmlFor="guestName">Name</FormLabel>
+          <Input
+            id="guestName"
+            placeholder="Guest Name"
+            value={newGuestName}
+            onChange={e => setNewGuestName(e.target.value)}
+          />
+        </div>
+        
+        <div className="space-y-2 flex-1">
+          <FormLabel htmlFor="guestEmail">Email</FormLabel>
+          <Input
+            id="guestEmail"
+            type="email"
+            placeholder="guest@example.com"
+            value={newGuestEmail}
+            onChange={e => setNewGuestEmail(e.target.value)}
+          />
+        </div>
+        
+        <Button type="button" onClick={addGuest} className="mb-0.5">
+          <Plus className="h-4 w-4 mr-1" />
+          Add Guest
+        </Button>
+      </div>
+      
+      {error && (
+        <div className="text-sm text-red-500">{error}</div>
+      )}
+
+      <div className="flex justify-between items-center">
+        <h4 className="font-medium flex items-center">
+          <Users className="mr-2 h-4 w-4" />
+          Guest List ({guests.length})
+        </h4>
+        <Button variant="outline" size="sm" onClick={importGuests}>
+          <Mail className="h-4 w-4 mr-1" /> Import Guests
+        </Button>
+      </div>
+      
+      {guests.length === 0 ? (
+        <div className="text-sm text-center py-8 border border-dashed rounded-md bg-muted/30">
+          No guests added yet
+        </div>
+      ) : (
+        <div className="border rounded-md">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Guest Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {guests.map((guest, index) => (
+                <TableRow key={guest.id || index}>
+                  <TableCell>{guest.name}</TableCell>
+                  <TableCell>{guest.email}</TableCell>
+                  <TableCell>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => removeGuest(index)}
+                    >
+                      <X className="h-4 w-4" />
+                      <span className="sr-only">Remove</span>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </div>
+  );
+}

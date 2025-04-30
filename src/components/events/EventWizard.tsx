@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +15,7 @@ import { GuestSettingsStep } from "./wizard-steps/GuestSettingsStep";
 import { CommunicationStep } from "./wizard-steps/CommunicationStep";
 import { CustomizationStep } from "./wizard-steps/CustomizationStep";
 import { ReviewStep } from "./wizard-steps/ReviewStep";
+import { GuestListStep, Guest } from "./wizard-steps/GuestListStep";
 import { EventTemplate, eventTemplates } from "./EventTemplates";
 import { validateImageFile } from "@/lib/storage";
 
@@ -29,6 +31,9 @@ export type EventFormData = {
   capacity?: number;
   rsvpDeadline?: string;
   allowPlusOnes: boolean;
+  
+  // Guest List
+  guests: Guest[];
   
   // Communication
   inviteMethod: string[];
@@ -51,6 +56,7 @@ interface EventWizardProps {
 const STEPS = [
   { id: "basic", label: "Basic Info" },
   { id: "guests", label: "Guest Settings" },
+  { id: "guestList", label: "Guest List" },
   { id: "communication", label: "Communication" },
   { id: "design", label: "Design" },
   { id: "review", label: "Review" }
@@ -77,6 +83,7 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       capacity: 0,
       rsvpDeadline: "",
       allowPlusOnes: false,
+      guests: [],
       inviteMethod: ["email"],
       sendReminders: true,
       reminderDays: 2,
@@ -158,6 +165,9 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
             if (metaData) {
               processMetaData(metaData);
             }
+            
+            // Fetch guest list if editing an existing event
+            fetchGuestList(eventId);
           }
         } catch (error) {
           console.error("Error fetching event:", error);
@@ -174,6 +184,27 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       fetchEvent();
     }
   }, [eventId, setValue, toast]);
+  
+  // Fetch guest list for an existing event
+  const fetchGuestList = async (eventId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('get_event_guests', {
+        p_event_id: eventId
+      });
+      
+      if (error) {
+        console.error("Error fetching guest list:", error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        console.log("Fetched guest list:", data);
+        setValue("guests", data);
+      }
+    } catch (error) {
+      console.error("Error fetching guest list:", error);
+    }
+  };
 
   // Helper function to process meta data from various sources
   const processMetaData = (meta: any) => {
@@ -223,11 +254,13 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
         return ["title", "date", "location", "eventType"];
       case 1: // Guest Settings
         return ["capacity", "rsvpDeadline", "allowPlusOnes"];
-      case 2: // Communication
+      case 2: // Guest List
+        return ["guests"];
+      case 3: // Communication
         return ["inviteMethod", "sendReminders", "reminderDays"];
-      case 3: // Customization
+      case 4: // Customization
         return ["templateId", "primaryColor", "accentColor"];
-      case 4: // Review
+      case 5: // Review
         return [];
       default:
         return [];
@@ -402,6 +435,8 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       console.log("Submitting event with data:", eventData);
       console.log("User ID:", user.id);
       
+      let eventId = eventId;
+      
       if (eventId) {
         // Update existing event
         console.log("Updating existing event:", eventId);
@@ -419,10 +454,6 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
         }
 
         console.log("Event updated successfully");
-        toast({
-          title: "Event Updated",
-          description: "Your event has been updated successfully!",
-        });
       } else {
         // Create new event
         console.log("Creating new event with host_id:", user.id);
@@ -431,7 +462,8 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
           .insert([{
             ...eventData,
             host_id: user.id
-          }]);
+          }])
+          .select();
 
         if (error) {
           console.error("Error creating event:", error);
@@ -439,10 +471,56 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
         }
 
         console.log("Event created successfully:", newEvent);
-        toast({
-          title: "Event Created",
-          description: "Your event has been created successfully!",
-        });
+        eventId = newEvent?.[0]?.id;
+      }
+      
+      // If we have a valid eventId, save the guest list
+      if (eventId && data.guests && data.guests.length > 0) {
+        console.log("Saving guest list for event:", eventId);
+        
+        // First, if we're updating an existing event, remove old guests
+        if (eventId) {
+          const { error: deleteError } = await supabase
+            .from("event_guests")
+            .delete()
+            .eq("event_id", eventId);
+          
+          if (deleteError) {
+            console.error("Error removing old guests:", deleteError);
+            // Continue anyway, as this is not critical
+          }
+        }
+        
+        // Prepare guest data for insertion
+        const guestData = data.guests.map(guest => ({
+          event_id: eventId,
+          name: guest.name,
+          email: guest.email
+        }));
+        
+        // Insert new guests
+        const { error: insertError } = await supabase
+          .from("event_guests")
+          .insert(guestData);
+        
+        if (insertError) {
+          console.error("Error saving guest list:", insertError);
+          toast({
+            title: "Warning",
+            description: "Event was saved but there was an error saving the guest list.",
+            variant: "destructive",
+          });
+        } else {
+          console.log("Guest list saved successfully");
+        }
+      }
+      
+      toast({
+        title: eventId ? "Event Updated" : "Event Created",
+        description: `Your event has been ${eventId ? "updated" : "created"} successfully!`,
+      });
+      
+      if (!eventId) {
         methods.reset();
       }
       
@@ -480,15 +558,17 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
       case 1:
         return <GuestSettingsStep />;
       case 2:
-        return <CommunicationStep />;
+        return <GuestListStep />;
       case 3:
+        return <CommunicationStep />;
+      case 4:
         return <CustomizationStep 
           customLogo={customLogo}
           customBanner={customBanner}
           setCustomLogo={setCustomLogo}
           setCustomBanner={setCustomBanner}
         />;
-      case 4:
+      case 5:
         return <ReviewStep />;
       default:
         return null;

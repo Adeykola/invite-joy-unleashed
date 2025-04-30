@@ -9,6 +9,44 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      event_guests: {
+        Row: {
+          created_at: string | null
+          email: string
+          event_id: string
+          id: string
+          invite_sent: boolean | null
+          invited_at: string | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          event_id: string
+          id?: string
+          invite_sent?: boolean | null
+          invited_at?: string | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          event_id?: string
+          id?: string
+          invite_sent?: boolean | null
+          invited_at?: string | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_guests_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           capacity: number | null
@@ -115,7 +153,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_event_guests: {
+        Args: { p_event_id: string }
+        Returns: {
+          id: string
+          name: string
+          email: string
+          invited_at: string
+          invite_sent: boolean
+        }[]
+      }
     }
     Enums: {
       user_role: "admin" | "host" | "user"
