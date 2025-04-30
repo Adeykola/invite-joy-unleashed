@@ -18,6 +18,7 @@ export type Database = {
           host_id: string | null
           id: string
           location: string
+          meta: Json | null
           title: string
           updated_at: string | null
         }
@@ -29,6 +30,7 @@ export type Database = {
           host_id?: string | null
           id?: string
           location: string
+          meta?: Json | null
           title: string
           updated_at?: string | null
         }
@@ -40,6 +42,7 @@ export type Database = {
           host_id?: string | null
           id?: string
           location?: string
+          meta?: Json | null
           title?: string
           updated_at?: string | null
         }

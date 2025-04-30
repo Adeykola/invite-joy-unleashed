@@ -13,7 +13,11 @@ import { useToast } from "@/hooks/use-toast";
 import { initStorageBuckets, checkStorageAvailability } from "@/lib/storage";
 import { Loader2 } from "lucide-react";
 
-export function CreateEventDialog() {
+interface CreateEventDialogProps {
+  storageInitialized?: boolean;
+}
+
+export function CreateEventDialog({ storageInitialized = false }: CreateEventDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [storageReady, setStorageReady] = useState(false);
   const [isCheckingStorage, setIsCheckingStorage] = useState(false);
@@ -30,6 +34,14 @@ export function CreateEventDialog() {
         
         try {
           console.log("Starting storage preparation process...");
+          
+          // If storage is already initialized from the parent component, use that
+          if (storageInitialized) {
+            console.log("Storage already initialized by parent component");
+            setStorageReady(true);
+            setIsCheckingStorage(false);
+            return;
+          }
           
           // Check if storage buckets exist
           const isAvailable = await checkStorageAvailability();
@@ -80,7 +92,7 @@ export function CreateEventDialog() {
     };
     
     prepareStorage();
-  }, [isOpen, storageReady, isCheckingStorage, toast, initRetries]);
+  }, [isOpen, storageReady, isCheckingStorage, toast, initRetries, storageInitialized]);
 
   const handleSuccess = () => {
     setIsOpen(false);

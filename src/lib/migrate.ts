@@ -35,6 +35,20 @@ export const migrateEvents = async () => {
       }
       
       console.log("Added meta column to events table");
+      
+      // Initialize existing records with empty meta data
+      const { error: updateError } = await supabase.rpc(
+        "execute_sql",
+        {
+          p_sql: "UPDATE public.events SET meta = '{}'::jsonb WHERE meta IS NULL"
+        }
+      );
+      
+      if (updateError) {
+        console.error("Error initializing meta data:", updateError);
+        return false;
+      }
+      
       return true;
     }
     

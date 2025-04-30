@@ -396,7 +396,7 @@ export function EventWizard({ eventId, onSuccess }: EventWizardProps) {
         date: data.date,
         location: data.location,
         capacity: Number(data.capacity) || null,
-        meta: JSON.stringify(metaData)
+        meta: metaData
       };
       
       console.log("Submitting event with data:", eventData);
