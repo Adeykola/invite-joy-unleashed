@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -57,7 +56,6 @@ const HostRoute = ({ children }: { children: JSX.Element }) => (
   <ProtectedRoute allowedRoles={["host"]}>{children}</ProtectedRoute>
 );
 
-// Add the UserRoute component
 const UserRoute = ({ children }: { children: JSX.Element }) => (
   <ProtectedRoute allowedRoles={["user"]}>{children}</ProtectedRoute>
 );
