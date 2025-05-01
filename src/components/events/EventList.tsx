@@ -92,7 +92,11 @@ export function EventList({ filter = "all" }: EventListProps) {
                 </Button>
               </TableCell>
               <TableCell>
-                <EventActions eventId={event.id} onDelete={refetch} />
+                <EventActions 
+                  eventId={event.id} 
+                  eventTitle={event.title} 
+                  onDelete={refetch} 
+                />
               </TableCell>
             </TableRow>
           ))}
