@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Improved function to check if storage buckets exist and are properly configured
@@ -45,11 +44,8 @@ export const checkStorageAvailability = async () => {
 export const initStorageBuckets = async () => {
   console.log("Initializing storage buckets...");
   
-  const buckets = [
-    { id: 'event-logos', name: 'Event Logos', public: true },
-    { id: 'event-banners', name: 'Event Banners', public: true }
-  ];
-  
+  // Since we've already created the buckets through SQL migration,
+  // let's just verify they exist and are properly configured
   try {
     // Verify storage access first
     const { data: testBuckets, error: testError } = await supabase.storage.listBuckets();
@@ -61,37 +57,26 @@ export const initStorageBuckets = async () => {
     
     console.log("Storage API access verified");
     
-    // Create each bucket and set to public
+    const buckets = [
+      { id: 'event-logos', name: 'Event Logos', public: true },
+      { id: 'event-banners', name: 'Event Banners', public: true }
+    ];
+    
+    // Check if buckets exist and are properly configured
     for (const bucket of buckets) {
       try {
         // Check if bucket exists
         const { data, error: checkError } = await supabase.storage.getBucket(bucket.id);
         
-        if (checkError && checkError.message.includes('not found')) {
-          console.log(`Creating bucket: ${bucket.id}`);
-          // Create the bucket if it doesn't exist
-          const { data: newBucket, error: createError } = await supabase.storage.createBucket(
-            bucket.id,
-            {
-              public: true,
-              fileSizeLimit: 10485760, // 10MB
-              allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp']
-            }
-          );
-          
-          if (createError) {
-            console.error(`Error creating bucket ${bucket.id}:`, createError);
-            return false;
-          }
-          
-          console.log(`Bucket ${bucket.id} created successfully`);
-        } else if (checkError) {
+        if (checkError) {
           console.error(`Error checking bucket ${bucket.id}:`, checkError);
           return false;
-        } else {
-          console.log(`Bucket ${bucket.id} already exists`);
+        }
+        
+        if (!data || !data.public) {
+          console.log(`Bucket ${bucket.id} exists but is not public, updating...`);
           
-          // Make sure the bucket is public
+          // Update bucket to be public
           const { data: updateData, error: updateError } = await supabase.storage.updateBucket(
             bucket.id,
             { public: true }
@@ -103,6 +88,8 @@ export const initStorageBuckets = async () => {
           } else {
             console.log(`Bucket ${bucket.id} updated to public`);
           }
+        } else {
+          console.log(`Bucket ${bucket.id} is properly configured`);
         }
       } catch (err) {
         console.error(`Bucket setup error for ${bucket.id}:`, err);
@@ -110,7 +97,7 @@ export const initStorageBuckets = async () => {
       }
     }
     
-    // Verify all buckets were created successfully
+    // Final verification
     return await checkStorageAvailability();
     
   } catch (error) {
