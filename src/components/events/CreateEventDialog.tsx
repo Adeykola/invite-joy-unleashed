@@ -12,7 +12,8 @@ import {
 import { EventWizard } from "./EventWizard";
 import { useToast } from "@/hooks/use-toast";
 import { initStorageBuckets, checkStorageAvailability } from "@/lib/storage";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface CreateEventDialogProps {
   storageInitialized?: boolean;
@@ -57,7 +58,7 @@ export function CreateEventDialog({ storageInitialized = false }: CreateEventDia
               setIsCheckingStorage(false); // Allow another retry
               return;
             } else if (!initSuccess) {
-              throw new Error("Failed to initialize storage buckets after multiple attempts");
+              throw new Error("Failed to initialize storage buckets after multiple attempts. This may be due to permissions issues.");
             }
             
             // Double-check availability after init
@@ -95,6 +96,13 @@ export function CreateEventDialog({ storageInitialized = false }: CreateEventDia
     prepareStorage();
   }, [isOpen, storageReady, isCheckingStorage, toast, initRetries, storageInitialized]);
 
+  const handleStorageRetry = () => {
+    setErrorMessage(null);
+    setStorageReady(false);
+    setInitRetries(0);
+    setIsCheckingStorage(false);
+  };
+
   const handleSuccess = () => {
     setIsOpen(false);
     toast({
@@ -123,24 +131,22 @@ export function CreateEventDialog({ storageInitialized = false }: CreateEventDia
           </div>
         ) : errorMessage ? (
           <div className="py-8">
-            <div className="p-4 border border-red-200 bg-red-50 text-red-700 rounded-md mb-4">
-              <h3 className="font-medium mb-1">Storage Error</h3>
-              <p className="text-sm">{errorMessage}</p>
-              <p className="text-sm mt-2">You can still try to create an event, but file uploads might not work.</p>
-            </div>
-            <div className="flex justify-center">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setErrorMessage(null);
-                  setStorageReady(false);
-                  setInitRetries(0);
-                  setIsCheckingStorage(false);
-                }}
-              >
-                Try Again
-              </Button>
-            </div>
+            <Alert variant="destructive" className="mb-4">
+              <AlertTitle>Storage Error</AlertTitle>
+              <AlertDescription>
+                <p>{errorMessage}</p>
+                <p className="text-sm mt-2">You can still try to create an event, but file uploads might not work.</p>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleStorageRetry}
+                  className="mt-2 bg-background"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Try Again
+                </Button>
+              </AlertDescription>
+            </Alert>
           </div>
         ) : (
           <EventWizard onSuccess={handleSuccess} />

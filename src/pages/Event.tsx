@@ -1,10 +1,11 @@
-import { useParams } from "react-router-dom";
-import PageLayout from "@/components/PageLayout";
+
+import { useParams, useNavigate } from "react-router-dom";
+import PageLayout from "@/components/layouts/PageLayout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { RsvpForm } from "@/components/RsvpForm";
 import { format } from "date-fns";
-import { Video, Utensils, QrCode } from "lucide-react";
+import { Video, Utensils, QrCode, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -13,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 const EventPage = () => {
   const { id } = useParams();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [qrVisible, setQrVisible] = useState(false);
   
   const { data: event, isLoading } = useQuery({
@@ -42,10 +44,20 @@ const EventPage = () => {
 
   if (!event) {
     return (
-      <div className="container mx-auto py-8 px-4 text-center">
-        <h1 className="text-2xl font-bold text-gray-800">Event not found</h1>
-        <p className="mt-2 text-gray-600">The event you're looking for doesn't exist or has been removed.</p>
-      </div>
+      <PageLayout>
+        <div className="container mx-auto py-8 px-4 text-center">
+          <Button 
+            variant="outline" 
+            className="mb-6" 
+            onClick={() => navigate("/events")}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Events
+          </Button>
+          <h1 className="text-2xl font-bold text-gray-800">Event not found</h1>
+          <p className="mt-2 text-gray-600">The event you're looking for doesn't exist or has been removed.</p>
+        </div>
+      </PageLayout>
     );
   }
 
@@ -61,9 +73,22 @@ const EventPage = () => {
     });
   };
 
+  const handleBack = () => {
+    navigate("/events");
+  };
+
   return (
-    <PageLayout showBackButton={true} backButtonLabel="Back to Events" backTo="/events">
+    <PageLayout>
       <div className="container mx-auto py-8 px-4">
+        <Button 
+          variant="outline" 
+          className="mb-6" 
+          onClick={handleBack}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Events
+        </Button>
+        
         <div className="max-w-2xl mx-auto">
           <h1 className="text-3xl font-bold mb-4">{event.title}</h1>
           <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
