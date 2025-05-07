@@ -1,5 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
+import { initStorageBuckets, checkStorageAvailability } from "./storage";
 
 // Using direct values instead of environment variables
 const supabaseUrl = "https://ttlqxvpcjpxpbzkgbyod.supabase.co";
@@ -16,4 +17,24 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 // Create a function to check if the Supabase client is properly configured
 export const isSupabaseConfigured = () => {
   return true; // We're now using hardcoded values, so it's always configured
+};
+
+// Add a helper function to initialize storage when the app loads
+export const initializeStorageOnStartup = async () => {
+  try {
+    console.log("Checking storage buckets on application startup...");
+    const isAvailable = await checkStorageAvailability();
+    
+    if (!isAvailable) {
+      console.log("Storage buckets not found on startup, initializing...");
+      await initStorageBuckets();
+    } else {
+      console.log("Storage buckets verified on startup");
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error initializing storage on startup:", error);
+    return false;
+  }
 };

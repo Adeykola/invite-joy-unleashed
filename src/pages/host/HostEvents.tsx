@@ -8,11 +8,12 @@ import { initStorageBuckets, checkStorageAvailability } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const HostEvents = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [storageInitialized, setStorageInitialized] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -67,6 +68,10 @@ const HostEvents = () => {
   const handleRetry = () => {
     setRetryAttempt(prev => prev + 1);
   };
+
+  const handleBack = () => {
+    navigate(-1);
+  };
   
   return (
     <DashboardLayout userType="host">
@@ -74,6 +79,10 @@ const HostEvents = () => {
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">Event Management</h2>
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleBack}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
             <Button variant="outline" size="sm" asChild>
               <Link to="/host-dashboard">
                 <ArrowLeft className="h-4 w-4 mr-2" />

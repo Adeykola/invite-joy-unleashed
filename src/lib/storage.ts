@@ -10,8 +10,8 @@ export const checkStorageAvailability = async () => {
     
     if (listError) {
       console.error("Storage API access error:", listError);
-      // Handle specific error codes that might indicate permissions issues
-      if (listError.code === "PGRST116" || listError.message?.includes("permission denied")) {
+      // Handle specific error cases based on error message instead of code
+      if (listError.message?.includes("permission denied")) {
         console.error("Permission denied accessing storage buckets. User may need to log in.");
         throw new Error("Permission denied accessing storage. Please log in and try again.");
       }

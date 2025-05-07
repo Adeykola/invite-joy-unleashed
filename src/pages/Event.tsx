@@ -1,201 +1,262 @@
 
-import { useParams, useNavigate } from "react-router-dom";
-import PageLayout from "@/components/layouts/PageLayout";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { RsvpForm } from "@/components/RsvpForm";
-import { format } from "date-fns";
-import { Video, Utensils, QrCode, ArrowLeft } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import React, { useEffect, useState } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageLayout } from '@/components/layouts/PageLayout';
+import { RsvpDialog } from '@/components/events/RsvpDialog';
+import { Skeleton } from '@/components/ui/skeleton';
+import { format } from 'date-fns';
+import { ArrowLeft, Calendar, Clock, MapPin } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-const EventPage = () => {
-  const { id } = useParams();
+// Define the event type
+type EventType = {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  location: string;
+  capacity?: number;
+  host_id?: string;
+  meta?: {
+    templateId?: string;
+    customLogoUrl?: string;
+    customBannerUrl?: string;
+    primaryColor?: string;
+    accentColor?: string;
+  };
+};
+
+// Define the host profile type
+type HostProfile = {
+  full_name?: string;
+  email?: string;
+};
+
+export default function EventPage() {
+  const { id } = useParams<{ id: string }>();
+  const [event, setEvent] = useState<EventType | null>(null);
+  const [hostProfile, setHostProfile] = useState<HostProfile | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [qrVisible, setQrVisible] = useState(false);
   
-  const { data: event, isLoading } = useQuery({
-    queryKey: ["event", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto"></div>
-          <p className="mt-3 text-gray-600">Loading event details...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!event) {
-    return (
-      <PageLayout>
-        <div className="container mx-auto py-8 px-4 text-center">
-          <Button 
-            variant="outline" 
-            className="mb-6" 
-            onClick={() => navigate("/events")}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Events
-          </Button>
-          <h1 className="text-2xl font-bold text-gray-800">Event not found</h1>
-          <p className="mt-2 text-gray-600">The event you're looking for doesn't exist or has been removed.</p>
-        </div>
-      </PageLayout>
-    );
-  }
-
-  // Check if event has virtual meeting details
-  const meta = typeof event.meta === 'string' ? JSON.parse(event.meta) : event.meta;
-  const hasVirtualDetails = meta?.virtualMeetingUrl || meta?.virtualMeetingId;
-
-  const generateQrCode = () => {
-    setQrVisible(true);
-    toast({
-      title: "QR Code Generated",
-      description: "You can now use this code for contactless check-in",
-    });
-  };
-
+  useEffect(() => {
+    const fetchEventDetails = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        if (!id) {
+          throw new Error('Event ID is missing');
+        }
+        
+        const { data, error } = await supabase
+          .from('events')
+          .select('*')
+          .eq('id', id)
+          .single();
+          
+        if (error) {
+          throw error;
+        }
+        
+        if (!data) {
+          throw new Error('Event not found');
+        }
+        
+        setEvent(data);
+        
+        // Fetch host details if available
+        if (data.host_id) {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('full_name, email')
+            .eq('id', data.host_id)
+            .single();
+            
+          if (!profileError && profileData) {
+            setHostProfile(profileData);
+          }
+        }
+      } catch (err: any) {
+        console.error('Error fetching event:', err);
+        setError(err.message || 'Failed to load event details');
+        toast({
+          title: 'Error',
+          description: 'Failed to load event details',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchEventDetails();
+  }, [id, toast]);
+  
   const handleBack = () => {
-    navigate("/events");
+    navigate(-1);
   };
 
+  const getFormattedDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return {
+        date: format(date, 'EEEE, MMMM d, yyyy'),
+        time: format(date, 'h:mm a')
+      };
+    } catch (err) {
+      return {
+        date: 'Date not available',
+        time: 'Time not available'
+      };
+    }
+  };
+
+  const getBannerStyle = () => {
+    if (!event?.meta) return {};
+    
+    const { primaryColor, customBannerUrl } = event.meta;
+    
+    return {
+      backgroundColor: primaryColor || '#4f46e5',
+      backgroundImage: customBannerUrl ? `url(${customBannerUrl})` : undefined,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+    };
+  };
+  
   return (
     <PageLayout>
-      <div className="container mx-auto py-8 px-4">
-        <Button 
-          variant="outline" 
-          className="mb-6" 
-          onClick={handleBack}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Events
-        </Button>
-        
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-3xl font-bold mb-4">{event.title}</h1>
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-2">Event Details</h2>
-              
-              <div className="flex flex-col space-y-3 mb-4">
-                <p className="text-gray-600">
-                  <strong>Date:</strong> {format(new Date(event.date), "PPP")}
-                </p>
-                
-                {/* Show location or virtual badge */}
-                <p className="text-gray-600">
-                  <strong>Location:</strong> {event.location}
-                  {hasVirtualDetails && (
-                    <Badge variant="outline" className="ml-2 bg-blue-50">
-                      <Video className="h-3 w-3 mr-1" /> Virtual
-                    </Badge>
-                  )}
-                </p>
-                
-                <p className="text-gray-600">{event.description}</p>
-              </div>
-              
-              {/* Virtual Meeting Details Section */}
-              {hasVirtualDetails && (
-                <div className="border rounded-md p-3 bg-blue-50 mb-4">
-                  <div className="flex items-center text-blue-700 mb-2">
-                    <Video className="h-4 w-4 mr-2" />
-                    <h3 className="font-medium">Virtual Meeting Details</h3>
-                  </div>
-                  {meta.virtualMeetingUrl && (
-                    <p className="text-sm mb-2">
-                      <strong>Meeting Link:</strong>{" "}
-                      <a 
-                        href={meta.virtualMeetingUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
-                        Join Meeting
-                      </a>
-                    </p>
-                  )}
-                  {meta.virtualMeetingId && (
-                    <p className="text-sm mb-2">
-                      <strong>Meeting ID:</strong> {meta.virtualMeetingId}
-                    </p>
-                  )}
-                  {meta.virtualMeetingPassword && (
-                    <p className="text-sm">
-                      <strong>Password:</strong> {meta.virtualMeetingPassword}
-                    </p>
-                  )}
-                </div>
-              )}
-              
-              {/* Meal Options Section */}
-              {meta?.mealOptions && meta.mealOptions.length > 0 && (
-                <div className="border rounded-md p-3 mb-4">
-                  <div className="flex items-center mb-2">
-                    <Utensils className="h-4 w-4 mr-2" />
-                    <h3 className="font-medium">Meal Options</h3>
-                  </div>
-                  <ul className="list-disc list-inside text-sm space-y-1">
-                    {meta.mealOptions.map((option: string, index: number) => (
-                      <li key={index}>{option}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              
-              {/* Contactless Check-In */}
-              <div className="mb-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={generateQrCode}
-                  className="flex items-center"
-                >
-                  <QrCode className="h-4 w-4 mr-1" />
-                  {qrVisible ? "Refresh QR Code" : "Get Check-in QR Code"}
+      <div className="container max-w-4xl py-8">
+        <div className="flex justify-between items-center mb-6">
+          <Button 
+            variant="outline" 
+            onClick={handleBack}
+            className="mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" /> Back
+          </Button>
+          <div className="flex-1"></div>
+        </div>
+
+        {isLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-3/4" />
+            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        ) : error ? (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center py-8">
+                <h2 className="text-xl font-semibold mb-4">Error Loading Event</h2>
+                <p className="mb-4 text-muted-foreground">{error}</p>
+                <Button asChild>
+                  <Link to="/events">View All Events</Link>
                 </Button>
-                
-                {qrVisible && (
-                  <div className="mt-3 border p-4 rounded-md text-center">
-                    <div className="mx-auto w-32 h-32 bg-gray-200 flex items-center justify-center mb-2">
-                      {/* This is a placeholder for a real QR code */}
-                      <QrCode className="w-24 h-24 text-gray-800" />
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      Show this QR code at the event entrance for contactless check-in
-                    </p>
-                  </div>
-                )}
               </div>
+            </CardContent>
+          </Card>
+        ) : event ? (
+          <div className="space-y-6">
+            <div
+              className="rounded-lg h-48 md:h-64 w-full flex items-center justify-center text-white"
+              style={getBannerStyle()}
+            >
+              {event.meta?.customLogoUrl ? (
+                <img 
+                  src={event.meta.customLogoUrl} 
+                  alt={`${event.title} logo`}
+                  className="max-h-24 max-w-xs"
+                />
+              ) : (
+                <h1 className="text-3xl md:text-4xl font-bold px-6 text-center">
+                  {event.title}
+                </h1>
+              )}
             </div>
             
-            <div className="border-t pt-6">
-              <h2 className="text-lg font-semibold mb-4">RSVP to this event</h2>
-              <RsvpForm eventId={event.id} mealOptions={meta?.mealOptions} />
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="flex-1">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{event.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      <div>
+                        <h3 className="font-semibold mb-2">About This Event</h3>
+                        <p className="text-muted-foreground">{event.description || 'No description provided.'}</p>
+                      </div>
+                      
+                      {hostProfile && (
+                        <div>
+                          <h3 className="font-semibold mb-2">Hosted By</h3>
+                          <p>{hostProfile.full_name || hostProfile.email || 'Event Host'}</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <div className="w-full md:w-80">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="space-y-4">
+                      <div className="flex items-start">
+                        <Calendar className="h-5 w-5 mr-3 mt-0.5 text-primary" />
+                        <div>
+                          <h3 className="font-semibold">Date & Time</h3>
+                          <p className="text-muted-foreground">{getFormattedDate(event.date).date}</p>
+                          <p className="text-muted-foreground">{getFormattedDate(event.date).time}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start">
+                        <MapPin className="h-5 w-5 mr-3 mt-0.5 text-primary" />
+                        <div>
+                          <h3 className="font-semibold">Location</h3>
+                          <p className="text-muted-foreground">{event.location || 'No location provided'}</p>
+                        </div>
+                      </div>
+                      
+                      {typeof event.capacity === 'number' && event.capacity > 0 && (
+                        <div className="pt-2">
+                          <p className="text-sm text-muted-foreground">
+                            Capacity: {event.capacity} guests
+                          </p>
+                        </div>
+                      )}
+                      
+                      <div className="pt-4">
+                        <RsvpDialog eventId={event.id} eventTitle={event.title} />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center py-8">
+                <h2 className="text-xl font-semibold mb-4">Event Not Found</h2>
+                <p className="mb-4 text-muted-foreground">Sorry, we couldn't find the event you're looking for.</p>
+                <Button asChild>
+                  <Link to="/events">View All Events</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </PageLayout>
   );
-};
-
-export default EventPage;
+}
