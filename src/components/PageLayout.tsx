@@ -1,6 +1,6 @@
 
 import { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -9,23 +9,41 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ChevronLeft } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
 interface PageLayoutProps {
   children: ReactNode;
+  showBackButton?: boolean;
+  backButtonLabel?: string;
+  backTo?: string;
 }
 
-const PageLayout = ({ children }: PageLayoutProps) => {
+const PageLayout = ({ 
+  children, 
+  showBackButton = false,
+  backButtonLabel = "Back",
+  backTo 
+}: PageLayoutProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   
   const navigation = [
     { name: "Features", href: "/features" },
     { name: "Events", href: "/events" },
     { name: "FAQ", href: "/faq" },
   ];
+
+  const handleBack = () => {
+    if (backTo) {
+      navigate(backTo);
+    } else {
+      navigate(-1);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -123,6 +141,21 @@ const PageLayout = ({ children }: PageLayoutProps) => {
           </Sheet>
         </div>
       </header>
+      
+      {/* Back button */}
+      {showBackButton && (
+        <div className="container mt-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleBack} 
+            className="flex items-center"
+          >
+            <ChevronLeft className="mr-1 h-4 w-4" />
+            {backButtonLabel}
+          </Button>
+        </div>
+      )}
       
       {/* Main content */}
       <main className="flex-1">

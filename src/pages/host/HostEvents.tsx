@@ -1,4 +1,5 @@
 
+// Update HostEvents to use the improved storage initialization and add a back button
 import { EventManagement } from "@/components/EventManagement";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Card } from "@/components/ui/card";
