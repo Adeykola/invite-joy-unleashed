@@ -1,8 +1,8 @@
-
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import FeatureSection from "@/components/FeatureSection";
 import { useAuth } from "@/contexts/AuthContext";
+import PageLayout from "@/components/PageLayout";
 
 const Index = () => {
   const { user, profile } = useAuth();
@@ -42,33 +42,25 @@ const Index = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-indigo-50">
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link to="/" className="text-2xl font-bold text-indigo-600">RSVPlatform</Link>
-          <nav className="space-x-4">
-            <Link to="/features" className="text-gray-600 hover:text-indigo-600 transition-colors">Features</Link>
-            {user ? (
-              <Link to={getDashboardLink()}>
-                <Button variant="outline" className="border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white">
-                  My Dashboard
-                </Button>
-              </Link>
-            ) : (
-              <div className="space-x-2">
-                <Link to="/login">
-                  <Button variant="outline" className="border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white">
-                    Sign In
-                  </Button>
-                </Link>
-                <Link to="/signup">
-                  <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                    Sign Up
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </nav>
+    <PageLayout>
+      <header className="bg-gradient-to-r from-purple-600 to-blue-500 text-white py-16 md:py-24">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6">Modern Event Management</h1>
+          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
+            Create, manage, and host events with ease. Provide a seamless experience for your guests.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link to="/signup">
+              <Button size="lg" className="bg-white text-purple-600 hover:bg-gray-100">
+                Get Started
+              </Button>
+            </Link>
+            <Link to="/events">
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+                Browse Events
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -154,7 +146,7 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>
+    </PageLayout>
   );
 };
 

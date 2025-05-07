@@ -20,6 +20,9 @@ import CheckIn from "./pages/host/CheckIn";
 import UserDashboard from "./pages/UserDashboard";
 import ResetPassword from "./pages/ResetPassword";
 import Event from "./pages/Event";
+import PublicEvents from "./pages/PublicEvents";
+import GuestPortal from "./components/events/GuestPortal";
+import GuestCheckInConfirmation from "./pages/GuestCheckInConfirmation";
 
 const ProtectedRoute = ({ children, allowedRoles = ["admin", "host", "user"] }: { children: JSX.Element, allowedRoles?: string[] }) => {
   const { user, profile, loading } = useAuth();
@@ -78,6 +81,9 @@ const App = () => (
             <Route path="/signup" element={<Signup />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/event/:id" element={<Event />} />
+            <Route path="/events" element={<PublicEvents />} />
+            <Route path="/guest-portal/:id" element={<GuestPortal />} />
+            <Route path="/check-in/:eventId/:rsvpId" element={<GuestCheckInConfirmation />} />
             
             <Route path="/admin-dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path="/host-dashboard" element={<HostRoute><HostDashboard /></HostRoute>} />
