@@ -20,21 +20,54 @@ export const isSupabaseConfigured = () => {
 };
 
 // Add a helper function to initialize storage when the app loads
-export const initializeStorageOnStartup = async () => {
+export const initializeStorageOnStartup = async (options = { quietMode: false }) => {
   try {
-    console.log("Checking storage buckets on application startup...");
+    if (!options.quietMode) {
+      console.log("Checking storage buckets on application startup...");
+    }
+    
     const isAvailable = await checkStorageAvailability();
     
     if (!isAvailable) {
-      console.log("Storage buckets not found on startup, initializing...");
-      await initStorageBuckets();
+      if (!options.quietMode) {
+        console.log("Storage buckets not found on startup, initializing...");
+      }
+      
+      // Use a timeout to avoid blocking the UI
+      return new Promise((resolve) => {
+        // Delay storage initialization to not block critical UI rendering
+        setTimeout(async () => {
+          try {
+            const success = await initStorageBuckets();
+            if (!options.quietMode) {
+              console.log("Storage initialization result:", success ? "Success" : "Failed");
+            }
+            resolve(success);
+          } catch (error) {
+            console.error("Error in delayed storage initialization:", error);
+            resolve(false);
+          }
+        }, 1000);
+      });
     } else {
-      console.log("Storage buckets verified on startup");
+      if (!options.quietMode) {
+        console.log("Storage buckets verified on startup");
+      }
+      return true;
     }
-    
-    return true;
   } catch (error) {
     console.error("Error initializing storage on startup:", error);
+    return false;
+  }
+};
+
+// Helper function to check if a user is authenticated
+export const isUserAuthenticated = async () => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    return !!session;
+  } catch (error) {
+    console.error("Error checking authentication status:", error);
     return false;
   }
 };
