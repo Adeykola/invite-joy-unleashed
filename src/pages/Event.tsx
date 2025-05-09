@@ -72,7 +72,10 @@ export default function EventPage() {
           location: data.location,
           capacity: data.capacity,
           host_id: data.host_id,
-          meta: data.meta
+          // Convert meta to a proper object if needed
+          meta: typeof data.meta === 'string' 
+            ? JSON.parse(data.meta) 
+            : data.meta
         };
         
         setEvent(eventData);
@@ -141,7 +144,7 @@ export default function EventPage() {
   };
   
   return (
-    <PageLayout showBackButton>
+    <PageLayout>
       <div className="container max-w-4xl py-8">
         <div className="flex justify-between items-center mb-6">
           <Button 
