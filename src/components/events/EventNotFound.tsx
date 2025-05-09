@@ -13,9 +13,14 @@ export const EventNotFound = () => {
           <Search className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-4">Event Not Found</h2>
           <p className="mb-6 text-muted-foreground">Sorry, we couldn't find the event you're looking for.</p>
-          <Button asChild>
-            <Link to="/events">View All Events</Link>
-          </Button>
+          <div className="space-x-2">
+            <Button asChild>
+              <Link to="/events">View All Events</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/host-dashboard/events">Manage Events</Link>
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

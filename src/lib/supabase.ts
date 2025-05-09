@@ -20,13 +20,20 @@ export const isSupabaseConfigured = () => {
 };
 
 // Add a helper function to initialize storage when the app loads
-export const initializeStorageOnStartup = async (options = { quietMode: false }) => {
+// This function now has a "viewOnly" mode that doesn't try to initialize storage
+export const initializeStorageOnStartup = async (options = { quietMode: false, viewOnly: false }) => {
   try {
     if (!options.quietMode) {
-      console.log("Checking storage buckets on application startup...");
+      console.log("Checking storage availability...");
     }
     
+    // If in viewOnly mode, just check if storage is available but don't try to initialize it
     const isAvailable = await checkStorageAvailability();
+    
+    // In viewOnly mode, just return the availability status without trying to initialize
+    if (options.viewOnly) {
+      return isAvailable;
+    }
     
     if (!isAvailable) {
       if (!options.quietMode) {
