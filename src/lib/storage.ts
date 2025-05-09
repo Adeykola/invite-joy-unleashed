@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Improved function to check if storage buckets exist and are properly configured

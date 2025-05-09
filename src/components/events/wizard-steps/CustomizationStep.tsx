@@ -1,4 +1,3 @@
-
 import { useFormContext, Controller } from "react-hook-form";
 import { EventTemplateSelector, eventTemplates } from "../EventTemplates";
 import { Label } from "@/components/ui/label";
@@ -45,6 +44,9 @@ export function CustomizationStep({
       reader.onload = (event) => {
         if (event.target?.result) {
           setCustomLogo(event.target.result as string);
+          
+          // Note: The actual upload to storage happens when the form is submitted,
+          // and the URL is saved to the event meta data
         }
       };
       reader.readAsDataURL(file);
@@ -61,6 +63,9 @@ export function CustomizationStep({
       reader.onload = (event) => {
         if (event.target?.result) {
           setCustomBanner(event.target.result as string);
+          
+          // Note: The actual upload to storage happens when the form is submitted,
+          // and the URL is saved to the event meta data
         }
       };
       reader.readAsDataURL(file);

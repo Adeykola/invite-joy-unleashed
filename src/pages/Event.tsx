@@ -31,7 +31,7 @@ export default function EventPage() {
     error: null
   });
   
-  // Only do a passive check for storage - don't attempt to initialize it for view-only pages
+  // Check storage availability for displaying images
   useEffect(() => {
     const checkStorage = async () => {
       try {
@@ -39,7 +39,7 @@ export default function EventPage() {
         setStorageStatus({
           isChecking: false,
           isAvailable,
-          error: isAvailable ? null : "Storage not available. Some event images may not display correctly."
+          error: isAvailable ? null : "Storage may not be fully accessible. Some event images may not display correctly."
         });
         
         if (!isAvailable) {
@@ -101,6 +101,7 @@ export default function EventPage() {
                   error={storageStatus.error} 
                   showBackButton={false}
                   isCritical={false}
+                  isStorageError={true}
                 />
               </div>
             )}

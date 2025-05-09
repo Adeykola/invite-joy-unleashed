@@ -16,7 +16,6 @@ export const EventBanner = ({ title, meta, fallbackColor = '#4f46e5' }: EventBan
       customBannerUrl?: string;
     };
     
-    // Handle image loading errors by setting a background color
     return {
       backgroundColor: primaryColor || fallbackColor,
       backgroundImage: customBannerUrl ? `url(${customBannerUrl})` : undefined,
@@ -28,6 +27,7 @@ export const EventBanner = ({ title, meta, fallbackColor = '#4f46e5' }: EventBan
   // Function to handle image loading errors
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     console.log("Image failed to load:", e);
+    // Set the image display to none if it fails to load
     e.currentTarget.style.display = 'none';
   };
 

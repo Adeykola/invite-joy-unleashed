@@ -1,10 +1,10 @@
 
-// Update HostEvents to use the improved storage initialization and add a back button
+// Update HostEvents to use the improved storage initialization
 import { EventManagement } from "@/components/EventManagement";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState } from "react";
-import { initStorageBuckets, checkStorageAvailability } from "@/lib/storage";
+import { checkStorageAvailability } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, ArrowLeft } from "lucide-react";
@@ -19,44 +19,36 @@ const HostEvents = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [retryAttempt, setRetryAttempt] = useState(0);
   
-  // Initialize storage buckets for event images when page loads
+  // Check storage availability when page loads
   useEffect(() => {
-    initStorage();
+    checkStorage();
   }, [retryAttempt]);
 
-  const initStorage = async () => {
+  const checkStorage = async () => {
     try {
       setIsInitializing(true);
       setErrorMessage(null);
-      console.log("Starting storage bucket initialization from HostEvents page...");
+      console.log("Checking storage availability from HostEvents page...");
       
-      // First check if buckets already exist
       const isAvailable = await checkStorageAvailability();
       
-      if (!isAvailable) {
-        console.log("Storage buckets not found, initializing...");
-        const success = await initStorageBuckets();
-        if (success) {
-          console.log("Storage buckets initialized successfully");
-          setStorageInitialized(true);
-          toast({
-            title: "Storage Ready",
-            description: "File storage for event images has been successfully set up.",
-          });
-        } else {
-          throw new Error("Failed to initialize storage buckets. This may be due to permissions or connectivity issues.");
-        }
-      } else {
-        console.log("Storage buckets already available");
+      if (isAvailable) {
+        console.log("Storage buckets are available");
         setStorageInitialized(true);
+        toast({
+          title: "Storage Ready",
+          description: "File storage for event images is available.",
+        });
+      } else {
+        throw new Error("Unable to access storage buckets. This may be due to permissions or connectivity issues.");
       }
     } catch (error: any) {
-      console.error("Error initializing storage buckets:", error);
-      const errorMsg = error?.message || "Could not initialize storage for uploads";
+      console.error("Error checking storage:", error);
+      const errorMsg = error?.message || "Could not access storage for uploads";
       setErrorMessage(errorMsg);
       
       toast({
-        title: "Storage Error",
+        title: "Storage Access Issue",
         description: errorMsg,
         variant: "destructive",
       });
@@ -94,11 +86,11 @@ const HostEvents = () => {
         
         {errorMessage ? (
           <Alert variant="destructive">
-            <AlertTitle className="font-medium mb-1">Storage Error</AlertTitle>
+            <AlertTitle className="font-medium mb-1">Storage Access Issue</AlertTitle>
             <AlertDescription>
               <p className="text-sm">{errorMessage}</p>
               <p className="text-sm mt-2">
-                Some event features may not work properly. Please try initializing storage again.
+                Some event features may not work properly. Please try checking storage access again.
               </p>
               <Button 
                 size="sm" 
@@ -120,7 +112,7 @@ const HostEvents = () => {
           !storageInitialized && isInitializing && (
             <Alert>
               <Loader2 className="h-4 w-4 mr-2 animate-spin inline-block" />
-              <AlertDescription className="inline-block">Setting up file storage...</AlertDescription>
+              <AlertDescription className="inline-block">Checking file storage availability...</AlertDescription>
             </Alert>
           )
         )}
