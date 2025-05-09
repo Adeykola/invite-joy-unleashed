@@ -4,14 +4,14 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PageLayout } from '@/components/layouts/PageLayout';
+import PageLayout from '@/components/layouts/PageLayout';
 import { RsvpDialog } from '@/components/events/RsvpDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { ArrowLeft, Calendar, Clock, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-// Define the event type
+// Define the event type with a more flexible meta type
 type EventType = {
   id: string;
   title: string;
@@ -20,13 +20,7 @@ type EventType = {
   location: string;
   capacity?: number;
   host_id?: string;
-  meta?: {
-    templateId?: string;
-    customLogoUrl?: string;
-    customBannerUrl?: string;
-    primaryColor?: string;
-    accentColor?: string;
-  };
+  meta?: Record<string, any> | null;
 };
 
 // Define the host profile type
@@ -41,6 +35,7 @@ export default function EventPage() {
   const [hostProfile, setHostProfile] = useState<HostProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [showRsvpDialog, setShowRsvpDialog] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -68,7 +63,19 @@ export default function EventPage() {
           throw new Error('Event not found');
         }
         
-        setEvent(data);
+        // Transform the data to match our EventType
+        const eventData: EventType = {
+          id: data.id,
+          title: data.title,
+          description: data.description,
+          date: data.date,
+          location: data.location,
+          capacity: data.capacity,
+          host_id: data.host_id,
+          meta: data.meta
+        };
+        
+        setEvent(eventData);
         
         // Fetch host details if available
         if (data.host_id) {
@@ -120,7 +127,10 @@ export default function EventPage() {
   const getBannerStyle = () => {
     if (!event?.meta) return {};
     
-    const { primaryColor, customBannerUrl } = event.meta;
+    const { primaryColor, customBannerUrl } = event.meta as {
+      primaryColor?: string;
+      customBannerUrl?: string;
+    };
     
     return {
       backgroundColor: primaryColor || '#4f46e5',
@@ -131,7 +141,7 @@ export default function EventPage() {
   };
   
   return (
-    <PageLayout>
+    <PageLayout showBackButton>
       <div className="container max-w-4xl py-8">
         <div className="flex justify-between items-center mb-6">
           <Button 
@@ -168,9 +178,9 @@ export default function EventPage() {
               className="rounded-lg h-48 md:h-64 w-full flex items-center justify-center text-white"
               style={getBannerStyle()}
             >
-              {event.meta?.customLogoUrl ? (
+              {event.meta && (event.meta as any).customLogoUrl ? (
                 <img 
-                  src={event.meta.customLogoUrl} 
+                  src={(event.meta as any).customLogoUrl} 
                   alt={`${event.title} logo`}
                   className="max-h-24 max-w-xs"
                 />
@@ -235,7 +245,19 @@ export default function EventPage() {
                       )}
                       
                       <div className="pt-4">
-                        <RsvpDialog eventId={event.id} eventTitle={event.title} />
+                        <Button 
+                          className="w-full" 
+                          onClick={() => setShowRsvpDialog(true)}
+                        >
+                          RSVP to this Event
+                        </Button>
+                        {event.id && (
+                          <RsvpDialog 
+                            eventId={event.id} 
+                            isOpen={showRsvpDialog}
+                            onOpenChange={setShowRsvpDialog}
+                          />
+                        )}
                       </div>
                     </div>
                   </CardContent>

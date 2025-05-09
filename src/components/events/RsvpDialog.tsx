@@ -18,7 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 interface RsvpDialogProps {
-  eventId: string | null;
+  eventId: string;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
