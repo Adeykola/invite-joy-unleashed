@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import PageLayout from '@/components/layouts/PageLayout';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { useEventDetails } from '@/hooks/useEventDetails';
 import { EventBanner } from '@/components/events/EventBanner';
 import { EventDetails } from '@/components/events/EventDetails';
@@ -32,38 +32,40 @@ export default function EventPage() {
   });
   
   // Check storage availability for displaying images - with retries
-  useEffect(() => {
-    const checkStorage = async () => {
-      try {
-        console.log("Event page: Checking storage availability...");
-        // Increase retry count to 2 for better reliability
-        const isAvailable = await checkStorageAvailability(2);
-        setStorageStatus({
-          isChecking: false,
-          isAvailable,
-          error: isAvailable ? null : "Storage may not be fully accessible. Some event images may not display correctly."
-        });
-        
-        if (!isAvailable) {
-          // Just show a toast instead of an error screen - non-critical feature
-          toast({
-            title: "Media Storage Limited",
-            description: "Some event images may not display correctly. This won't affect event details.",
-            duration: 5000,
-          });
-        }
-      } catch (err) {
-        console.log("Storage check error (non-critical):", err);
-        setStorageStatus({
-          isChecking: false,
-          isAvailable: false,
-          error: "Storage check failed. Some event images may not display correctly."
+  const checkStorage = useCallback(async () => {
+    try {
+      console.log("Event page: Checking storage availability...");
+      setStorageStatus(prev => ({ ...prev, isChecking: true }));
+      
+      // Increase retry count to 2 for better reliability
+      const isAvailable = await checkStorageAvailability(2);
+      setStorageStatus({
+        isChecking: false,
+        isAvailable,
+        error: isAvailable ? null : "Storage may not be fully accessible. Some event images may not display correctly."
+      });
+      
+      if (!isAvailable) {
+        // Just show a toast instead of an error screen - non-critical feature
+        toast({
+          title: "Media Storage Limited",
+          description: "Some event images may not display correctly. This won't affect event details.",
+          duration: 5000,
         });
       }
-    };
-    
-    checkStorage();
+    } catch (err) {
+      console.log("Storage check error (non-critical):", err);
+      setStorageStatus({
+        isChecking: false,
+        isAvailable: false,
+        error: "Storage check failed. Some event images may not display correctly."
+      });
+    }
   }, [toast]);
+  
+  useEffect(() => {
+    checkStorage();
+  }, [checkStorage]);
   
   const handleBack = () => {
     navigate(-1);
@@ -75,6 +77,14 @@ export default function EventPage() {
     }
     return undefined;
   };
+  
+  // Determine if we should show storage warning based on event metadata
+  const hasCustomImages = event?.meta && 
+    ((event.meta.customLogoUrl || event.meta.customBannerUrl));
+  
+  const showStorageWarning = !storageStatus.isAvailable && 
+                             storageStatus.error && 
+                             hasCustomImages;
   
   return (
     <PageLayout>
@@ -91,14 +101,17 @@ export default function EventPage() {
         </div>
 
         {isLoading ? (
-          <EventLoadingState message={getLoadingMessage()} />
+          <EventLoadingState 
+            message={getLoadingMessage()} 
+            isStorage={storageStatus.isChecking} 
+            retryFn={checkStorage}
+          />
         ) : error ? (
           <EventError error={error} />
         ) : event ? (
           <>
             {/* Show storage error as a non-critical warning only if needed */}
-            {storageStatus.error && !storageStatus.isAvailable && event.meta && 
-             ((event.meta.customLogoUrl || event.meta.customBannerUrl)) && (
+            {showStorageWarning && (
               <div className="mb-6">
                 <EventError 
                   error={storageStatus.error} 
@@ -106,6 +119,15 @@ export default function EventPage() {
                   isCritical={false}
                   isStorageError={true}
                 />
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={checkStorage} 
+                  className="mt-2"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry Loading Images
+                </Button>
               </div>
             )}
             

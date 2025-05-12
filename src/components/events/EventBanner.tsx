@@ -22,15 +22,20 @@ export const EventBanner = ({ title, meta, fallbackColor = '#4f46e5' }: EventBan
     };
     
     // Only use banner image if URL exists and no image error has occurred
-    return {
-      backgroundColor: primaryColor || fallbackColor,
-      backgroundImage: customBannerUrl && !imageError.banner ? `url(${customBannerUrl})` : undefined,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-    };
+    if (customBannerUrl && !imageError.banner) {
+      return {
+        backgroundColor: primaryColor || fallbackColor,
+        backgroundImage: `url(${customBannerUrl})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      };
+    }
+    
+    // Fallback to solid color
+    return { backgroundColor: primaryColor || fallbackColor };
   };
 
-  // Improved error handling function with more specific error tracking
+  // Improved error handling function with more specific error tracking and recovery
   const handleImageError = (type: 'logo' | 'banner') => (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     console.log(`${type} image failed to load:`, e.currentTarget.src);
     setImageError(prev => ({ ...prev, [type]: true }));
@@ -44,7 +49,7 @@ export const EventBanner = ({ title, meta, fallbackColor = '#4f46e5' }: EventBan
 
   return (
     <div
-      className="rounded-lg h-48 md:h-64 w-full flex items-center justify-center text-white relative overflow-hidden"
+      className="rounded-lg h-48 md:h-64 w-full flex items-center justify-center text-white relative overflow-hidden shadow-md"
       style={getBannerStyle()}
       onError={() => setImageError(prev => ({ ...prev, banner: true }))}
     >
@@ -52,11 +57,12 @@ export const EventBanner = ({ title, meta, fallbackColor = '#4f46e5' }: EventBan
         <img 
           src={(meta as any).customLogoUrl} 
           alt={`${title} logo`}
-          className="max-h-24 max-w-xs z-10"
+          className="max-h-24 max-w-xs z-10 drop-shadow-lg"
           onError={handleImageError('logo')}
+          loading="eager"
         />
       ) : (
-        <h1 className="text-3xl md:text-4xl font-bold px-6 text-center">
+        <h1 className="text-3xl md:text-4xl font-bold px-6 text-center drop-shadow-md">
           {title}
         </h1>
       )}

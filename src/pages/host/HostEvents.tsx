@@ -1,5 +1,4 @@
 
-// Update HostEvents to use the improved storage initialization
 import { EventManagement } from "@/components/EventManagement";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -7,22 +6,30 @@ import { useEffect, useState } from "react";
 import { checkStorageAvailability } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, ArrowLeft } from "lucide-react";
+import { Loader2, RefreshCw, ArrowLeft, Info } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useAuth } from "@/contexts/AuthContext";
 
 const HostEvents = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [storageInitialized, setStorageInitialized] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [retryAttempt, setRetryAttempt] = useState(0);
+  const [checkCount, setCheckCount] = useState(0);
   
   // Check storage availability when page loads
   useEffect(() => {
-    checkStorage();
-  }, [retryAttempt]);
+    if (user) {
+      checkStorage();
+    } else {
+      setErrorMessage("Authentication required to access storage features.");
+      setIsInitializing(false);
+    }
+  }, [retryAttempt, user, checkCount]);
 
   const checkStorage = async () => {
     try {
@@ -30,7 +37,8 @@ const HostEvents = () => {
       setErrorMessage(null);
       console.log("Checking storage availability from HostEvents page...");
       
-      const isAvailable = await checkStorageAvailability();
+      // Increase retry attempts for better resilience
+      const isAvailable = await checkStorageAvailability(2);
       
       if (isAvailable) {
         console.log("Storage buckets are available");
@@ -48,9 +56,9 @@ const HostEvents = () => {
       setErrorMessage(errorMsg);
       
       toast({
+        variant: "destructive",
         title: "Storage Access Issue",
         description: errorMsg,
-        variant: "destructive",
       });
     } finally {
       setIsInitializing(false);
@@ -59,11 +67,16 @@ const HostEvents = () => {
   
   const handleRetry = () => {
     setRetryAttempt(prev => prev + 1);
+    setCheckCount(prev => prev + 1);
   };
 
   const handleBack = () => {
     navigate(-1);
   };
+  
+  // Determine if we should show warning or critical error
+  const showCriticalError = !!errorMessage && !storageInitialized;
+  const showWarning = !errorMessage && !storageInitialized;
   
   return (
     <DashboardLayout userType="host">
@@ -84,13 +97,13 @@ const HostEvents = () => {
           </div>
         </div>
         
-        {errorMessage ? (
+        {showCriticalError && (
           <Alert variant="destructive">
             <AlertTitle className="font-medium mb-1">Storage Access Issue</AlertTitle>
             <AlertDescription>
               <p className="text-sm">{errorMessage}</p>
               <p className="text-sm mt-2">
-                Some event features may not work properly. Please try checking storage access again.
+                Image upload features won't be available. You can still manage events.
               </p>
               <Button 
                 size="sm" 
@@ -108,17 +121,37 @@ const HostEvents = () => {
               </Button>
             </AlertDescription>
           </Alert>
-        ) : (
-          !storageInitialized && isInitializing && (
-            <Alert>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin inline-block" />
-              <AlertDescription className="inline-block">Checking file storage availability...</AlertDescription>
-            </Alert>
-          )
+        )}
+        
+        {showWarning && !isInitializing && (
+          <Alert>
+            <Info className="h-4 w-4 mr-2" />
+            <AlertDescription>
+              Storage features partially initialized. Custom images may not work properly.
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="ml-2 bg-background" 
+                onClick={handleRetry}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Check Again
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {isInitializing && (
+          <Alert>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin inline-block" />
+            <AlertDescription className="inline-block">Checking file storage availability...</AlertDescription>
+          </Alert>
         )}
         
         <Card className="p-6">
-          <EventManagement storageInitialized={storageInitialized} />
+          <EventManagement 
+            storageInitialized={storageInitialized} 
+          />
         </Card>
       </div>
     </DashboardLayout>
