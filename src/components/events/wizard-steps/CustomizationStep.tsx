@@ -1,3 +1,4 @@
+
 import { useFormContext, Controller } from "react-hook-form";
 import { EventTemplateSelector, eventTemplates } from "../EventTemplates";
 import { Label } from "@/components/ui/label";
@@ -5,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, Image } from "lucide-react";
+import { Upload, Image, Info } from "lucide-react";
 import { useWatch } from "react-hook-form";
 import { EventFormData } from "../EventWizard";
 import { useState } from "react";
@@ -117,6 +118,12 @@ export function CustomizationStep({
             <div className="space-y-4">
               <div>
                 <Label>Custom Logo</Label>
+                <div className="flex items-center gap-1 mb-1">
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">
+                    Maximum size: 10MB. Supported formats: PNG, JPEG, GIF, WebP, SVG.
+                  </span>
+                </div>
                 <div className="mt-2 flex items-center justify-center border rounded-md p-4">
                   {customLogo ? (
                     <div className="relative w-full h-32 flex items-center justify-center">
@@ -156,6 +163,12 @@ export function CustomizationStep({
               
               <div>
                 <Label>Event Banner</Label>
+                <div className="flex items-center gap-1 mb-1">
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">
+                    Maximum size: 10MB. Supported formats: PNG, JPEG, GIF, WebP, SVG.
+                  </span>
+                </div>
                 <div className="mt-2 flex items-center justify-center border rounded-md p-4">
                   {customBanner ? (
                     <div className="relative w-full h-40 flex items-center justify-center">

@@ -1,5 +1,3 @@
-
-// Update CreateEventDialog.tsx to use the improved storage initialization
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
