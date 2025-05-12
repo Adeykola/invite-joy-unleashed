@@ -22,7 +22,7 @@ const alertVariants = cva(
   }
 )
 
-// Make sure the type export includes the warning variant
+// Define a clear type for the variant that includes all options
 export type AlertVariant = "default" | "destructive" | "warning"
 
 const Alert = React.forwardRef<
