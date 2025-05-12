@@ -22,6 +22,9 @@ const alertVariants = cva(
   }
 )
 
+// Make sure the type export includes the warning variant
+export type AlertVariant = "default" | "destructive" | "warning"
+
 const Alert = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
