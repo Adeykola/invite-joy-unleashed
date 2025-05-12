@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
@@ -293,12 +292,28 @@ export function EventWizard({ eventId: initialEventId, onSuccess }: EventWizardP
       console.log(`Uploading file to ${bucket}/${fileName}`, file);
       
       // First verify bucket exists and is accessible
-      const { data: bucketData, error: bucketError } = await supabase.storage.getBucket(bucket);
-      
-      if (bucketError) {
-        console.error(`Bucket check error for ${bucket}:`, bucketError);
-        setUploadError(`Storage bucket ${bucket} is not accessible. Please try again later.`);
-        throw new Error(`Storage bucket ${bucket} does not exist or is not accessible.`);
+      try {
+        const { data: bucketData, error: bucketError } = await supabase.storage.getBucket(bucket);
+        
+        if (bucketError) {
+          console.error(`Bucket check error for ${bucket}:`, bucketError);
+          
+          // Try to create the bucket if it doesn't exist
+          const { error: createError } = await supabase.storage.createBucket(bucket, {
+            public: true,
+            fileSizeLimit: 10485760, // 10MB
+            allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml']
+          });
+          
+          if (createError && !createError.message.includes('already exists')) {
+            setUploadError(`Storage not available. Please try again later or proceed without images.`);
+            throw new Error(`Failed to create storage bucket ${bucket}.`);
+          }
+        }
+      } catch (error) {
+        console.error(`Storage bucket error:`, error);
+        setUploadError(`Storage not available. Please try again later or proceed without images.`);
+        throw error;
       }
       
       // Upload to storage

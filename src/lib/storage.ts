@@ -5,45 +5,42 @@ import { supabase } from "@/integrations/supabase/client";
 export const checkStorageAvailability = async (retryCount = 1) => {
   console.log("Checking storage availability...");
   
-  // First check if user is authenticated - this is required for storage access in many cases
   try {
+    // First check if user is authenticated - this is required for storage access in many cases
     const { data: session } = await supabase.auth.getSession();
     const isAuthenticated = !!session?.session;
     
     if (!isAuthenticated) {
       console.log("User not authenticated, storage may be limited");
-      // For unauthenticated users, we'll try to access public buckets
+      return false;
     }
     
-    // Try to directly access files from public buckets
+    // Try to directly access files from public buckets to check if they exist
     const { data: logoFiles, error: logoError } = await supabase.storage
       .from('event-logos')
       .list('', { limit: 1 });
       
-    if (!logoError && logoFiles) {
-      console.log("Event-logos bucket is accessible");
-      return true;
-    }
-    
     const { data: bannerFiles, error: bannerError } = await supabase.storage
       .from('event-banners')
       .list('', { limit: 1 });
       
-    if (!bannerError && bannerFiles) {
-      console.log("Event-banners bucket is accessible");
-      return true;
+    // If both buckets return errors, they likely don't exist
+    if (logoError && bannerError) {
+      console.log("Storage buckets not found:", { logoError, bannerError });
+      
+      // Check if we need to retry
+      if (retryCount > 0) {
+        console.log(`Retrying storage check (${retryCount} attempts left)...`);
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+        return checkStorageAvailability(retryCount - 1);
+      }
+      
+      return false;
     }
     
-    // Check if we need to retry
-    if (logoError && bannerError && retryCount > 0) {
-      console.log(`Retrying storage check (${retryCount} attempts left)...`);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
-      return checkStorageAvailability(retryCount - 1);
-    }
-
-    // If we got here, both buckets returned errors
-    console.log("Could not access storage buckets:", { logoError, bannerError });
-    return false;
+    // At least one bucket is accessible
+    console.log("Storage is accessible");
+    return true;
   } catch (err) {
     console.error("Critical error checking storage:", err);
     
@@ -78,12 +75,6 @@ export const initStorageBuckets = async (retries = 2) => {
       allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml']
     });
     
-    if (logosError && !logosError.message.includes('already exists')) {
-      console.error("Error creating event-logos bucket:", logosError);
-    } else {
-      console.log("event-logos bucket created or already exists");
-    }
-    
     // Try to create event-banners bucket
     const { data: bannersData, error: bannersError } = await supabase.storage.createBucket('event-banners', {
       public: true,
@@ -91,17 +82,18 @@ export const initStorageBuckets = async (retries = 2) => {
       allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml']
     });
     
-    if (bannersError && !bannersError.message.includes('already exists')) {
-      console.error("Error creating event-banners bucket:", bannersError);
-    } else {
-      console.log("event-banners bucket created or already exists");
-    }
+    // Check if operations succeeded or buckets already existed
+    const logoSuccess = !logosError || (logosError.message && logosError.message.includes('already exists'));
+    const bannerSuccess = !bannersError || (bannersError.message && bannersError.message.includes('already exists'));
     
-    // Check if both operations succeeded or buckets already existed
-    const logoSuccess = !logosError || logosError.message.includes('already exists');
-    const bannerSuccess = !bannersError || bannersError.message.includes('already exists');
+    console.log("Bucket creation results:", {
+      logoSuccess,
+      bannerSuccess,
+      logosError: logosError?.message,
+      bannersError: bannersError?.message
+    });
     
-    return logoSuccess || bannerSuccess;
+    return logoSuccess && bannerSuccess;
   } catch (error) {
     console.error("Error during storage initialization:", error);
     

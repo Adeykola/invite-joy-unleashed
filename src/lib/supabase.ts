@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { initStorageBuckets, checkStorageAvailability } from "./storage";
 
@@ -22,24 +21,43 @@ export const isSupabaseConfigured = () => {
 // Automatically create storage buckets if they don't exist
 export const ensureStorageBuckets = async () => {
   console.log("Checking if storage buckets need to be created...");
-  const isAvailable = await checkStorageAvailability();
-  
-  if (!isAvailable) {
-    console.log("Storage buckets not found, attempting to create them...");
-    
-    // First check if user is authenticated
+  try {
+    // Check if user is authenticated
     const { data: session } = await supabase.auth.getSession();
     if (!session?.session) {
       console.log("User not authenticated, cannot create storage buckets");
       return false;
     }
     
-    const success = await initStorageBuckets();
-    console.log("Storage bucket creation result:", success ? "Success" : "Failed");
-    return success;
+    // First check if buckets already exist
+    let bucketsExist = false;
+    
+    try {
+      const { data: logoBucket, error: logoError } = await supabase.storage.getBucket('event-logos');
+      const { data: bannerBucket, error: bannerError } = await supabase.storage.getBucket('event-banners');
+      
+      // If either request succeeds, then at least one bucket exists
+      if (!logoError || !bannerError) {
+        console.log("At least one bucket already exists");
+        bucketsExist = true;
+      }
+    } catch (error) {
+      console.log("Error checking buckets, will try to create them:", error);
+    }
+    
+    // If buckets don't exist, create them
+    if (!bucketsExist) {
+      console.log("Storage buckets not found, creating them...");
+      const success = await initStorageBuckets();
+      console.log("Storage bucket creation result:", success ? "Success" : "Failed");
+      return success;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error ensuring storage buckets:", error);
+    return false;
   }
-  
-  return true;
 };
 
 // Add a helper function to initialize storage when the app loads
