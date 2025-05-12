@@ -1,7 +1,9 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 // Improved function to check if storage buckets exist and are properly configured
-export const checkStorageAvailability = async () => {
+// with better error handling and retry logic
+export const checkStorageAvailability = async (retryCount = 1) => {
   console.log("Checking storage availability...");
   try {
     // First check if we can even access the storage API
@@ -9,11 +11,33 @@ export const checkStorageAvailability = async () => {
     
     if (listError) {
       console.error("Storage API access error:", listError);
-      // Handle specific error cases based on error message instead of code
-      if (listError.message?.includes("permission denied")) {
-        console.error("Permission denied accessing storage buckets. User may need to log in.");
-        throw new Error("Permission denied accessing storage. Please log in and try again.");
+      
+      // Handle authentication related errors
+      if (listError.message?.includes("JWT") || listError.message?.includes("token") || 
+          listError.message?.includes("auth") || listError.message?.includes("permission")) {
+        console.log("Authentication issue detected, may be normal for non-authenticated users");
+        
+        // For public access, we'll try to access the buckets directly without authentication
+        // by checking if known buckets exist
+        try {
+          // Try to get a specific bucket that should be public
+          const { data: bucket, error: bucketError } = await supabase.storage.getBucket('event-logos');
+          if (!bucketError && bucket) {
+            console.log("Public bucket access successful despite auth error");
+            return true;
+          }
+        } catch (e) {
+          console.log("Failed to access bucket directly:", e);
+        }
       }
+      
+      // If retries are left, try again
+      if (retryCount > 0) {
+        console.log(`Retrying storage check (${retryCount} attempts left)...`);
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+        return checkStorageAvailability(retryCount - 1);
+      }
+      
       return false;
     }
     
@@ -28,10 +52,19 @@ export const checkStorageAvailability = async () => {
     console.log(`Found ${foundBuckets.length} of ${requiredBuckets.length} required buckets:`, 
       foundBuckets.map(b => b.id));
     
-    // Check if all the required buckets exist
-    return foundBuckets.length === requiredBuckets.length;
+    // Consider it a success if we find at least one required bucket
+    // This allows partial functionality instead of complete failure
+    return foundBuckets.length > 0;
   } catch (err) {
     console.error("Storage check critical error:", err);
+    
+    // If retries are left, try again
+    if (retryCount > 0) {
+      console.log(`Retrying after error (${retryCount} attempts left)...`);
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+      return checkStorageAvailability(retryCount - 1);
+    }
+    
     return false;
   }
 };

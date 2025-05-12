@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 
 interface EventBannerProps {
   title: string;
@@ -8,6 +8,11 @@ interface EventBannerProps {
 }
 
 export const EventBanner = ({ title, meta, fallbackColor = '#4f46e5' }: EventBannerProps) => {
+  const [imageError, setImageError] = useState({
+    logo: false,
+    banner: false
+  });
+  
   const getBannerStyle = () => {
     if (!meta) return { backgroundColor: fallbackColor };
     
@@ -16,32 +21,39 @@ export const EventBanner = ({ title, meta, fallbackColor = '#4f46e5' }: EventBan
       customBannerUrl?: string;
     };
     
+    // Only use banner image if URL exists and no image error has occurred
     return {
       backgroundColor: primaryColor || fallbackColor,
-      backgroundImage: customBannerUrl ? `url(${customBannerUrl})` : undefined,
+      backgroundImage: customBannerUrl && !imageError.banner ? `url(${customBannerUrl})` : undefined,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
     };
   };
 
-  // Function to handle image loading errors
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    console.log("Image failed to load:", e);
+  // Improved error handling function with more specific error tracking
+  const handleImageError = (type: 'logo' | 'banner') => (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    console.log(`${type} image failed to load:`, e.currentTarget.src);
+    setImageError(prev => ({ ...prev, [type]: true }));
+    
     // Set the image display to none if it fails to load
     e.currentTarget.style.display = 'none';
   };
+
+  // Check if we have a valid logo URL and no previous error
+  const shouldShowLogo = meta && (meta as any).customLogoUrl && !imageError.logo;
 
   return (
     <div
       className="rounded-lg h-48 md:h-64 w-full flex items-center justify-center text-white relative overflow-hidden"
       style={getBannerStyle()}
+      onError={() => setImageError(prev => ({ ...prev, banner: true }))}
     >
-      {meta && (meta as any).customLogoUrl ? (
+      {shouldShowLogo ? (
         <img 
           src={(meta as any).customLogoUrl} 
           alt={`${title} logo`}
           className="max-h-24 max-w-xs z-10"
-          onError={handleImageError}
+          onError={handleImageError('logo')}
         />
       ) : (
         <h1 className="text-3xl md:text-4xl font-bold px-6 text-center">

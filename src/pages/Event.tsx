@@ -31,11 +31,13 @@ export default function EventPage() {
     error: null
   });
   
-  // Check storage availability for displaying images
+  // Check storage availability for displaying images - with retries
   useEffect(() => {
     const checkStorage = async () => {
       try {
-        const isAvailable = await checkStorageAvailability();
+        console.log("Event page: Checking storage availability...");
+        // Increase retry count to 2 for better reliability
+        const isAvailable = await checkStorageAvailability(2);
         setStorageStatus({
           isChecking: false,
           isAvailable,
@@ -43,10 +45,10 @@ export default function EventPage() {
         });
         
         if (!isAvailable) {
-          // Just show a toast instead of an error screen
+          // Just show a toast instead of an error screen - non-critical feature
           toast({
             title: "Media Storage Limited",
-            description: "Some event images may not display correctly.",
+            description: "Some event images may not display correctly. This won't affect event details.",
             duration: 5000,
           });
         }
@@ -94,8 +96,9 @@ export default function EventPage() {
           <EventError error={error} />
         ) : event ? (
           <>
-            {/* Only show storage error as a non-critical warning if there's an issue but we have event data */}
-            {storageStatus.error && !storageStatus.isAvailable && (
+            {/* Show storage error as a non-critical warning only if needed */}
+            {storageStatus.error && !storageStatus.isAvailable && event.meta && 
+             ((event.meta.customLogoUrl || event.meta.customBannerUrl)) && (
               <div className="mb-6">
                 <EventError 
                   error={storageStatus.error} 

@@ -11,7 +11,7 @@ export const EventLoadingState = ({ message, isStorage = false }: EventLoadingSt
   return (
     <div className="space-y-4">
       {message && (
-        <div className={`text-center p-2 text-sm ${isStorage ? 'text-amber-600' : 'text-muted-foreground'} mb-2 rounded-md ${isStorage ? 'bg-amber-50 border border-amber-100' : ''}`}>
+        <div className={`text-center p-3 text-sm ${isStorage ? 'text-amber-600' : 'text-muted-foreground'} mb-2 rounded-md ${isStorage ? 'bg-amber-50 border border-amber-100' : ''}`}>
           {message}
           {isStorage && (
             <div className="text-xs mt-1 text-amber-500">
