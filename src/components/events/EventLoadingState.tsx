@@ -1,25 +1,27 @@
 
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface EventLoadingStateProps {
   message?: string;
   isStorage?: boolean;
   retryFn?: () => void;
+  isRetrying?: boolean;
 }
 
 export const EventLoadingState = ({ 
   message, 
   isStorage = false,
-  retryFn 
+  retryFn,
+  isRetrying = false
 }: EventLoadingStateProps) => {
   return (
     <div className="space-y-4">
       {message && (
         <div className={`${isStorage ? 'flex items-center gap-2' : ''} text-center p-3 text-sm ${isStorage ? 'text-amber-600' : 'text-muted-foreground'} mb-2 rounded-md ${isStorage ? 'bg-amber-50 border border-amber-100' : ''}`}>
           {isStorage && (
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0" />
           )}
           <div>
             {message}
@@ -31,9 +33,17 @@ export const EventLoadingState = ({
             {isStorage && retryFn && (
               <button 
                 onClick={retryFn}
-                className="text-xs mt-1 text-blue-500 hover:text-blue-700 hover:underline"
+                disabled={isRetrying}
+                className="text-xs mt-1 text-blue-500 hover:text-blue-700 hover:underline disabled:opacity-50 flex items-center gap-1"
               >
-                Try again
+                {isRetrying ? (
+                  <>
+                    <RefreshCw className="h-3 w-3 animate-spin" />
+                    Checking...
+                  </>
+                ) : (
+                  <>Check again</>
+                )}
               </button>
             )}
           </div>

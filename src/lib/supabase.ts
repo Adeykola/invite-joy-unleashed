@@ -19,6 +19,29 @@ export const isSupabaseConfigured = () => {
   return true; // We're now using hardcoded values, so it's always configured
 };
 
+// Automatically create storage buckets if they don't exist
+export const ensureStorageBuckets = async () => {
+  console.log("Checking if storage buckets need to be created...");
+  const isAvailable = await checkStorageAvailability();
+  
+  if (!isAvailable) {
+    console.log("Storage buckets not found, attempting to create them...");
+    
+    // First check if user is authenticated
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.session) {
+      console.log("User not authenticated, cannot create storage buckets");
+      return false;
+    }
+    
+    const success = await initStorageBuckets();
+    console.log("Storage bucket creation result:", success ? "Success" : "Failed");
+    return success;
+  }
+  
+  return true;
+};
+
 // Add a helper function to initialize storage when the app loads
 // This function now has a "viewOnly" mode that doesn't try to initialize storage
 export const initializeStorageOnStartup = async (options = { quietMode: false, viewOnly: false }) => {

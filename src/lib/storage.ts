@@ -1,68 +1,52 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
-// Improved function to check if storage buckets exist with better error handling
+// Improved function to check if storage buckets exist with better error handling and authentication checks
 export const checkStorageAvailability = async (retryCount = 1) => {
   console.log("Checking storage availability...");
+  
+  // First check if user is authenticated - this is required for storage access in many cases
   try {
-    // First check if we can access the storage API
-    const { data: bucketsList, error: listError } = await supabase.storage.listBuckets();
+    const { data: session } = await supabase.auth.getSession();
+    const isAuthenticated = !!session?.session;
     
-    if (listError) {
-      console.error("Storage API access error:", listError);
-      
-      // Try a different approach for unauthenticated users or permission issues
-      // Directly check if we can list objects in the public buckets
-      try {
-        // Try to access files from event-logos bucket
-        const { data: logoFiles, error: logoError } = await supabase.storage
-          .from('event-logos')
-          .list('', { limit: 1 });
-          
-        if (!logoError && logoFiles) {
-          console.log("Public bucket direct access successful");
-          return true;
-        }
-        
-        // Try to access files from event-banners bucket
-        const { data: bannerFiles, error: bannerError } = await supabase.storage
-          .from('event-banners')
-          .list('', { limit: 1 });
-          
-        if (!bannerError && bannerFiles) {
-          console.log("Public bucket direct access successful");
-          return true;
-        }
-      } catch (e) {
-        console.log("Failed to directly access bucket contents:", e);
-      }
-      
-      // If retries are left, try again
-      if (retryCount > 0) {
-        console.log(`Retrying storage check (${retryCount} attempts left)...`);
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
-        return checkStorageAvailability(retryCount - 1);
-      }
-      
-      return false;
+    if (!isAuthenticated) {
+      console.log("User not authenticated, storage may be limited");
+      // For unauthenticated users, we'll try to access public buckets
     }
     
-    if (!bucketsList || bucketsList.length === 0) {
-      console.log("No storage buckets found");
-      return false;
+    // Try to directly access files from public buckets
+    const { data: logoFiles, error: logoError } = await supabase.storage
+      .from('event-logos')
+      .list('', { limit: 1 });
+      
+    if (!logoError && logoFiles) {
+      console.log("Event-logos bucket is accessible");
+      return true;
     }
     
-    const requiredBuckets = ['event-logos', 'event-banners'];
-    const foundBuckets = bucketsList.filter(b => requiredBuckets.includes(b.id));
+    const { data: bannerFiles, error: bannerError } = await supabase.storage
+      .from('event-banners')
+      .list('', { limit: 1 });
+      
+    if (!bannerError && bannerFiles) {
+      console.log("Event-banners bucket is accessible");
+      return true;
+    }
     
-    console.log(`Found ${foundBuckets.length} of ${requiredBuckets.length} required buckets:`, 
-      foundBuckets.map(b => b.id));
-    
-    // Consider it a success if we find at least one required bucket
-    return foundBuckets.length > 0;
+    // Check if we need to retry
+    if (logoError && bannerError && retryCount > 0) {
+      console.log(`Retrying storage check (${retryCount} attempts left)...`);
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+      return checkStorageAvailability(retryCount - 1);
+    }
+
+    // If we got here, both buckets returned errors
+    console.log("Could not access storage buckets:", { logoError, bannerError });
+    return false;
   } catch (err) {
-    console.error("Storage check critical error:", err);
+    console.error("Critical error checking storage:", err);
     
-    // If retries are left, try again
     if (retryCount > 0) {
       console.log(`Retrying after error (${retryCount} attempts left)...`);
       await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
@@ -73,12 +57,12 @@ export const checkStorageAvailability = async (retryCount = 1) => {
   }
 };
 
-// Refactor initStorageBuckets to handle common edge cases
+// Modified function to create storage buckets if they don't exist
 export const initStorageBuckets = async (retries = 2) => {
   console.log("Initializing storage buckets...");
   
   try {
-    // Check if user is authenticated and has permissions
+    // Check if user is authenticated with proper permissions
     const { data: session } = await supabase.auth.getSession();
     const isAuthenticated = !!session?.session;
     
@@ -87,17 +71,47 @@ export const initStorageBuckets = async (retries = 2) => {
       return false;
     }
     
-    // Verify buckets exist
-    const isAvailable = await checkStorageAvailability();
-    if (isAvailable) {
-      console.log("Storage buckets already available");
-      return true;
+    // Try to create event-logos bucket
+    const { data: logosData, error: logosError } = await supabase.storage.createBucket('event-logos', {
+      public: true,
+      fileSizeLimit: 10485760, // 10MB
+      allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml']
+    });
+    
+    if (logosError && !logosError.message.includes('already exists')) {
+      console.error("Error creating event-logos bucket:", logosError);
+    } else {
+      console.log("event-logos bucket created or already exists");
     }
     
-    console.log("Storage buckets not found, but user is authenticated. This may indicate a permissions issue.");
-    return false;
+    // Try to create event-banners bucket
+    const { data: bannersData, error: bannersError } = await supabase.storage.createBucket('event-banners', {
+      public: true,
+      fileSizeLimit: 10485760, // 10MB
+      allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml']
+    });
+    
+    if (bannersError && !bannersError.message.includes('already exists')) {
+      console.error("Error creating event-banners bucket:", bannersError);
+    } else {
+      console.log("event-banners bucket created or already exists");
+    }
+    
+    // Check if both operations succeeded or buckets already existed
+    const logoSuccess = !logosError || logosError.message.includes('already exists');
+    const bannerSuccess = !bannersError || bannersError.message.includes('already exists');
+    
+    return logoSuccess || bannerSuccess;
   } catch (error) {
     console.error("Error during storage initialization:", error);
+    
+    // Retry if attempts are left
+    if (retries > 0) {
+      console.log(`Retrying bucket creation (${retries} attempts left)...`);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      return initStorageBuckets(retries - 1);
+    }
+    
     return false;
   }
 };

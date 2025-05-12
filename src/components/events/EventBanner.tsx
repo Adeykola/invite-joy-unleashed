@@ -5,9 +5,15 @@ interface EventBannerProps {
   title: string;
   meta?: Record<string, any> | null;
   fallbackColor?: string;
+  onImageError?: (type: 'logo' | 'banner') => void;
 }
 
-export const EventBanner = ({ title, meta, fallbackColor = '#4f46e5' }: EventBannerProps) => {
+export const EventBanner = ({ 
+  title, 
+  meta, 
+  fallbackColor = '#4f46e5',
+  onImageError
+}: EventBannerProps) => {
   const [imageError, setImageError] = useState({
     logo: false,
     banner: false
@@ -42,6 +48,11 @@ export const EventBanner = ({ title, meta, fallbackColor = '#4f46e5' }: EventBan
     
     // Set the image display to none if it fails to load
     e.currentTarget.style.display = 'none';
+    
+    // Notify parent component about the error
+    if (onImageError) {
+      onImageError(type);
+    }
   };
 
   // Check if we have a valid logo URL and no previous error
@@ -51,7 +62,6 @@ export const EventBanner = ({ title, meta, fallbackColor = '#4f46e5' }: EventBan
     <div
       className="rounded-lg h-48 md:h-64 w-full flex items-center justify-center text-white relative overflow-hidden shadow-md"
       style={getBannerStyle()}
-      onError={() => setImageError(prev => ({ ...prev, banner: true }))}
     >
       {shouldShowLogo ? (
         <img 

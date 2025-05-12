@@ -11,10 +11,11 @@ import {
 } from "@/components/ui/dialog";
 import { EventWizard } from "./EventWizard";
 import { useToast } from "@/hooks/use-toast";
-import { initStorageBuckets, checkStorageAvailability } from "@/lib/storage";
+import { checkStorageAvailability, initStorageBuckets } from "@/lib/storage";
 import { Loader2, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
+import { ensureStorageBuckets } from "@/lib/supabase";
 
 interface CreateEventDialogProps {
   storageInitialized?: boolean;
@@ -55,26 +56,18 @@ export function CreateEventDialog({ storageInitialized = false }: CreateEventDia
           return;
         }
         
-        // Check if storage buckets exist
-        const isAvailable = await checkStorageAvailability();
+        // Use improved storage initialization with automatic bucket creation
+        const success = await ensureStorageBuckets();
         
-        if (!isAvailable) {
-          console.log("Storage buckets not found or not properly configured, initializing...");
-          const initSuccess = await initStorageBuckets();
-          
-          if (!initSuccess) {
-            throw new Error("Failed to initialize storage buckets. This may be due to permissions issues.");
-          }
-          
-          // Double-check availability after init
-          const isNowAvailable = await checkStorageAvailability();
-          if (!isNowAvailable) {
-            throw new Error("Storage buckets were created but are not properly configured");
-          }
+        if (success) {
+          console.log("Storage is ready for use");
+          setStorageReady(true);
+        } else {
+          console.log("Storage initialization failed, proceed anyway...");
+          // Still allow the user to create events, but warn them about image uploads
+          setErrorMessage("Storage buckets could not be accessed. You can still create events, but image uploads may not work.");
+          setStorageReady(true);  // Allow them to continue anyway
         }
-        
-        console.log("Storage is ready for use");
-        setStorageReady(true);
       } catch (error: any) {
         console.error("Failed to initialize storage:", error);
         
@@ -82,16 +75,14 @@ export function CreateEventDialog({ storageInitialized = false }: CreateEventDia
         setErrorMessage(errorMsg);
         
         toast({
-          title: "Storage Error",
-          description: errorMsg,
-          variant: "destructive",
+          title: "Storage Warning",
+          description: "Storage access is limited. You can still create events, but image uploads may not work.",
+          variant: "warning",
         });
         
-        // Still set storageReady to true after a certain number of retries to allow user to try using the form
-        if (initRetries >= 2) {
-          console.log("Max retries reached, proceeding anyway...");
-          setStorageReady(true);
-        }
+        // Still set storageReady to true to allow event creation without images
+        console.log("Setting storageReady to true despite errors to allow event creation");
+        setStorageReady(true);
       } finally {
         setIsCheckingStorage(false);
       }
@@ -103,7 +94,7 @@ export function CreateEventDialog({ storageInitialized = false }: CreateEventDia
   const handleStorageRetry = () => {
     setErrorMessage(null);
     setStorageReady(false);
-    setInitRetries(0);
+    setInitRetries(prev => prev + 1);
     setIsCheckingStorage(false);
   };
 
@@ -142,11 +133,11 @@ export function CreateEventDialog({ storageInitialized = false }: CreateEventDia
           </div>
         ) : errorMessage ? (
           <div className="py-8">
-            <Alert variant="destructive" className="mb-4">
-              <AlertTitle>Storage Error</AlertTitle>
+            <Alert variant="warning" className="mb-4">
+              <AlertTitle>Storage Notice</AlertTitle>
               <AlertDescription>
                 <p>{errorMessage}</p>
-                <p className="text-sm mt-2">You can still try to create an event, but file uploads might not work.</p>
+                <p className="text-sm mt-2">You can still create an event, but custom images may not work properly.</p>
                 <Button 
                   variant="outline" 
                   size="sm"
