@@ -1,170 +1,156 @@
 
-import { useState } from 'react';
-import PageLayout from "@/components/PageLayout";
 import { Button } from "@/components/ui/button";
+import { Check } from "lucide-react";
+import PageLayout from "@/components/PageLayout";
 import { Link } from "react-router-dom";
-import { Check, CheckCircle } from "lucide-react";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
+
+const pricingPlans = [
+  {
+    name: "Free",
+    price: "$0",
+    description: "Perfect for small events",
+    features: [
+      "Up to 50 guests",
+      "Basic event page",
+      "Email invitations",
+      "RSVP tracking",
+      "Limited customization"
+    ],
+    cta: "Get Started",
+    highlighted: false
+  },
+  {
+    name: "Pro",
+    price: "$39",
+    period: "per month",
+    description: "Great for regular events",
+    features: [
+      "Up to 250 guests",
+      "Custom event pages",
+      "Email & SMS invitations",
+      "Detailed guest management",
+      "Custom questions",
+      "Event reminders",
+      "Priority support"
+    ],
+    cta: "Start Free Trial",
+    highlighted: true
+  },
+  {
+    name: "Enterprise",
+    price: "$99",
+    period: "per month",
+    description: "For large organizations",
+    features: [
+      "Unlimited guests",
+      "Multiple event management",
+      "Advanced analytics",
+      "API access",
+      "Custom branding",
+      "Dedicated account manager",
+      "White-label option",
+      "24/7 premium support"
+    ],
+    cta: "Contact Sales",
+    highlighted: false
+  }
+];
 
 const Pricing = () => {
-  const [isAnnual, setIsAnnual] = useState(true);
-  
-  const plans = [
-    {
-      name: "Basic",
-      monthlyPrice: 0,
-      annualPrice: 0,
-      description: "For small personal events",
-      features: [
-        "1 active event",
-        "Up to 50 guests",
-        "Email invitations",
-        "Basic RSVP tracking",
-        "Standard templates",
-      ],
-      isPopular: false,
-      buttonText: "Get Started"
-    },
-    {
-      name: "Standard",
-      monthlyPrice: 29,
-      annualPrice: 19,
-      description: "Perfect for regular event hosts",
-      features: [
-        "Up to 5 active events",
-        "Up to 250 guests per event",
-        "Custom questions",
-        "Meal selection options",
-        "Premium templates",
-        "Guest reminders",
-        "Plus-one management"
-      ],
-      isPopular: true,
-      buttonText: "Choose Standard"
-    },
-    {
-      name: "Professional",
-      monthlyPrice: 59,
-      annualPrice: 39,
-      description: "For professional event planners",
-      features: [
-        "Unlimited active events",
-        "Unlimited guests",
-        "Custom branding",
-        "Advanced analytics",
-        "Priority support",
-        "Guest check-in system",
-        "Custom domain",
-        "API access",
-        "Integrations"
-      ],
-      isPopular: false,
-      buttonText: "Choose Professional"
-    }
-  ];
-
   return (
     <PageLayout>
-      <div className="bg-brand-light py-12 md:py-16">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 text-brand-primary">
-              Simple, Transparent Pricing
-            </h1>
-            <p className="text-lg text-gray-700 mb-6">
-              Choose the plan that's right for your events
-            </p>
-            
-            <div className="flex items-center justify-center gap-4 mt-8">
-              <span className={isAnnual ? "text-gray-500" : "text-brand-primary font-medium"}>Monthly</span>
-              <Switch
-                checked={isAnnual}
-                onCheckedChange={setIsAnnual}
-              />
-              <span className={!isAnnual ? "text-gray-500" : "text-brand-primary font-medium"}>
-                Annually <span className="text-sm text-brand-accent font-bold ml-2">Save 35%</span>
-              </span>
-            </div>
-          </div>
+      <div className="container mx-auto py-20 px-4">
+        <div className="text-center mb-16">
+          <h1 className="text-4xl md:text-5xl font-bold text-brand-primary mb-4">
+            Simple, Transparent Pricing
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Choose the plan that works best for your events and budget
+          </p>
         </div>
-      </div>
-      
-      <div className="container mx-auto px-4 py-12 md:py-16 -mt-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {plans.map((plan, index) => (
-            <Card 
-              key={index} 
-              className={`relative ${
-                plan.isPopular 
-                  ? "border-brand-accent shadow-lg shadow-brand-accent/10" 
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {pricingPlans.map((plan, index) => (
+            <div 
+              key={index}
+              className={`rounded-xl overflow-hidden border transition-all hover:shadow-xl ${
+                plan.highlighted 
+                  ? "border-brand-primary ring-2 ring-brand-primary/30 shadow-lg" 
                   : "border-gray-200"
               }`}
             >
-              {plan.isPopular && (
-                <div className="absolute -top-4 left-0 right-0 mx-auto w-fit bg-brand-accent text-brand-primary px-3 py-1 rounded-full text-sm font-medium">
-                  Most Popular
+              <div className={`p-8 ${plan.highlighted ? "bg-brand-light" : "bg-white"}`}>
+                <h3 className="text-2xl font-bold text-brand-primary">{plan.name}</h3>
+                <div className="mt-4 flex items-baseline">
+                  <span className="text-4xl font-bold text-gray-900">{plan.price}</span>
+                  {plan.period && (
+                    <span className="ml-1 text-xl text-gray-500">/{plan.period}</span>
+                  )}
                 </div>
-              )}
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold text-brand-primary">{plan.name}</CardTitle>
-                <div className="mt-4 mb-2">
-                  <span className="text-4xl font-bold">
-                    ${isAnnual ? plan.annualPrice : plan.monthlyPrice}
-                  </span>
-                  <span className="text-gray-500 ml-2">/month</span>
-                </div>
-                {isAnnual && plan.annualPrice > 0 && (
-                  <p className="text-sm text-gray-500">Billed annually</p>
-                )}
                 <p className="mt-2 text-gray-600">{plan.description}</p>
-              </CardHeader>
-              <CardContent>
+
+                <Button 
+                  asChild 
+                  className={`mt-6 w-full ${
+                    plan.highlighted 
+                      ? "bg-brand-primary hover:bg-brand-primary/90" 
+                      : "bg-white border border-brand-primary text-brand-primary hover:bg-brand-light"
+                  }`}
+                >
+                  <Link to={plan.name === "Enterprise" ? "/contact" : "/signup"}>
+                    {plan.cta}
+                  </Link>
+                </Button>
+              </div>
+
+              <div className="p-8 bg-white border-t">
+                <p className="font-medium mb-4">What's included:</p>
                 <ul className="space-y-3">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start">
-                      <Check className="h-5 w-5 text-brand-accent mr-2 flex-shrink-0 mt-0.5" />
+                  {plan.features.map((feature, idx) => (
+                    <li key={idx} className="flex items-start">
+                      <Check className="h-5 w-5 text-brand-primary flex-shrink-0 mr-2" />
                       <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  asChild 
-                  className={`w-full ${
-                    plan.isPopular 
-                      ? "bg-brand-primary hover:bg-brand-primary/90" 
-                      : "bg-brand-primary/80 hover:bg-brand-primary"
-                  }`}
-                >
-                  <Link to="/signup">{plan.buttonText}</Link>
-                </Button>
-              </CardFooter>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
-        
-        <div className="mt-16 max-w-3xl mx-auto text-center">
-          <h3 className="text-2xl font-bold mb-4 text-brand-primary">Enterprise Solutions</h3>
-          <p className="text-gray-700 mb-6">
-            Need a custom solution for large-scale or specialized events? Our enterprise plan offers tailored features, dedicated support, and custom integrations.
+
+        <div className="mt-20 text-center">
+          <h2 className="text-2xl font-bold mb-4">Need a custom plan?</h2>
+          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+            We offer tailored solutions for organizations with specific requirements. 
+            Contact our sales team to discuss your needs.
           </p>
-          <Button asChild variant="outline" className="border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-white">
+          <Button asChild className="bg-brand-primary hover:bg-brand-primary/90">
             <Link to="/contact">Contact Sales</Link>
           </Button>
         </div>
-        
-        <div className="mt-16 p-8 bg-brand-light rounded-lg max-w-3xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center gap-6">
-            <div className="flex-shrink-0">
-              <CheckCircle className="h-16 w-16 text-brand-primary" />
-            </div>
+
+        <div className="mt-20 bg-brand-light p-8 rounded-xl max-w-4xl mx-auto">
+          <h2 className="text-2xl font-bold text-center mb-6">Frequently Asked Questions</h2>
+          
+          <div className="space-y-6">
             <div>
-              <h3 className="text-xl font-bold mb-2 text-brand-primary">100% Satisfaction Guarantee</h3>
-              <p className="text-gray-700">
-                Try any of our paid plans risk-free for 14 days. If you're not completely satisfied, let us know and we'll refund your payment.
-              </p>
+              <h3 className="text-lg font-semibold text-brand-primary mb-2">Can I switch plans later?</h3>
+              <p className="text-gray-600">Yes, you can upgrade or downgrade your plan at any time. Changes will take effect at the start of your next billing cycle.</p>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold text-brand-primary mb-2">Is there a contract or commitment?</h3>
+              <p className="text-gray-600">No long-term contracts. All paid plans are billed monthly or annually, and you can cancel at any time.</p>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold text-brand-primary mb-2">Do you offer non-profit discounts?</h3>
+              <p className="text-gray-600">Yes, we offer special pricing for non-profit organizations. Please contact our sales team for details.</p>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold text-brand-primary mb-2">What payment methods do you accept?</h3>
+              <p className="text-gray-600">We accept all major credit cards, PayPal, and can arrange for invoice payment for annual Enterprise plans.</p>
             </div>
           </div>
         </div>
