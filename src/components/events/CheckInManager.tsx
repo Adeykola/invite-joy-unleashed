@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { QRCodeGenerator } from "@/components/QRCode";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import QRCode from "@/components/QRCode";
+import { Alert, AlertDescription } from "@/components/ui/alert-custom";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -99,12 +99,19 @@ export function CheckInManager({ eventId }: CheckInManagerProps) {
   // Handle manual check-in
   const handleCheckIn = async (rsvpId: string, isCheckedIn: boolean) => {
     try {
+      const updateData: any = {
+        checked_in: isCheckedIn
+      };
+      
+      if (isCheckedIn) {
+        updateData.check_in_time = new Date().toISOString();
+      } else {
+        updateData.check_in_time = null;
+      }
+      
       const { error } = await supabase
         .from("rsvps")
-        .update({
-          checked_in: isCheckedIn,
-          check_in_time: isCheckedIn ? new Date().toISOString() : null
-        })
+        .update(updateData)
         .eq("id", rsvpId);
         
       if (error) throw error;
@@ -211,7 +218,7 @@ export function CheckInManager({ eventId }: CheckInManagerProps) {
             </CardHeader>
             <CardContent className="flex flex-col items-center">
               <div className="bg-white p-6 rounded-lg">
-                <QRCodeGenerator 
+                <QRCode 
                   value={checkinUrl}
                   size={250}
                   className="mx-auto"

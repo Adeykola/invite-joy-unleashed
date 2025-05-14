@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, ArrowLeft, Info } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert-custom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ensureStorageBuckets } from "@/lib/supabase";
 
@@ -69,7 +69,7 @@ const HostEvents = () => {
       setErrorMessage(errorMsg);
       
       toast({
-        variant: "warning",
+        variant: "default",
         title: "Storage Access Limited",
         description: "Some features may not work properly. Core event functionality will still be available.",
       });

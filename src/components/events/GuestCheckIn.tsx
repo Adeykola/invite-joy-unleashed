@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert-custom";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, Calendar, Clock, MapPin, Info, Loader2 } from "lucide-react";
 import { format } from "date-fns";
@@ -99,12 +99,14 @@ export function GuestCheckIn() {
     if (!rsvpId) return;
     
     try {
+      const updateData: any = {
+        checked_in: true,
+        check_in_time: new Date().toISOString()
+      };
+      
       const { error } = await supabase
         .from("rsvps")
-        .update({
-          checked_in: true,
-          check_in_time: new Date().toISOString()
-        })
+        .update(updateData)
         .eq("id", rsvpId);
         
       if (error) throw error;
@@ -187,11 +189,11 @@ export function GuestCheckIn() {
                 </div>
                 
                 {isCheckedIn ? (
-                  <Alert className="bg-green-50 border-green-200">
+                  <Alert variant="default" className="bg-green-50 border-green-200">
                     <CheckCircle className="h-4 w-4 text-green-500" />
                     <AlertTitle className="text-green-700">Checked In</AlertTitle>
                     <AlertDescription className="text-green-600">
-                      You have already checked in to this event at {rsvp.check_in_time ? format(new Date(rsvp.check_in_time), "p") : ""}
+                      You have already checked in to this event {rsvp.check_in_time ? `at ${format(new Date(rsvp.check_in_time), "p")}` : ""}
                     </AlertDescription>
                   </Alert>
                 ) : (

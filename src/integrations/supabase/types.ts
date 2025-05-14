@@ -49,6 +49,7 @@ export type Database = {
       }
       events: {
         Row: {
+          banner_image: string | null
           capacity: number | null
           created_at: string | null
           date: string
@@ -61,6 +62,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          banner_image?: string | null
           capacity?: number | null
           created_at?: string | null
           date: string
@@ -73,6 +75,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          banner_image?: string | null
           capacity?: number | null
           created_at?: string | null
           date?: string
@@ -112,6 +115,8 @@ export type Database = {
       }
       rsvps: {
         Row: {
+          check_in_time: string | null
+          checked_in: boolean | null
           comments: string | null
           created_at: string | null
           event_id: string | null
@@ -121,6 +126,8 @@ export type Database = {
           response_status: string
         }
         Insert: {
+          check_in_time?: string | null
+          checked_in?: boolean | null
           comments?: string | null
           created_at?: string | null
           event_id?: string | null
@@ -130,6 +137,8 @@ export type Database = {
           response_status: string
         }
         Update: {
+          check_in_time?: string | null
+          checked_in?: boolean | null
           comments?: string | null
           created_at?: string | null
           event_id?: string | null
@@ -153,6 +162,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_rsvp_checkin_columns: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      get_column_info: {
+        Args: { target_table: string; target_column: string }
+        Returns: {
+          column_name: string
+          data_type: string
+        }[]
+      }
       get_event_guests: {
         Args: { p_event_id: string }
         Returns: {

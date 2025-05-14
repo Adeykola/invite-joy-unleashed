@@ -1,5 +1,5 @@
 
-import { PageLayout } from "@/components/layouts/PageLayout";
+import PageLayout from "@/components/layouts/PageLayout";
 import { GuestCheckIn } from "@/components/events/GuestCheckIn";
 
 const GuestCheckInConfirmation = () => {

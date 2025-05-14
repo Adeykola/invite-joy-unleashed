@@ -7,13 +7,15 @@ interface QRCodeProps {
   size?: number;
   color?: string;
   bgColor?: string;
+  className?: string;
 }
 
 const QRCode: React.FC<QRCodeProps> = ({ 
   value, 
   size = 200, 
   color = '#000000', 
-  bgColor = '#ffffff' 
+  bgColor = '#ffffff',
+  className
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   
@@ -52,7 +54,7 @@ const QRCode: React.FC<QRCodeProps> = ({
     }
   }, [value, size, color, bgColor]);
   
-  return <div ref={ref} />;
+  return <div ref={ref} className={className} />;
 };
 
 export default QRCode;
