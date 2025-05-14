@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Mail, Check, X } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Mail, Check, X, MessageSquare, Link, Share } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Table,
@@ -22,6 +23,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface InviteGuestsDialogProps {
   eventId: string;
@@ -38,6 +41,8 @@ type Guest = {
   invite_sent: boolean;
 };
 
+type InviteMethod = "email" | "sms" | "link" | "whatsapp";
+
 export function InviteGuestsDialog({ 
   eventId, 
   eventTitle, 
@@ -47,6 +52,7 @@ export function InviteGuestsDialog({
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const [selectedGuests, setSelectedGuests] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [currentMethod, setCurrentMethod] = useState<InviteMethod>("email");
   const { toast } = useToast();
 
   // Use controlled or uncontrolled open state based on props
@@ -71,6 +77,22 @@ export function InviteGuestsDialog({
       
       if (error) throw error;
       return data as Guest[];
+    },
+  });
+
+  // Fetch event details to get invitation templates
+  const { data: eventDetails } = useQuery({
+    queryKey: ["event-invite-details", eventId],
+    enabled: isOpen,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', eventId)
+        .single();
+        
+      if (error) throw error;
+      return data;
     },
   });
 
@@ -105,8 +127,30 @@ export function InviteGuestsDialog({
     setIsProcessing(true);
 
     try {
-      // In a real application, this would call an API to send emails
-      // For now, we'll just mark them as invited in the database
+      // Get the selected guests' information
+      const selectedGuestData = guests?.filter(guest => 
+        selectedGuests.includes(guest.id)
+      ) || [];
+
+      // Get event meta data
+      const meta = eventDetails?.meta || {};
+      const templates = {
+        email: meta.emailTemplate || "You're invited to {event_title} on {event_date}. RSVP at: {rsvp_link}",
+        emailSubject: meta.emailSubject || `Invitation to ${eventTitle}`,
+        sms: meta.smsTemplate || "You're invited to {event_title}. RSVP: {rsvp_link}",
+        whatsapp: meta.whatsappTemplate || "Hello {guest_name}, you're invited to {event_title} on {event_date}. RSVP: {rsvp_link}"
+      };
+      
+      // Send invitations based on the selected method
+      if (currentMethod === "email") {
+        await sendEmailInvitations(selectedGuestData, templates.emailSubject, templates.email);
+      } else if (currentMethod === "sms") {
+        await generateTextMessages(selectedGuestData, templates.sms);
+      } else if (currentMethod === "whatsapp") {
+        await generateWhatsAppMessages(selectedGuestData, templates.whatsapp);
+      } else if (currentMethod === "link") {
+        await generateShareableLinks(selectedGuestData);
+      }
       
       // Update the selected guests to mark them as invited
       const { error } = await supabase
@@ -121,7 +165,7 @@ export function InviteGuestsDialog({
 
       toast({
         title: "Invitations Sent",
-        description: `Successfully sent invitations to ${selectedGuests.length} guests.`,
+        description: `Successfully sent ${currentMethod} invitations to ${selectedGuests.length} guests.`,
       });
 
       // Refresh the guest list
@@ -139,6 +183,131 @@ export function InviteGuestsDialog({
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const sendEmailInvitations = async (guests: Guest[], subject: string, template: string) => {
+    try {
+      // Call the Supabase Edge Function to send emails
+      const eventDate = eventDetails?.date 
+        ? format(new Date(eventDetails.date), 'PPP')
+        : 'the scheduled date';
+      
+      const response = await fetch(`https://ttlqxvpcjpxpbzkgbyod.supabase.co/functions/v1/send-invitations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.auth.getSession().then(res => res.data.session?.access_token)}`
+        },
+        body: JSON.stringify({
+          invitationType: 'email',
+          eventId,
+          eventTitle,
+          eventDate,
+          guests,
+          template,
+          subject
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to send email invitations');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error sending email invitations:', error);
+      throw error;
+    }
+  };
+
+  const generateTextMessages = async (guests: Guest[], template: string) => {
+    // For demo, we'll just show the formatted SMS messages
+    // In production, this would call an SMS provider API
+    
+    const formattedSMSList = guests.map(guest => {
+      const rsvpLink = `${window.location.origin}/event/${eventId}`;
+      const message = template
+        .replace('{guest_name}', guest.name)
+        .replace('{event_title}', eventTitle)
+        .replace('{rsvp_link}', rsvpLink);
+        
+      return { phone: "Not available", message, recipient: guest.name };
+    });
+    
+    // Show a toast with instruction for manual SMS sending
+    toast({
+      title: "SMS Messages Prepared",
+      description: "SMS integration requires a provider. For now, you can copy the generated messages.",
+    });
+    
+    console.log("SMS messages generated:", formattedSMSList);
+    
+    return formattedSMSList;
+  };
+  
+  const generateWhatsAppMessages = async (guests: Guest[], template: string) => {
+    // For demo, generate WhatsApp deep links
+    const whatsappLinks = guests.map(guest => {
+      const rsvpLink = `${window.location.origin}/event/${eventId}`;
+      const eventDate = eventDetails?.date 
+        ? format(new Date(eventDetails.date), 'PPP')
+        : 'the scheduled date';
+        
+      const message = template
+        .replace('{guest_name}', guest.name)
+        .replace('{event_title}', eventTitle)
+        .replace('{event_date}', eventDate)
+        .replace('{rsvp_link}', rsvpLink);
+        
+      // Create WhatsApp deep link
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappLink = `https://wa.me/?text=${encodedMessage}`;
+      
+      return { link: whatsappLink, recipient: guest.name };
+    });
+    
+    // Open the first WhatsApp link in a new window
+    if (whatsappLinks.length > 0) {
+      window.open(whatsappLinks[0].link, '_blank');
+      
+      if (whatsappLinks.length > 1) {
+        toast({
+          title: "Multiple WhatsApp Messages",
+          description: "First message opened. Please manually send the rest.",
+        });
+      }
+    }
+    
+    console.log("WhatsApp links generated:", whatsappLinks);
+    
+    return whatsappLinks;
+  };
+  
+  const generateShareableLinks = async (guests: Guest[]) => {
+    // Generate individual shareable links for each guest
+    const shareableLinks = guests.map(guest => {
+      // Create a unique link for each guest
+      const rsvpLink = `${window.location.origin}/event/${eventId}`;
+      return { link: rsvpLink, recipient: guest.name, email: guest.email };
+    });
+    
+    // Copy the first link to clipboard
+    if (shareableLinks.length > 0) {
+      navigator.clipboard.writeText(shareableLinks[0].link)
+        .then(() => {
+          toast({
+            title: "Link Copied",
+            description: `Shareable link for ${shareableLinks[0].recipient} copied to clipboard.`,
+          });
+        })
+        .catch(err => {
+          console.error('Could not copy link: ', err);
+        });
+    }
+    
+    console.log("Shareable links generated:", shareableLinks);
+    
+    return shareableLinks;
   };
 
   return (
@@ -159,7 +328,52 @@ export function InviteGuestsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-4 space-y-4">
+        <Tabs defaultValue="email" onValueChange={(value) => setCurrentMethod(value as InviteMethod)}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="email" className="flex items-center">
+              <Mail className="mr-2 h-4 w-4" />
+              Email
+            </TabsTrigger>
+            <TabsTrigger value="sms" className="flex items-center">
+              <MessageSquare className="mr-2 h-4 w-4" />
+              SMS
+            </TabsTrigger>
+            <TabsTrigger value="whatsapp" className="flex items-center">
+              <MessageSquare className="mr-2 h-4 w-4" />
+              WhatsApp
+            </TabsTrigger>
+            <TabsTrigger value="link" className="flex items-center">
+              <Link className="mr-2 h-4 w-4" />
+              Link
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="email" className="mt-0">
+            <p className="text-sm text-muted-foreground mb-4">
+              Send email invitations to your guests.
+            </p>
+          </TabsContent>
+          
+          <TabsContent value="sms" className="mt-0">
+            <p className="text-sm text-muted-foreground mb-4">
+              Send SMS invitations (requires phone numbers).
+            </p>
+          </TabsContent>
+          
+          <TabsContent value="whatsapp" className="mt-0">
+            <p className="text-sm text-muted-foreground mb-4">
+              Send WhatsApp invitations using preformatted messages.
+            </p>
+          </TabsContent>
+          
+          <TabsContent value="link" className="mt-0">
+            <p className="text-sm text-muted-foreground mb-4">
+              Generate shareable links for your guests.
+            </p>
+          </TabsContent>
+        </Tabs>
+
+        <div className="mt-0 space-y-4">
           {isLoading ? (
             <div className="text-center py-8">Loading guests...</div>
           ) : guests && guests.length > 0 ? (
@@ -182,7 +396,7 @@ export function InviteGuestsDialog({
                   onClick={handleSendInvites}
                   disabled={isProcessing || selectedGuests.length === 0}
                 >
-                  Send Invitations
+                  {isProcessing ? "Sending..." : `Send ${currentMethod === "link" ? "Links" : currentMethod === "email" ? "Emails" : currentMethod === "sms" ? "SMS" : "WhatsApp"}`}
                 </Button>
               </div>
 

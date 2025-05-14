@@ -7,19 +7,27 @@ import { Input } from "@/components/ui/input";
 import { FormItem, FormLabel, FormControl, FormDescription } from "@/components/ui/form";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Slider } from "@/components/ui/slider";
+import { useToast } from "@/hooks/use-toast";
 import { EventFormData } from "../EventWizard";
 
 const inviteOptions = [
   { id: "email", label: "Email" },
   { id: "sms", label: "SMS/Text" },
   { id: "link", label: "Shareable Link" },
-  { id: "qr", label: "QR Code" }
+  { id: "whatsapp", label: "WhatsApp" }
 ];
 
 export function CommunicationStep() {
   const { control, watch } = useFormContext<EventFormData>();
+  const { toast } = useToast();
+  
   const sendReminders = watch("sendReminders");
   const reminderDays = watch("reminderDays");
+  const inviteMethods = watch("inviteMethod") || [];
+  
+  const hasEmail = inviteMethods.includes("email");
+  const hasSms = inviteMethods.includes("sms");
+  const hasWhatsapp = inviteMethods.includes("whatsapp");
   
   return (
     <div className="space-y-6">
@@ -68,6 +76,97 @@ export function CommunicationStep() {
             Select all the ways you want to invite guests to your event.
           </p>
         </div>
+
+        {/* Email template section - only shown if email is selected */}
+        {hasEmail && (
+          <div className="space-y-4 rounded-md border p-4">
+            <h4 className="font-medium">Email Settings</h4>
+            <Controller
+              name="emailSubject"
+              control={control}
+              defaultValue="You're invited!"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email Subject</FormLabel>
+                  <FormControl>
+                    <Input placeholder="You're invited!" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <Controller
+              name="emailTemplate"
+              control={control}
+              defaultValue="Hello, you're invited to my event! Please RSVP at the link below."
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email Message</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Hello, you're invited to my event! Please RSVP at the link below."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Personalization tags: {"{guest_name}"}, {"{event_title}"}, {"{event_date}"}, {"{rsvp_link}"}
+                  </FormDescription>
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
+
+        {/* SMS template section - only shown if SMS is selected */}
+        {hasSms && (
+          <div className="space-y-4 rounded-md border p-4">
+            <h4 className="font-medium">SMS Settings</h4>
+            <Controller
+              name="smsTemplate"
+              control={control}
+              defaultValue="Hi {guest_name}! You're invited to {event_title}. RSVP here: {rsvp_link}"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>SMS Message</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Hi {guest_name}! You're invited to {event_title}. RSVP here: {rsvp_link}" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Keep message short. Tags: {"{guest_name}"}, {"{event_title}"}, {"{rsvp_link}"}
+                  </FormDescription>
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
+
+        {/* WhatsApp template section - only shown if WhatsApp is selected */}
+        {hasWhatsapp && (
+          <div className="space-y-4 rounded-md border p-4">
+            <h4 className="font-medium">WhatsApp Settings</h4>
+            <Controller
+              name="whatsappTemplate"
+              control={control}
+              defaultValue="Hello {guest_name},\n\nYou're invited to {event_title} on {event_date}!\n\nPlease RSVP at: {rsvp_link}\n\nLooking forward to seeing you!"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>WhatsApp Message</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Hello {guest_name},\n\nYou're invited to {event_title} on {event_date}!\n\nPlease RSVP at: {rsvp_link}" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Personalization tags: {"{guest_name}"}, {"{event_title}"}, {"{event_date}"}, {"{rsvp_link}"}
+                  </FormDescription>
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
 
         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
           <div className="space-y-0.5">
@@ -132,7 +231,17 @@ export function CommunicationStep() {
                     </FormDescription>
                   </div>
                   <FormControl>
-                    <Switch />
+                    <Controller
+                      name="sendThankYou"
+                      control={control}
+                      defaultValue={false}
+                      render={({ field }) => (
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      )}
+                    />
                   </FormControl>
                 </FormItem>
 
@@ -144,7 +253,17 @@ export function CommunicationStep() {
                     </FormDescription>
                   </div>
                   <FormControl>
-                    <Switch />
+                    <Controller
+                      name="collectFeedback"
+                      control={control}
+                      defaultValue={false}
+                      render={({ field }) => (
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      )}
+                    />
                   </FormControl>
                 </FormItem>
               </div>
