@@ -1,7 +1,6 @@
 
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-
 import { cn } from "@/lib/utils"
 
 const alertVariants = cva(
@@ -13,7 +12,7 @@ const alertVariants = cva(
         destructive:
           "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive",
         warning:
-          "border-amber-200 text-amber-800 bg-amber-50 [&>svg]:text-amber-600 dark:border-amber-500/30 dark:bg-amber-900/20 dark:text-amber-500",
+          "border-yellow-500/50 text-yellow-600 dark:border-yellow-500 [&>svg]:text-yellow-500",
       },
     },
     defaultVariants: {
@@ -22,12 +21,13 @@ const alertVariants = cva(
   }
 )
 
-// Define a clear type for the variant that includes all options
-export type AlertVariant = "default" | "destructive" | "warning"
+export type AlertVariant = "default" | "destructive" | "warning";
 
 const Alert = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
+  React.HTMLAttributes<HTMLDivElement> & {
+    variant?: AlertVariant;
+  }
 >(({ className, variant, ...props }, ref) => (
   <div
     ref={ref}

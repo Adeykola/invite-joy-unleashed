@@ -1,4 +1,5 @@
 
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +9,9 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Features from "./pages/Features";
+import FAQ from "./pages/FAQ";
+import Pricing from "./pages/Pricing";
+import Testimonials from "./pages/Testimonials";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -77,6 +81,9 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/features" element={<Features />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/testimonials" element={<Testimonials />} />
+            <Route path="/faq" element={<FAQ />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/reset-password" element={<ResetPassword />} />
@@ -103,3 +110,4 @@ const App = () => (
 );
 
 export default App;
+
