@@ -10,6 +10,7 @@ import { Upload, Image, Info } from "lucide-react";
 import { useWatch } from "react-hook-form";
 import { EventFormData } from "../EventWizard";
 import { useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface CustomizationStepProps {
   customLogo: string | null;
@@ -30,14 +31,30 @@ export function CustomizationStep({
   const accentColor = useWatch({ control, name: "accentColor" });
   
   const [activeTab, setActiveTab] = useState<string>("templates");
+  const [uploadError, setUploadError] = useState<string | null>(null);
   
   // Preview the selected template
   const selectedTemplate = eventTemplates.find((t) => t.id === templateId) || eventTemplates[0];
   
-  // Handle file selection
+  // Handle file selection with improved validation
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUploadError(null);
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      
+      // Validate file size
+      if (file.size > 10 * 1024 * 1024) {
+        setUploadError("Logo file size exceeds 10MB limit.");
+        return;
+      }
+      
+      // Validate file type
+      const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/svg+xml', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        setUploadError(`Invalid file type: ${file.type}. Please use PNG, JPEG, GIF, SVG, or WebP.`);
+        return;
+      }
+      
       setValue("customLogo", file);
       
       // Preview the image
@@ -45,9 +62,6 @@ export function CustomizationStep({
       reader.onload = (event) => {
         if (event.target?.result) {
           setCustomLogo(event.target.result as string);
-          
-          // Note: The actual upload to storage happens when the form is submitted,
-          // and the URL is saved to the event meta data
         }
       };
       reader.readAsDataURL(file);
@@ -55,8 +69,23 @@ export function CustomizationStep({
   };
   
   const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUploadError(null);
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      
+      // Validate file size
+      if (file.size > 10 * 1024 * 1024) {
+        setUploadError("Banner file size exceeds 10MB limit.");
+        return;
+      }
+      
+      // Validate file type
+      const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/svg+xml', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        setUploadError(`Invalid file type: ${file.type}. Please use PNG, JPEG, GIF, SVG, or WebP.`);
+        return;
+      }
+      
       setValue("customBanner", file);
       
       // Preview the image
@@ -64,9 +93,6 @@ export function CustomizationStep({
       reader.onload = (event) => {
         if (event.target?.result) {
           setCustomBanner(event.target.result as string);
-          
-          // Note: The actual upload to storage happens when the form is submitted,
-          // and the URL is saved to the event meta data
         }
       };
       reader.readAsDataURL(file);
@@ -81,6 +107,14 @@ export function CustomizationStep({
           Choose a design template or create your own custom branded event.
         </p>
       </div>
+      
+      {uploadError && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>
+            {uploadError}
+          </AlertDescription>
+        </Alert>
+      )}
       
       <Tabs
         defaultValue="templates"
@@ -121,7 +155,7 @@ export function CustomizationStep({
                 <div className="flex items-center gap-1 mb-1">
                   <Info className="h-4 w-4 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground">
-                    Maximum size: 10MB. Supported formats: PNG, JPEG, GIF, WebP, SVG.
+                    Recommended size: 200x200px (square). Maximum size: 10MB.
                   </span>
                 </div>
                 <div className="mt-2 flex items-center justify-center border rounded-md p-4">
@@ -153,7 +187,7 @@ export function CustomizationStep({
                       <input
                         type="file"
                         className="hidden"
-                        accept="image/*"
+                        accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp"
                         onChange={handleLogoChange}
                       />
                     </label>
@@ -166,7 +200,7 @@ export function CustomizationStep({
                 <div className="flex items-center gap-1 mb-1">
                   <Info className="h-4 w-4 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground">
-                    Maximum size: 10MB. Supported formats: PNG, JPEG, GIF, WebP, SVG.
+                    Recommended size: 1200x400px (3:1 ratio). Maximum size: 10MB.
                   </span>
                 </div>
                 <div className="mt-2 flex items-center justify-center border rounded-md p-4">
@@ -198,7 +232,7 @@ export function CustomizationStep({
                       <input
                         type="file"
                         className="hidden"
-                        accept="image/*"
+                        accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp"
                         onChange={handleBannerChange}
                       />
                     </label>

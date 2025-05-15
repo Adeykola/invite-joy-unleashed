@@ -15,7 +15,7 @@ export const checkStorageAvailability = async (retryCount = 1) => {
       return false;
     }
     
-    // Try to directly access files from public buckets to check if they exist
+    // Try to directly access files from event buckets to check if they exist
     const { data: logoFiles, error: logoError } = await supabase.storage
       .from('event-logos')
       .list('', { limit: 1 });
@@ -72,14 +72,14 @@ export const initStorageBuckets = async (retries = 2) => {
     const { data: logosData, error: logosError } = await supabase.storage.createBucket('event-logos', {
       public: true,
       fileSizeLimit: 10485760, // 10MB
-      allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml']
+      allowedMimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'image/svg+xml']
     });
     
     // Try to create event-banners bucket
     const { data: bannersData, error: bannersError } = await supabase.storage.createBucket('event-banners', {
       public: true,
       fileSizeLimit: 10485760, // 10MB
-      allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml']
+      allowedMimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'image/svg+xml']
     });
     
     // Check if operations succeeded or buckets already existed
@@ -108,7 +108,7 @@ export const initStorageBuckets = async (retries = 2) => {
   }
 };
 
-// Helper function to validate an image file before upload
+// Improved helper function to validate an image file before upload
 export const validateImageFile = (file: File): boolean => {
   if (!file) {
     console.error("No file provided for validation");
@@ -125,7 +125,7 @@ export const validateImageFile = (file: File): boolean => {
   // Check file size (10MB limit)
   const maxSize = 10 * 1024 * 1024; // 10MB
   if (file.size > maxSize) {
-    console.error(`File too large: ${file.size} bytes. Max size: ${maxSize} bytes`);
+    console.error(`File too large: ${file.size} bytes. Max size: ${maxSize} bytes (10MB)`);
     return false;
   }
   

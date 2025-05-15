@@ -76,7 +76,7 @@ export function CreateEventDialog({ storageInitialized = false }: CreateEventDia
         toast({
           title: "Storage Warning",
           description: "Storage access is limited. You can still create events, but image uploads may not work.",
-          variant: "destructive",
+          variant: "destructive",  // Changed from "warning" to "destructive" to match allowed variants
         });
         
         // Still set storageReady to true to allow event creation without images

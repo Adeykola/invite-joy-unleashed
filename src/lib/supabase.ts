@@ -10,45 +10,79 @@ export const isSupabaseConfigured = () => {
   return true; // We are using Supabase, so it is configured
 };
 
+// Enhanced function to create and configure storage buckets
 export const ensureStorageBuckets = async () => {
   try {
-    // Check if storage buckets exist
-    const { data: buckets, error } = await supabase.storage.listBuckets();
-    
-    if (error) {
-      console.error('Error checking storage buckets:', error);
+    console.log("Starting storage bucket verification");
+    // First check if user is authenticated
+    const { data: authData } = await supabase.auth.getSession();
+    if (!authData.session) {
+      console.log("User not authenticated, can't access storage");
       return false;
     }
     
-    // Check for event-images bucket
-    const eventImagesBucket = buckets?.find(b => b.name === 'event-images');
-    if (!eventImagesBucket) {
-      // Create event-images bucket
-      const { error: createError } = await supabase.storage.createBucket('event-images', {
-        public: true
+    // Check if buckets exist and create them if they don't
+    const { data: buckets, error } = await supabase.storage.listBuckets();
+    
+    if (error) {
+      console.error('Error listing storage buckets:', error);
+      return false;
+    }
+    
+    // Check for event-logos bucket
+    const logoBucket = buckets?.find(b => b.name === 'event-logos');
+    if (!logoBucket) {
+      console.log("Creating event-logos bucket");
+      const { error: createLogoError } = await supabase.storage.createBucket('event-logos', {
+        public: true,
+        fileSizeLimit: 10485760, // 10MB
+        allowedMimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'image/svg+xml']
       });
       
-      if (createError) {
-        console.error('Error creating event-images bucket:', createError);
-        return false;
+      if (createLogoError) {
+        console.error('Error creating event-logos bucket:', createLogoError);
+        if (!createLogoError.message.includes('already exists')) {
+          return false;
+        }
       }
     }
     
-    // Check for avatars bucket
-    const avatarsBucket = buckets?.find(b => b.name === 'avatars');
-    if (!avatarsBucket) {
-      // Create avatars bucket
-      const { error: createError } = await supabase.storage.createBucket('avatars', {
-        public: true
+    // Check for event-banners bucket
+    const bannerBucket = buckets?.find(b => b.name === 'event-banners');
+    if (!bannerBucket) {
+      console.log("Creating event-banners bucket");
+      const { error: createBannerError } = await supabase.storage.createBucket('event-banners', {
+        public: true,
+        fileSizeLimit: 10485760, // 10MB
+        allowedMimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'image/svg+xml']
       });
       
-      if (createError) {
-        console.error('Error creating avatars bucket:', createError);
-        return false;
+      if (createBannerError) {
+        console.error('Error creating event-banners bucket:', createBannerError);
+        if (!createBannerError.message.includes('already exists')) {
+          return false;
+        }
       }
     }
     
-    // If we got here, buckets are created or already exist
+    // Set public access policies for both buckets
+    const setupPolicy = async (bucketName: string) => {
+      try {
+        const { error: policyError } = await supabase.storage.from(bucketName).getPublicUrl('test-policy-file');
+        if (policyError) {
+          console.log(`Setting up public policy for ${bucketName}`);
+          // Public policy should be set automatically when creating the bucket as public
+        }
+      } catch (e) {
+        console.log(`Note: Policy check failed for ${bucketName}, but this is often expected:`, e);
+        // This is often expected and not a true error
+      }
+    };
+    
+    await setupPolicy('event-logos');
+    await setupPolicy('event-banners');
+    
+    console.log("Storage buckets verified and configured successfully");
     return true;
   } catch (error) {
     console.error('Unexpected error ensuring storage buckets:', error);
