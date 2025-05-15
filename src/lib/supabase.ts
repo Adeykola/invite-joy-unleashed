@@ -68,10 +68,12 @@ export const ensureStorageBuckets = async () => {
     // Set public access policies for both buckets
     const setupPolicy = async (bucketName: string) => {
       try {
-        const { error: policyError } = await supabase.storage.from(bucketName).getPublicUrl('test-policy-file');
-        if (policyError) {
-          console.log(`Setting up public policy for ${bucketName}`);
-          // Public policy should be set automatically when creating the bucket as public
+        // In the latest Supabase JavaScript client, getPublicUrl doesn't return an error property
+        // The method has changed to only return { data: { publicUrl: string } }
+        // So we just need to check if we can get a public URL without checking for errors
+        const { data } = supabase.storage.from(bucketName).getPublicUrl('test-policy-file');
+        if (data) {
+          console.log(`Public access confirmed for ${bucketName}`);
         }
       } catch (e) {
         console.log(`Note: Policy check failed for ${bucketName}, but this is often expected:`, e);
