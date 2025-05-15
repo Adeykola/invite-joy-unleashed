@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
@@ -38,6 +39,13 @@ export type EventFormData = {
   inviteMethod: string[];
   sendReminders: boolean;
   reminderDays: number;
+  // Email templates
+  emailSubject?: string;
+  emailTemplate?: string;
+  smsTemplate?: string;
+  whatsappTemplate?: string;
+  sendThankYou?: boolean;
+  collectFeedback?: boolean;
   
   // Customization
   templateId: string;

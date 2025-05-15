@@ -81,38 +81,38 @@ export function CommunicationStep() {
         {hasEmail && (
           <div className="space-y-4 rounded-md border p-4">
             <h4 className="font-medium">Email Settings</h4>
-            <Controller
-              name="emailSubject"
-              control={control}
-              defaultValue="You're invited!"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email Subject</FormLabel>
-                  <FormControl>
+            <FormItem>
+              <FormLabel>Email Subject</FormLabel>
+              <FormControl>
+                <Controller
+                  name="emailSubject"
+                  control={control}
+                  defaultValue="You're invited!"
+                  render={({ field }) => (
                     <Input placeholder="You're invited!" {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <Controller
-              name="emailTemplate"
-              control={control}
-              defaultValue="Hello, you're invited to my event! Please RSVP at the link below."
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email Message</FormLabel>
-                  <FormControl>
+                  )}
+                />
+              </FormControl>
+            </FormItem>
+            <FormItem>
+              <FormLabel>Email Message</FormLabel>
+              <FormControl>
+                <Controller
+                  name="emailTemplate"
+                  control={control}
+                  defaultValue="Hello, you're invited to my event! Please RSVP at the link below."
+                  render={({ field }) => (
                     <Input
                       placeholder="Hello, you're invited to my event! Please RSVP at the link below."
                       {...field}
                     />
-                  </FormControl>
-                  <FormDescription>
-                    Personalization tags: {"{guest_name}"}, {"{event_title}"}, {"{event_date}"}, {"{rsvp_link}"}
-                  </FormDescription>
-                </FormItem>
-              )}
-            />
+                  )}
+                />
+              </FormControl>
+              <FormDescription>
+                Personalization tags: {"{guest_name}"}, {"{event_title}"}, {"{event_date}"}, {"{rsvp_link}"}
+              </FormDescription>
+            </FormItem>
           </div>
         )}
 
@@ -120,25 +120,25 @@ export function CommunicationStep() {
         {hasSms && (
           <div className="space-y-4 rounded-md border p-4">
             <h4 className="font-medium">SMS Settings</h4>
-            <Controller
-              name="smsTemplate"
-              control={control}
-              defaultValue="Hi {guest_name}! You're invited to {event_title}. RSVP here: {rsvp_link}"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>SMS Message</FormLabel>
-                  <FormControl>
+            <FormItem>
+              <FormLabel>SMS Message</FormLabel>
+              <FormControl>
+                <Controller
+                  name="smsTemplate"
+                  control={control}
+                  defaultValue="Hi {guest_name}! You're invited to {event_title}. RSVP here: {rsvp_link}"
+                  render={({ field }) => (
                     <Input 
                       placeholder="Hi {guest_name}! You're invited to {event_title}. RSVP here: {rsvp_link}" 
                       {...field} 
                     />
-                  </FormControl>
-                  <FormDescription>
-                    Keep message short. Tags: {"{guest_name}"}, {"{event_title}"}, {"{rsvp_link}"}
-                  </FormDescription>
-                </FormItem>
-              )}
-            />
+                  )}
+                />
+              </FormControl>
+              <FormDescription>
+                Keep message short. Tags: {"{guest_name}"}, {"{event_title}"}, {"{rsvp_link}"}
+              </FormDescription>
+            </FormItem>
           </div>
         )}
 
@@ -146,25 +146,25 @@ export function CommunicationStep() {
         {hasWhatsapp && (
           <div className="space-y-4 rounded-md border p-4">
             <h4 className="font-medium">WhatsApp Settings</h4>
-            <Controller
-              name="whatsappTemplate"
-              control={control}
-              defaultValue="Hello {guest_name},\n\nYou're invited to {event_title} on {event_date}!\n\nPlease RSVP at: {rsvp_link}\n\nLooking forward to seeing you!"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>WhatsApp Message</FormLabel>
-                  <FormControl>
+            <FormItem>
+              <FormLabel>WhatsApp Message</FormLabel>
+              <FormControl>
+                <Controller
+                  name="whatsappTemplate"
+                  control={control}
+                  defaultValue="Hello {guest_name},\n\nYou're invited to {event_title} on {event_date}!\n\nPlease RSVP at: {rsvp_link}\n\nLooking forward to seeing you!"
+                  render={({ field }) => (
                     <Input 
                       placeholder="Hello {guest_name},\n\nYou're invited to {event_title} on {event_date}!\n\nPlease RSVP at: {rsvp_link}" 
                       {...field} 
                     />
-                  </FormControl>
-                  <FormDescription>
-                    Personalization tags: {"{guest_name}"}, {"{event_title}"}, {"{event_date}"}, {"{rsvp_link}"}
-                  </FormDescription>
-                </FormItem>
-              )}
-            />
+                  )}
+                />
+              </FormControl>
+              <FormDescription>
+                Personalization tags: {"{guest_name}"}, {"{event_title}"}, {"{event_date}"}, {"{rsvp_link}"}
+              </FormDescription>
+            </FormItem>
           </div>
         )}
 
@@ -237,7 +237,7 @@ export function CommunicationStep() {
                       defaultValue={false}
                       render={({ field }) => (
                         <Switch
-                          checked={field.value}
+                          checked={field.value === true}
                           onCheckedChange={field.onChange}
                         />
                       )}
@@ -259,7 +259,7 @@ export function CommunicationStep() {
                       defaultValue={false}
                       render={({ field }) => (
                         <Switch
-                          checked={field.value}
+                          checked={field.value === true}
                           onCheckedChange={field.onChange}
                         />
                       )}
