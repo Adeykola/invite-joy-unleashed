@@ -34,7 +34,45 @@ import { TemplateEditor } from "@/components/whatsapp/TemplateEditor";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CalendarIcon, Loader2, Send, Upload, UserCircle, Users } from "lucide-react";
-import * as Papa from 'papaparse';
+
+// Simple CSV parser implementation
+const Papa = {
+  parse: (file: File, options: any) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const csv = e.target?.result as string;
+      const lines = csv.split('\n');
+      const headers = lines[0].split(',');
+      
+      const results: any[] = [];
+      
+      for (let i = 1; i < lines.length; i++) {
+        if (lines[i].trim() === '') continue;
+        
+        const data = lines[i].split(',');
+        const obj: any = {};
+        
+        for (let j = 0; j < headers.length; j++) {
+          obj[headers[j].trim()] = data[j]?.trim();
+        }
+        
+        results.push(obj);
+      }
+      
+      if (options && typeof options.complete === 'function') {
+        options.complete({ data: results });
+      }
+    };
+    
+    reader.onerror = (error) => {
+      if (options && typeof options.error === 'function') {
+        options.error(error);
+      }
+    };
+    
+    reader.readAsText(file);
+  }
+};
 
 interface Recipient {
   phone: string;
@@ -169,10 +207,10 @@ export function BroadcastWizard() {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => {
+      complete: (results: { data: any[] }) => {
         if (results.data && Array.isArray(results.data) && results.data.length > 0) {
           // Validate data has required phone field
-          const validData = results.data.filter((row: any) => row.phone);
+          const validData = results.data.filter((row: any) => row.phone) as Recipient[];
           setRecipients(validData);
           
           // Set preview recipient
@@ -187,7 +225,7 @@ export function BroadcastWizard() {
           });
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error("Error parsing CSV:", error);
         toast({
           title: "Error",

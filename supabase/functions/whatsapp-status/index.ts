@@ -65,9 +65,9 @@ serve(async (req) => {
       });
     }
     
-    // Get URL parameters
-    const url = new URL(req.url);
-    const sessionId = url.searchParams.get('sessionId');
+    // Get request body
+    const body = await req.json();
+    const sessionId = body.sessionId;
     
     if (!sessionId) {
       return new Response(JSON.stringify({ error: 'Missing sessionId parameter' }), {
