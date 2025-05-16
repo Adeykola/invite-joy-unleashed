@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,6 +58,9 @@ interface Event {
 interface WhatsAppSession {
   id: string;
   status: string;
+  last_connected_at: string | null;
+  display_name: string | null;
+  phone_number: string | null;
 }
 
 export function BroadcastWizard() {
