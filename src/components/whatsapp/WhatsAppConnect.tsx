@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, RefreshCw, Smartphone, Check, X } from "lucide-react";
-import QRCode from "qrcode.react";
+import QRCode from "@/components/QRCode";
 
 interface WhatsAppSession {
   id: string;

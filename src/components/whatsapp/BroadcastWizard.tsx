@@ -34,7 +34,7 @@ import { TemplateEditor } from "@/components/whatsapp/TemplateEditor";
 import { format } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CalendarIcon, Loader2, Send, Upload, UserCircle, Users } from "lucide-react";
-import Papa from 'papaparse';
+import * as Papa from 'papaparse';
 
 interface Recipient {
   phone: string;
