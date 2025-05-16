@@ -36,42 +36,26 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CalendarIcon, Loader2, Send, Upload, UserCircle, Users } from "lucide-react";
 
 // Simple CSV parser implementation
-const Papa = {
-  parse: (file: File, options: any) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const csv = e.target?.result as string;
-      const lines = csv.split('\n');
-      const headers = lines[0].split(',');
-      
-      const results: any[] = [];
-      
-      for (let i = 1; i < lines.length; i++) {
-        if (lines[i].trim() === '') continue;
-        
-        const data = lines[i].split(',');
-        const obj: any = {};
-        
-        for (let j = 0; j < headers.length; j++) {
-          obj[headers[j].trim()] = data[j]?.trim();
-        }
-        
-        results.push(obj);
-      }
-      
-      if (options && typeof options.complete === 'function') {
-        options.complete({ data: results });
-      }
-    };
+const parseCSV = (csvText: string) => {
+  const lines = csvText.split('\n');
+  const headers = lines[0].split(',').map(header => header.trim());
+  
+  const results = [];
+  
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === '') continue;
     
-    reader.onerror = (error) => {
-      if (options && typeof options.error === 'function') {
-        options.error(error);
-      }
-    };
+    const data = lines[i].split(',');
+    const obj: any = {};
     
-    reader.readAsText(file);
+    for (let j = 0; j < headers.length; j++) {
+      obj[headers[j]] = data[j]?.trim();
+    }
+    
+    results.push(obj);
   }
+  
+  return results;
 };
 
 interface Recipient {
@@ -204,36 +188,39 @@ export function BroadcastWizard() {
     
     setCsvFile(file);
     
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results: { data: any[] }) => {
-        if (results.data && Array.isArray(results.data) && results.data.length > 0) {
-          // Validate data has required phone field
-          const validData = results.data.filter((row: any) => row.phone) as Recipient[];
-          setRecipients(validData);
-          
-          // Set preview recipient
-          if (validData.length > 0) {
-            setPreviewRecipient(validData[0]);
-            updatePreview();
-          }
-          
-          toast({
-            title: "CSV Uploaded",
-            description: `Loaded ${validData.length} recipients from CSV`
-          });
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const csvText = event.target?.result as string;
+      const parsedData = parseCSV(csvText);
+      
+      if (parsedData && parsedData.length > 0) {
+        // Validate data has required phone field
+        const validData = parsedData.filter((row: any) => row.phone) as Recipient[];
+        setRecipients(validData);
+        
+        // Set preview recipient
+        if (validData.length > 0) {
+          setPreviewRecipient(validData[0]);
+          updatePreview();
         }
-      },
-      error: (error: any) => {
-        console.error("Error parsing CSV:", error);
+        
         toast({
-          title: "Error",
-          description: "Failed to parse CSV file",
-          variant: "destructive"
+          title: "CSV Uploaded",
+          description: `Loaded ${validData.length} recipients from CSV`
         });
       }
-    });
+    };
+    
+    reader.onerror = () => {
+      console.error("Error reading CSV file");
+      toast({
+        title: "Error",
+        description: "Failed to parse CSV file",
+        variant: "destructive"
+      });
+    };
+    
+    reader.readAsText(file);
   };
 
   // Handle manual recipient input
