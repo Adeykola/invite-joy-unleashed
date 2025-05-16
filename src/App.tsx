@@ -1,113 +1,75 @@
 
-
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+
+// Pages
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import ResetPassword from "./pages/ResetPassword";
+import AdminDashboard from "./pages/AdminDashboard";
+import HostDashboard from "./pages/HostDashboard";
+import UserDashboard from "./pages/UserDashboard";
 import Features from "./pages/Features";
 import FAQ from "./pages/FAQ";
 import Pricing from "./pages/Pricing";
 import Testimonials from "./pages/Testimonials";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import AdminDashboard from "./pages/AdminDashboard";
-import HostDashboard from "./pages/HostDashboard";
-import HostEvents from "./pages/host/HostEvents";
-import HostGuests from "./pages/host/HostGuests";
-import HostCalendar from "./pages/host/HostCalendar";
-import HostSettings from "./pages/host/HostSettings";
-import CheckIn from "./pages/host/CheckIn";
-import UserDashboard from "./pages/UserDashboard";
-import ResetPassword from "./pages/ResetPassword";
+import NotFound from "./pages/NotFound";
 import Event from "./pages/Event";
 import PublicEvents from "./pages/PublicEvents";
-import GuestPortal from "./components/events/GuestPortal";
 import GuestCheckInConfirmation from "./pages/GuestCheckInConfirmation";
 
-const ProtectedRoute = ({ children, allowedRoles = ["admin", "host", "user"] }: { children: JSX.Element, allowedRoles?: string[] }) => {
-  const { user, profile, loading } = useAuth();
-  
-  if (loading) {
-    return <div className="flex h-screen items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto"></div>
-        <p className="mt-3 text-gray-600">Loading...</p>
-      </div>
-    </div>;
-  }
-  
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  if (profile && !allowedRoles.includes(profile.role)) {
-    if (profile.role === "admin") {
-      return <Navigate to="/admin-dashboard" replace />;
-    } else if (profile.role === "host") {
-      return <Navigate to="/host-dashboard" replace />;
-    } else {
-      return <Navigate to="/user-dashboard" replace />;
-    }
-  }
-  
-  return children;
-};
+// Host Dashboard Pages
+import CheckIn from "./pages/host/CheckIn";
+import HostCalendar from "./pages/host/HostCalendar";
+import HostEvents from "./pages/host/HostEvents";
+import HostGuests from "./pages/host/HostGuests";
+import HostSettings from "./pages/host/HostSettings";
+import WhatsAppDashboard from "./pages/host/WhatsAppDashboard"; // New import
 
-const AdminRoute = ({ children }: { children: JSX.Element }) => (
-  <ProtectedRoute allowedRoles={["admin"]}>{children}</ProtectedRoute>
-);
+// Toaster
+import { Toaster } from "@/components/ui/toaster";
 
-const HostRoute = ({ children }: { children: JSX.Element }) => (
-  <ProtectedRoute allowedRoles={["host"]}>{children}</ProtectedRoute>
-);
-
-const UserRoute = ({ children }: { children: JSX.Element }) => (
-  <ProtectedRoute allowedRoles={["user"]}>{children}</ProtectedRoute>
-);
-
+// Create a client
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <BrowserRouter>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Router>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/features" element={<Features />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/testimonials" element={<Testimonials />} />
-            <Route path="/faq" element={<FAQ />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/event/:id" element={<Event />} />
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
+            <Route path="/host-dashboard" element={<HostDashboard />} />
+            <Route path="/user-dashboard" element={<UserDashboard />} />
+            <Route path="/features" element={<Features />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/testimonials" element={<Testimonials />} />
+            <Route path="/event/:eventId" element={<Event />} />
             <Route path="/events" element={<PublicEvents />} />
-            <Route path="/guest-portal/:id" element={<GuestPortal />} />
-            <Route path="/check-in/:eventId/:rsvpId" element={<GuestCheckInConfirmation />} />
+            <Route path="/check-in-confirmation/:eventId" element={<GuestCheckInConfirmation />} />
             
-            <Route path="/admin-dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-            <Route path="/host-dashboard" element={<HostRoute><HostDashboard /></HostRoute>} />
-            <Route path="/host-dashboard/events" element={<HostRoute><HostEvents /></HostRoute>} />
-            <Route path="/host-dashboard/guests" element={<HostRoute><HostGuests /></HostRoute>} />
-            <Route path="/host-dashboard/calendar" element={<HostRoute><HostCalendar /></HostRoute>} />
-            <Route path="/host-dashboard/settings" element={<HostRoute><HostSettings /></HostRoute>} />
-            <Route path="/host-dashboard/check-in/:eventId" element={<HostRoute><CheckIn /></HostRoute>} />
-            <Route path="/user-dashboard" element={<UserRoute><UserDashboard /></UserRoute>} />
+            {/* Host Dashboard Pages */}
+            <Route path="/host/checkin/:eventId" element={<CheckIn />} />
+            <Route path="/host/calendar" element={<HostCalendar />} />
+            <Route path="/host/events" element={<HostEvents />} />
+            <Route path="/host/guests" element={<HostGuests />} />
+            <Route path="/host/settings" element={<HostSettings />} />
+            <Route path="/host/whatsapp" element={<WhatsAppDashboard />} /> {/* New Route */}
             
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </TooltipProvider>
-      </BrowserRouter>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+          <Toaster />
+        </Router>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
-
