@@ -9,6 +9,7 @@ type AuthContextType = {
   profile: any | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  isAuthenticated: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,6 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      console.log('Auth state changed:', event, newSession?.user?.id);
       setSession(newSession);
       setUser(newSession?.user ?? null);
       
@@ -36,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               .single();
               
             setProfile(data);
+            console.log('Profile loaded:', data);
           } catch (error) {
             console.error('Error fetching profile:', error);
           }
@@ -49,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const getInitialSession = async () => {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
+        console.log('Initial session:', initialSession?.user?.id);
         
         setSession(initialSession);
         setUser(initialSession?.user ?? null);
@@ -61,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .single();
             
           setProfile(data);
+          console.log('Initial profile loaded:', data);
         }
       } catch (error) {
         console.error('Error getting initial session:', error);
@@ -78,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
+      console.log('Signing out user');
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
@@ -92,7 +98,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     profile,
     loading,
-    signOut
+    signOut,
+    isAuthenticated: !!user
   };
 
   return (
