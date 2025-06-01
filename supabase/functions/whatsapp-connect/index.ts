@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { encodeBase64, decodeBase64 } from "https://deno.land/std@0.178.0/encoding/base64.ts";
+import { encodeBase64 } from "https://deno.land/std@0.178.0/encoding/base64.ts";
 import { crypto } from "https://deno.land/std@0.178.0/crypto/mod.ts";
 
 const corsHeaders = {
@@ -9,99 +9,60 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Simple encryption using AES-GCM and a secure key
-async function encryptSessionData(data: string, userId: string): Promise<{ encryptedData: string, encryptionKey: string }> {
-  // Generate a random key for each session
-  const key = await crypto.subtle.generateKey(
-    { name: "AES-GCM", length: 256 },
-    true,
-    ["encrypt", "decrypt"]
-  );
-
-  // Export the key for storage
-  const exportedKey = await crypto.subtle.exportKey("raw", key);
-  const encryptionKey = encodeBase64(new Uint8Array(exportedKey));
-  
-  // Create an initialization vector
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  
-  // Encrypt the data
-  const dataBuffer = new TextEncoder().encode(data);
-  const encryptedBuffer = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv },
-    key,
-    dataBuffer
-  );
-  
-  // Combine IV and encrypted data for storage
-  const encryptedArray = new Uint8Array(iv.length + encryptedBuffer.byteLength);
-  encryptedArray.set(iv, 0);
-  encryptedArray.set(new Uint8Array(encryptedBuffer), iv.length);
-  
-  return {
-    encryptedData: encodeBase64(encryptedArray),
-    encryptionKey
-  };
+// WhatsApp Web API integration will be implemented here
+// For now, this is a foundation that generates QR codes for connection
+function generateWhatsAppWebQR(): string {
+  // In real implementation, this would integrate with WhatsApp Web API
+  // For now, we generate a placeholder QR that points to WhatsApp Web
+  const sessionData = crypto.randomUUID();
+  return `https://web.whatsapp.com/qr/${sessionData}`;
 }
 
-// Function to simulate WhatsApp QR code generation
-// In a real implementation, this would interact with the WhatsApp API
-function generateFakeQRCode(): string {
-  const randomData = crypto.randomUUID();
-  return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${randomData}`;
-}
-
-async function initWhatsAppSession(userId: string): Promise<{ qrCode: string; sessionId: string }> {
+async function initWhatsAppWebSession(userId: string): Promise<{ qrCode: string; sessionId: string }> {
   try {
-    console.log("Starting WhatsApp session initialization for user:", userId);
+    console.log("Initializing WhatsApp Web session for user:", userId);
     
-    // Generate a QR code (in real implementation, this would come from WhatsApp)
-    const qrCode = generateFakeQRCode();
-    
-    // Create a session ID
+    // Generate session ID
     const sessionId = crypto.randomUUID();
     
-    // Encrypt and store the initial session data
-    const initialSessionData = JSON.stringify({
-      qrCode: qrCode,
-      status: 'pending',
-      createdAt: new Date().toISOString()
+    // Generate QR code for WhatsApp Web connection
+    const qrCode = generateWhatsAppWebQR();
+    
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Store session data
+    const { error } = await supabase.from("whatsapp_sessions").insert({
+      id: sessionId,
+      user_id: userId,
+      session_data: { 
+        status: 'initializing', 
+        qrGenerated: true,
+        apiType: 'web' 
+      },
+      encrypted_session_key: encodeBase64(new TextEncoder().encode(sessionId)),
+      status: 'connecting'
     });
     
-    try {
-      const { encryptedData, encryptionKey } = await encryptSessionData(initialSessionData, userId);
-      
-      // Create Supabase client
-      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      
-      // Store initial session data
-      await supabase.from("whatsapp_sessions").insert({
-        id: sessionId,
-        user_id: userId,
-        session_data: { status: 'pending', qrGenerated: true },
-        encrypted_session_key: encryptionKey,
-        status: 'initializing'
-      });
-      
-      // Return QR code and session ID to client
-      return {
-        qrCode: qrCode,
-        sessionId
-      };
-    } catch (error) {
+    if (error) {
       console.error("Error storing session:", error);
       throw error;
     }
+    
+    return {
+      qrCode,
+      sessionId
+    };
   } catch (error) {
-    console.error("Error initializing WhatsApp session:", error);
+    console.error("Error initializing WhatsApp Web session:", error);
     throw error;
   }
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -112,7 +73,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    // Get authorization header
+    // Authenticate user
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Not authorized' }), {
@@ -121,7 +82,6 @@ serve(async (req) => {
       });
     }
     
-    // Check if the token is valid
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
@@ -132,8 +92,25 @@ serve(async (req) => {
       });
     }
     
-    // Initialize WhatsApp session
-    const { qrCode, sessionId } = await initWhatsAppSession(user.id);
+    // Handle different methods
+    const body = await req.json().catch(() => ({}));
+    
+    if (body.method === 'disconnect' && body.sessionId) {
+      // Handle disconnection
+      await supabase
+        .from('whatsapp_sessions')
+        .update({ status: 'disconnected' })
+        .eq('id', body.sessionId)
+        .eq('user_id', user.id);
+        
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // Default: Initialize new session
+    const { qrCode, sessionId } = await initWhatsAppWebSession(user.id);
     
     return new Response(JSON.stringify({ qrCode, sessionId }), {
       status: 200,

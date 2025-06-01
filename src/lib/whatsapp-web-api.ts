@@ -251,7 +251,7 @@ export class WhatsAppWebAPIService {
 
       return {
         id: data.id,
-        status: data.status,
+        status: data.status as 'disconnected' | 'connecting' | 'connected' | 'error',
         displayName: data.display_name,
         phoneNumber: data.phone_number,
         lastConnected: data.last_connected_at

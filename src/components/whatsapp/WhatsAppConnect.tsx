@@ -1,184 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
 import { Loader2, RefreshCw, Smartphone, Check, X } from "lucide-react";
-import QRCode from "@/components/QRCode";
+import { useAuth } from "@/contexts/AuthContext";
+import { useWhatsAppConnection } from "@/hooks/useWhatsAppConnection";
 
-interface WhatsAppSession {
-  id: string;
-  status: string;
-  last_connected_at: string | null;
-  display_name: string | null;
-  phone_number: string | null;
-}
+// QR Code component using external API
+const QRCode = ({ value, size = 200 }: { value: string; size?: number }) => {
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}`;
+  
+  return (
+    <img 
+      src={qrUrl} 
+      alt="QR Code" 
+      className="rounded-lg border"
+      style={{ width: size, height: size }}
+    />
+  );
+};
 
 export function WhatsAppConnect() {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [qrCode, setQrCode] = useState<string | null>(null);
-  const [session, setSession] = useState<WhatsAppSession | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [statusCheckInterval, setStatusCheckInterval] = useState<number | null>(null);
-
-  // Function to fetch current active session if exists
-  const fetchActiveSession = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from("whatsapp_sessions")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("status", "connected")
-        .order("last_connected_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      if (error) {
-        console.log("No active session found:", error.message);
-        return;
-      }
-
-      if (data) {
-        setSession(data);
-        setSessionId(data.id);
-      }
-    } catch (err) {
-      console.error("Error fetching active session:", err);
-    }
-  };
-
-  // Function to check session status
-  const checkSessionStatus = async () => {
-    if (!user || !sessionId) return;
-
-    try {
-      const { data: statusData } = await supabase
-        .functions.invoke("whatsapp-status", {
-          body: { sessionId }
-        });
-
-      if (statusData?.status === "connected") {
-        // Session is connected, update UI
-        setQrCode(null);
-        setSession({
-          id: sessionId,
-          status: statusData.status,
-          last_connected_at: statusData.lastConnected,
-          display_name: statusData.displayName,
-          phone_number: statusData.phoneNumber
-        });
-
-        // Clear the interval if we're connected
-        if (statusCheckInterval) {
-          clearInterval(statusCheckInterval);
-          setStatusCheckInterval(null);
-        }
-
-        toast({
-          title: "WhatsApp Connected",
-          description: "Your WhatsApp account is now connected and ready to use."
-        });
-      }
-    } catch (err) {
-      console.error("Error checking session status:", err);
-    }
-  };
-
-  // Initialize component - check for active session
-  useEffect(() => {
-    fetchActiveSession();
-  }, [user]);
-
-  // Start new WhatsApp session
-  const startNewSession = async () => {
-    if (!user) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const { data, error } = await supabase
-        .functions.invoke("whatsapp-connect", {
-          method: "POST"
-        });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      if (data?.qrCode && data?.sessionId) {
-        setQrCode(data.qrCode);
-        setSessionId(data.sessionId);
-        
-        // Start polling for status updates
-        const intervalId = window.setInterval(checkSessionStatus, 5000);
-        setStatusCheckInterval(intervalId);
-        
-        toast({
-          title: "QR Code Generated",
-          description: "Please scan this QR code with your WhatsApp"
-        });
-      }
-    } catch (err: any) {
-      console.error("Error starting WhatsApp session:", err);
-      setError(err.message || "Failed to generate QR code");
-      toast({
-        title: "Connection Failed",
-        description: "Failed to connect to WhatsApp. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Disconnect session
-  const disconnectSession = async () => {
-    if (!user || !sessionId) return;
-
-    setIsLoading(true);
-
-    try {
-      const { error } = await supabase
-        .from("whatsapp_sessions")
-        .update({ status: "disconnected" })
-        .eq("id", sessionId);
-
-      if (error) throw error;
-
-      setSession(null);
-      setSessionId(null);
-      toast({
-        title: "WhatsApp Disconnected",
-        description: "Your WhatsApp account has been disconnected."
-      });
-    } catch (err) {
-      console.error("Error disconnecting session:", err);
-      toast({
-        title: "Disconnection Failed",
-        description: "Failed to disconnect WhatsApp. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Clean up interval on component unmount
-  useEffect(() => {
-    return () => {
-      if (statusCheckInterval) {
-        clearInterval(statusCheckInterval);
-      }
-    };
-  }, [statusCheckInterval]);
+  const {
+    session,
+    qrCode,
+    isConnecting,
+    isLoading,
+    error,
+    startConnection,
+    disconnect,
+    isConnected
+  } = useWhatsAppConnection();
 
   if (!user) {
     return (
@@ -196,42 +50,43 @@ export function WhatsAppConnect() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Smartphone className="h-5 w-5" />
-          WhatsApp Connection
+          WhatsApp Web Connection
         </CardTitle>
         <CardDescription>
-          Connect your WhatsApp account to send messages to your event guests.
+          Connect your WhatsApp account using WhatsApp Web to send messages to your event guests.
         </CardDescription>
       </CardHeader>
+      
       <CardContent>
         {error && (
           <Alert variant="destructive" className="mb-4">
-            <AlertTitle>Error</AlertTitle>
+            <AlertTitle>Connection Error</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
 
-        {session?.status === "connected" ? (
+        {isConnected && session ? (
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-green-600 font-medium">
               <Check className="h-5 w-5" />
               <span>WhatsApp Connected</span>
             </div>
             
-            {session.display_name && (
+            {session.displayName && (
               <div className="text-sm">
-                <span className="font-medium">Account Name:</span> {session.display_name}
+                <span className="font-medium">Account Name:</span> {session.displayName}
               </div>
             )}
             
-            {session.phone_number && (
+            {session.phoneNumber && (
               <div className="text-sm">
-                <span className="font-medium">Phone Number:</span> {session.phone_number}
+                <span className="font-medium">Phone Number:</span> {session.phoneNumber}
               </div>
             )}
             
-            {session.last_connected_at && (
+            {session.lastConnected && (
               <div className="text-sm">
-                <span className="font-medium">Connected since:</span> {new Date(session.last_connected_at).toLocaleString()}
+                <span className="font-medium">Connected since:</span> {new Date(session.lastConnected).toLocaleString()}
               </div>
             )}
           </div>
@@ -240,25 +95,41 @@ export function WhatsAppConnect() {
             <div className="bg-white p-4 rounded-lg">
               <QRCode value={qrCode} size={200} />
             </div>
-            <p className="text-center text-sm max-w-md">
-              Open WhatsApp on your phone, go to Settings &gt; Linked Devices &gt; 
-              Link a Device, then scan this QR code.
-            </p>
+            <div className="text-center space-y-2">
+              <p className="text-sm font-medium">Scan QR Code with WhatsApp</p>
+              <p className="text-xs text-muted-foreground max-w-md">
+                1. Open WhatsApp on your phone<br/>
+                2. Go to Settings → Linked Devices<br/>
+                3. Tap "Link a Device"<br/>
+                4. Scan this QR code
+              </p>
+              {isConnecting && (
+                <div className="flex items-center justify-center gap-2 text-blue-600">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">Waiting for connection...</span>
+                </div>
+              )}
+            </div>
           </div>
         ) : (
-          <div className="text-center py-4">
-            <p className="mb-4">
-              Connect your WhatsApp account to send messages to your event guests.
-              This uses WhatsApp's multi-device feature and does not store your credentials.
-            </p>
+          <div className="text-center py-8 space-y-4">
+            <div className="space-y-2">
+              <h3 className="font-medium">Connect WhatsApp Web</h3>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                Use WhatsApp's multi-device feature to connect your account. 
+                This allows sending messages without keeping your phone connected.
+              </p>
+            </div>
+            
             <Button
-              onClick={startNewSession}
-              disabled={isLoading}
+              onClick={startConnection}
+              disabled={isLoading || isConnecting}
+              size="lg"
             >
-              {isLoading ? (
+              {isLoading || isConnecting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating QR Code...
+                  {isConnecting ? 'Connecting...' : 'Loading...'}
                 </>
               ) : (
                 <>
@@ -270,12 +141,13 @@ export function WhatsAppConnect() {
           </div>
         )}
       </CardContent>
-      {(session?.status === "connected" || qrCode) && (
+      
+      {(isConnected || qrCode) && (
         <CardFooter className="flex justify-between">
-          {session?.status === "connected" ? (
+          {isConnected ? (
             <Button 
               variant="destructive" 
-              onClick={disconnectSession}
+              onClick={disconnect}
               disabled={isLoading}
             >
               {isLoading ? (
@@ -283,13 +155,13 @@ export function WhatsAppConnect() {
               ) : (
                 <X className="mr-2 h-4 w-4" />
               )}
-              Disconnect WhatsApp
+              Disconnect
             </Button>
           ) : (
             <Button 
               variant="outline" 
-              onClick={startNewSession}
-              disabled={isLoading}
+              onClick={startConnection}
+              disabled={isConnecting || isLoading}
             >
               <RefreshCw className="mr-2 h-4 w-4" />
               Generate New QR Code
