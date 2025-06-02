@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Lock, Mail, User, AlertCircle } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Signup = () => {
   const [name, setName] = useState("");
@@ -18,8 +20,24 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user, profile, loading } = useAuth();
 
   const supabaseConfigured = isSupabaseConfigured();
+
+  // Redirect authenticated users away from signup page
+  useEffect(() => {
+    if (!loading && user && profile) {
+      console.log('User already authenticated, redirecting...', { user: user.id, role: profile.role });
+      
+      if (profile.role === 'admin') {
+        navigate('/admin');
+      } else if (profile.role === 'host') {
+        navigate('/host');
+      } else {
+        navigate('/dashboard');
+      }
+    }
+  }, [user, profile, loading, navigate]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +64,8 @@ const Signup = () => {
     }
     
     try {
+      console.log('Attempting to sign up with email:', email, 'role:', userRole);
+      
       // Sign up user with Supabase
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -62,8 +82,11 @@ const Signup = () => {
         throw error;
       }
       
+      console.log('Sign up successful, user ID:', data.user?.id);
+      
       if (data.user) {
         // Create a profile record in the profiles table
+        console.log('Creating profile for user:', data.user.id);
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([
@@ -76,13 +99,16 @@ const Signup = () => {
           ]);
           
         if (profileError) {
+          console.error('Profile creation error:', profileError);
           throw profileError;
         }
+        
+        console.log('Profile created successfully');
       }
       
       toast({
         title: "Account created successfully!",
-        description: "Please check your email to verify your account.",
+        description: "Please check your email to verify your account, then you can log in.",
       });
       
       // Wait a moment and redirect to login
@@ -113,10 +139,11 @@ const Signup = () => {
     }
     
     try {
+      console.log('Attempting Google OAuth signup');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/user-dashboard`
+          redirectTo: `${window.location.origin}/dashboard`
         }
       });
       
@@ -132,6 +159,18 @@ const Signup = () => {
       });
     }
   };
+
+  // Show loading while checking authentication state
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 p-4">
