@@ -1,260 +1,106 @@
 
-import { ReactNode, useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { ReactNode } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import {
-  LayoutDashboard,
-  Calendar,
-  Users,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  Bell,
-  User,
-  ChevronDown
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { LogOut, Calendar, Users, Settings, MessageSquare, BarChart3, Home } from "lucide-react";
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  userType: "admin" | "host" | "user";
+  userType: "user" | "host" | "admin";
 }
 
-type NavItemType = {
-  name: string;
-  href: string;
-  icon: JSX.Element;
-  userTypes: Array<"admin" | "host" | "user">;
-};
-
 const DashboardLayout = ({ children, userType }: DashboardLayoutProps) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { toast } = useToast();
   const { user, profile, signOut } = useAuth();
+  const navigate = useNavigate();
 
-  const navItems: NavItemType[] = [
-    {
-      name: "Dashboard",
-      href: "/host-dashboard",
-      icon: <LayoutDashboard className="h-5 w-5" />,
-      userTypes: ["admin", "host", "user"],
-    },
-    {
-      name: "Events",
-      href: "/host-dashboard/events",
-      icon: <Calendar className="h-5 w-5" />,
-      userTypes: ["host"],
-    },
-    {
-      name: "Guest Lists",
-      href: "/host-dashboard/guests",
-      icon: <Users className="h-5 w-5" />,
-      userTypes: ["host"],
-    },
-    {
-      name: "Calendar",
-      href: "/host-dashboard/calendar",
-      icon: <Calendar className="h-5 w-5" />,
-      userTypes: ["host"],
-    },
-    {
-      name: "All Events",
-      href: "/admin-dashboard",
-      icon: <Calendar className="h-5 w-5" />,
-      userTypes: ["admin"],
-    },
-    {
-      name: "Users",
-      href: "/admin-dashboard",
-      icon: <Users className="h-5 w-5" />,
-      userTypes: ["admin"],
-    },
-    {
-      name: "My RSVPs",
-      href: "/user-dashboard",
-      icon: <Calendar className="h-5 w-5" />,
-      userTypes: ["user"],
-    },
-    {
-      name: "Settings",
-      href: "/host-dashboard/settings",
-      icon: <Settings className="h-5 w-5" />,
-      userTypes: ["admin", "host", "user"],
-    },
-  ];
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
-  const filteredNavItems = navItems.filter(item => 
-    item.userTypes.includes(userType)
-  );
-
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      toast({
-        title: "Logged out successfully",
-        description: "Redirecting to home page...",
-      });
-      navigate("/");
-    } catch (error) {
-      console.error("Error logging out:", error);
-      toast({
-        title: "Error",
-        description: "Failed to log out. Please try again.",
-        variant: "destructive",
-      });
+  const getNavItems = () => {
+    switch (userType) {
+      case "admin":
+        return [
+          { href: "/admin", label: "Dashboard", icon: Home },
+          { href: "/admin/users", label: "Users", icon: Users },
+          { href: "/admin/events", label: "Events", icon: Calendar },
+          { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+          { href: "/admin/settings", label: "Settings", icon: Settings },
+        ];
+      case "host":
+        return [
+          { href: "/host", label: "Dashboard", icon: Home },
+          { href: "/host/events", label: "Events", icon: Calendar },
+          { href: "/host/calendar", label: "Calendar", icon: Calendar },
+          { href: "/host/guests", label: "Guests", icon: Users },
+          { href: "/host/whatsapp", label: "WhatsApp", icon: MessageSquare },
+          { href: "/host/settings", label: "Settings", icon: Settings },
+        ];
+      case "user":
+      default:
+        return [
+          { href: "/dashboard", label: "Dashboard", icon: Home },
+          { href: "/events", label: "Browse Events", icon: Calendar },
+        ];
     }
   };
 
+  const navItems = getNavItems();
+
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar for desktop */}
-      <div className="hidden md:flex md:flex-shrink-0">
-        <div className="flex w-64 flex-col">
-          <div className="flex flex-col flex-grow border-r border-gray-200 bg-white pt-5 pb-4 overflow-y-auto">
-            <div className="flex items-center flex-shrink-0 px-4">
-              <Link to="/" className="text-xl font-bold text-indigo-600">RSVPlatform</Link>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <Link to="/" className="text-xl font-bold text-indigo-600">
+                EventManager
+              </Link>
             </div>
-            <div className="mt-8 flex-grow flex flex-col">
-              <nav className="flex-1 px-2 space-y-1">
-                {filteredNavItems.map((item) => (
+            
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-700">
+                {profile?.full_name || user?.email || 'User'}
+              </span>
+              <span className="text-xs text-gray-500 capitalize bg-gray-100 px-2 py-1 rounded">
+                {profile?.role || userType}
+              </span>
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign out
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex">
+        {/* Sidebar */}
+        <nav className="w-64 bg-white shadow-sm min-h-screen border-r">
+          <div className="p-4">
+            <ul className="space-y-2">
+              {navItems.map((item) => (
+                <li key={item.href}>
                   <Link
-                    key={item.name}
                     to={item.href}
-                    className={cn(
-                      location.pathname === item.href
-                        ? "bg-indigo-50 text-indigo-600"
-                        : "text-gray-600 hover:bg-indigo-50 hover:text-indigo-600",
-                      "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors"
-                    )}
+                    className="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
                   >
-                    {item.icon}
-                    <span className="ml-3">{item.name}</span>
+                    <item.icon className="h-5 w-5 mr-3" />
+                    {item.label}
                   </Link>
-                ))}
-              </nav>
-            </div>
-            <div className="px-2 mt-4">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start text-gray-600 hover:text-indigo-600"
-                onClick={handleLogout}
-              >
-                <LogOut className="mr-2 h-5 w-5" />
-                Logout
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Mobile sidebar */}
-      <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-        <SheetContent side="left" className="w-[240px] sm:w-[300px] p-0">
-          <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between p-4 border-b">
-              <Link to="/" className="text-xl font-bold text-indigo-600" onClick={() => setIsSidebarOpen(false)}>RSVPlatform</Link>
-              <Button variant="ghost" size="sm" onClick={() => setIsSidebarOpen(false)}>
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-            <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
-              {filteredNavItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={cn(
-                    location.pathname === item.href
-                      ? "bg-indigo-50 text-indigo-600"
-                      : "text-gray-600 hover:bg-indigo-50 hover:text-indigo-600",
-                    "group flex items-center px-3 py-3 text-base font-medium rounded-md transition-colors"
-                  )}
-                  onClick={() => setIsSidebarOpen(false)}
-                >
-                  {item.icon}
-                  <span className="ml-3">{item.name}</span>
-                </Link>
+                </li>
               ))}
-            </nav>
-            <div className="p-4 border-t">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start text-gray-600 hover:text-indigo-600"
-                onClick={handleLogout}
-              >
-                <LogOut className="mr-2 h-5 w-5" />
-                Logout
-              </Button>
-            </div>
+            </ul>
           </div>
-        </SheetContent>
-      </Sheet>
-      
-      {/* Main content */}
-      <div className="flex flex-col flex-1 overflow-hidden">
-        {/* Topbar */}
-        <div className="flex-shrink-0 flex h-16 bg-white border-b border-gray-200">
-          <button
-            type="button"
-            className="md:hidden px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
-            onClick={() => setIsSidebarOpen(true)}
-          >
-            <span className="sr-only">Open sidebar</span>
-            <Menu className="h-6 w-6" />
-          </button>
-          <div className="flex-1 flex justify-between px-4 md:px-0">
-            <div className="flex-1 flex md:ml-6 items-center">
-              <h1 className="text-lg font-semibold text-gray-800 md:ml-6">
-                {userType === "admin" ? "Admin Dashboard" : 
-                 userType === "host" ? "Event Host Dashboard" : 
-                 "My Account"}
-              </h1>
-            </div>
-            <div className="ml-4 flex items-center md:ml-6 space-x-4">
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <Bell className="h-5 w-5" />
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-1">
-                    <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                      <User className="h-4 w-4 text-indigo-600" />
-                    </div>
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>
-                    {profile?.full_name || user?.email || 'My Account'}
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>Profile</DropdownMenuItem>
-                  <DropdownMenuItem>Settings</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </div>
-        
-        {/* Main content area */}
-        <div className="flex-1 overflow-auto p-4 md:p-6 bg-gray-50">
+        </nav>
+
+        {/* Main Content */}
+        <main className="flex-1 p-8">
           {children}
-        </div>
+        </main>
       </div>
     </div>
   );
