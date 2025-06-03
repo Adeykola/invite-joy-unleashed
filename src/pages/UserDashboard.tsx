@@ -2,25 +2,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, CheckCircle, MapPin } from "lucide-react";
+import { Calendar, CheckCircle, Clock, MapPin } from "lucide-react";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
-import { useAuth } from "@/contexts/AuthContext";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 const UserDashboard = () => {
-  const { user, profile, loading } = useAuth();
-  const navigate = useNavigate();
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
-
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate('/login');
-    }
-  }, [user, loading, navigate]);
 
   // Fetch all events
   const { data: events, isLoading } = useQuery({
@@ -38,14 +29,12 @@ const UserDashboard = () => {
 
   // Function to handle quick RSVP response
   const handleRsvp = async (eventId: string, status: string, name = "Guest", email = "guest@example.com") => {
-    if (!user) return;
-    
     setLoadingStates(prev => ({ ...prev, [eventId]: true }));
     try {
       const { error } = await supabase.from("rsvps").insert([{
         event_id: eventId,
-        guest_name: profile?.full_name || name,
-        guest_email: user.email || email,
+        guest_name: name,
+        guest_email: email,
         response_status: status,
         comments: `Quick ${status} from dashboard`
       }]);
@@ -59,21 +48,6 @@ const UserDashboard = () => {
       setLoadingStates(prev => ({ ...prev, [eventId]: false }));
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null; // Will redirect in useEffect
-  }
 
   if (isLoading) {
     return (
@@ -92,7 +66,7 @@ const UserDashboard = () => {
     <DashboardLayout userType="user">
       <div className="space-y-8">
         <div>
-          <h2 className="text-2xl font-bold mb-6">Welcome to Your Dashboard!</h2>
+          <h2 className="text-2xl font-bold mb-6">Welcome to Our Event Platform!</h2>
           <p className="text-gray-600 mb-6">
             Browse through upcoming events and RSVP directly from your dashboard. 
             Click on any event to see more details.
@@ -194,7 +168,7 @@ const UserDashboard = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">
-                  Quickly respond to event invitations with a single click. Track your RSVPs.
+                  Quickly respond to event invitations with a single click. No login required.
                 </p>
               </CardContent>
             </Card>

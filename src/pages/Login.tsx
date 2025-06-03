@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Lock, Mail, AlertCircle } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
-import { useAuth } from "@/contexts/AuthContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -17,24 +15,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user, profile, loading } = useAuth();
 
   const supabaseConfigured = isSupabaseConfigured();
-
-  // Redirect authenticated users away from login page
-  useEffect(() => {
-    if (!loading && user && profile) {
-      console.log('User already authenticated, redirecting...', { user: user.id, role: profile.role });
-      
-      if (profile.role === 'admin') {
-        navigate('/admin');
-      } else if (profile.role === 'host') {
-        navigate('/host');
-      } else {
-        navigate('/dashboard');
-      }
-    }
-  }, [user, profile, loading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,8 +33,6 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      console.log('Attempting to sign in with email:', email);
-      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -62,54 +42,30 @@ const Login = () => {
         throw error;
       }
       
-      console.log('Sign in successful, user ID:', data.user.id);
-      
       toast({
         title: "Login successful!",
         description: "Redirecting you to the dashboard...",
       });
       
-      // Wait a moment for the auth context to update, then fetch profile
-      setTimeout(async () => {
-        try {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', data.user.id)
-            .single();
-          
-          console.log('Profile fetch result:', { profile, profileError });
-          
-          if (profileError) {
-            console.error('Profile fetch error:', profileError);
-            // If profile doesn't exist, default to user dashboard
-            navigate('/dashboard');
-            return;
-          }
-          
-          // Navigate based on role
-          if (profile?.role === 'admin') {
-            console.log('Redirecting to admin dashboard');
-            navigate('/admin');
-          } else if (profile?.role === 'host') {
-            console.log('Redirecting to host dashboard');
-            navigate('/host');
-          } else {
-            console.log('Redirecting to user dashboard');
-            navigate('/dashboard');
-          }
-        } catch (err) {
-          console.error('Error during profile fetch:', err);
-          // Fallback to user dashboard
-          navigate('/dashboard');
-        }
-      }, 500);
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+      
+      if (profile?.role === 'admin') {
+        navigate('/admin-dashboard');
+      } else if (profile?.role === 'host') {
+        navigate('/host-dashboard');
+      } else {
+        navigate('/user-dashboard');
+      }
       
     } catch (error: any) {
       console.error("Login error:", error);
       toast({
         title: "Login failed",
-        description: error.message || "Please check your credentials and try again.",
+        description: "Please check your credentials and try again.",
         variant: "destructive",
       });
     } finally {
@@ -128,11 +84,10 @@ const Login = () => {
     }
     
     try {
-      console.log('Attempting Google OAuth login');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`
+          redirectTo: `${window.location.origin}/user-dashboard`
         }
       });
       
@@ -148,18 +103,6 @@ const Login = () => {
       });
     }
   };
-
-  // Show loading while checking authentication state
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Checking authentication...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 p-4">

@@ -9,59 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      broadcast_recipients: {
-        Row: {
-          broadcast_id: string
-          created_at: string
-          delivered_at: string | null
-          error_message: string | null
-          id: string
-          phone_number: string
-          read_at: string | null
-          recipient_data: Json
-          retry_count: number
-          sent_at: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          broadcast_id: string
-          created_at?: string
-          delivered_at?: string | null
-          error_message?: string | null
-          id?: string
-          phone_number: string
-          read_at?: string | null
-          recipient_data: Json
-          retry_count?: number
-          sent_at?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          broadcast_id?: string
-          created_at?: string
-          delivered_at?: string | null
-          error_message?: string | null
-          id?: string
-          phone_number?: string
-          read_at?: string | null
-          recipient_data?: Json
-          retry_count?: number
-          sent_at?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "broadcast_recipients_broadcast_id_fkey"
-            columns: ["broadcast_id"]
-            isOneToOne: false
-            referencedRelation: "whatsapp_broadcasts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       event_guests: {
         Row: {
           created_at: string | null
@@ -102,7 +49,6 @@ export type Database = {
       }
       events: {
         Row: {
-          banner_image: string | null
           capacity: number | null
           created_at: string | null
           date: string
@@ -115,7 +61,6 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          banner_image?: string | null
           capacity?: number | null
           created_at?: string | null
           date: string
@@ -128,7 +73,6 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          banner_image?: string | null
           capacity?: number | null
           created_at?: string | null
           date?: string
@@ -139,33 +83,6 @@ export type Database = {
           meta?: Json | null
           title?: string
           updated_at?: string | null
-        }
-        Relationships: []
-      }
-      message_templates: {
-        Row: {
-          content: string
-          created_at: string
-          id: string
-          title: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          id?: string
-          title: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          id?: string
-          title?: string
-          updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -195,8 +112,6 @@ export type Database = {
       }
       rsvps: {
         Row: {
-          check_in_time: string | null
-          checked_in: boolean | null
           comments: string | null
           created_at: string | null
           event_id: string | null
@@ -206,8 +121,6 @@ export type Database = {
           response_status: string
         }
         Insert: {
-          check_in_time?: string | null
-          checked_in?: boolean | null
           comments?: string | null
           created_at?: string | null
           event_id?: string | null
@@ -217,8 +130,6 @@ export type Database = {
           response_status: string
         }
         Update: {
-          check_in_time?: string | null
-          checked_in?: boolean | null
           comments?: string | null
           created_at?: string | null
           event_id?: string | null
@@ -237,130 +148,11 @@ export type Database = {
           },
         ]
       }
-      whatsapp_broadcasts: {
-        Row: {
-          created_at: string
-          delivered_count: number | null
-          event_id: string | null
-          failed_count: number | null
-          id: string
-          name: string
-          read_count: number | null
-          scheduled_for: string | null
-          sent_count: number | null
-          status: string
-          template_id: string
-          total_recipients: number | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          delivered_count?: number | null
-          event_id?: string | null
-          failed_count?: number | null
-          id?: string
-          name: string
-          read_count?: number | null
-          scheduled_for?: string | null
-          sent_count?: number | null
-          status?: string
-          template_id: string
-          total_recipients?: number | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          delivered_count?: number | null
-          event_id?: string | null
-          failed_count?: number | null
-          id?: string
-          name?: string
-          read_count?: number | null
-          scheduled_for?: string | null
-          sent_count?: number | null
-          status?: string
-          template_id?: string
-          total_recipients?: number | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "whatsapp_broadcasts_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "whatsapp_broadcasts_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "message_templates"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      whatsapp_sessions: {
-        Row: {
-          connection_attempts: number
-          created_at: string
-          display_name: string | null
-          encrypted_session_key: string
-          id: string
-          last_connected_at: string | null
-          phone_number: string | null
-          session_data: Json
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          connection_attempts?: number
-          created_at?: string
-          display_name?: string | null
-          encrypted_session_key: string
-          id?: string
-          last_connected_at?: string | null
-          phone_number?: string | null
-          session_data: Json
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          connection_attempts?: number
-          created_at?: string
-          display_name?: string | null
-          encrypted_session_key?: string
-          id?: string
-          last_connected_at?: string | null
-          phone_number?: string | null
-          session_data?: Json
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      add_rsvp_checkin_columns: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      get_column_info: {
-        Args: { target_table: string; target_column: string }
-        Returns: {
-          column_name: string
-          data_type: string
-        }[]
-      }
       get_event_guests: {
         Args: { p_event_id: string }
         Returns: {

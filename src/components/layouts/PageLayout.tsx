@@ -1,6 +1,6 @@
 
 import { ReactNode } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Menu, X, ChevronLeft } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
 interface PageLayoutProps {
@@ -27,13 +26,12 @@ const PageLayout = ({
   backButtonLabel = "Back",
   backTo 
 }: PageLayoutProps) => {
-  const { user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   
   const navigation = [
     { name: "Features", href: "/features" },
-    { name: "Events", href: "/events" },
+    { name: "Pricing", href: "/pricing" },
+    { name: "Testimonials", href: "/testimonials" },
     { name: "FAQ", href: "/faq" },
   ];
 
@@ -72,20 +70,12 @@ const PageLayout = ({
           </div>
           
           <div className="hidden md:flex items-center space-x-4">
-            {user ? (
-              <Button asChild className="bg-gradient-to-r from-indigo-600 to-purple-600">
-                <Link to="/user-dashboard">Dashboard</Link>
-              </Button>
-            ) : (
-              <>
-                <Button variant="ghost" asChild>
-                  <Link to="/login">Sign in</Link>
-                </Button>
-                <Button asChild className="bg-gradient-to-r from-indigo-600 to-purple-600">
-                  <Link to="/signup">Sign up</Link>
-                </Button>
-              </>
-            )}
+            <Button variant="ghost" asChild>
+              <Link to="/login">Sign in</Link>
+            </Button>
+            <Button asChild className="bg-gradient-to-r from-indigo-600 to-purple-600">
+              <Link to="/signup">Sign up</Link>
+            </Button>
           </div>
           
           {/* Mobile menu button */}
@@ -121,20 +111,12 @@ const PageLayout = ({
                   ))}
                 </nav>
                 <div className="mt-auto border-t py-6 space-y-4">
-                  {user ? (
-                    <Button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600" asChild>
-                      <Link to="/user-dashboard">Dashboard</Link>
-                    </Button>
-                  ) : (
-                    <>
-                      <Button variant="outline" className="w-full" asChild>
-                        <Link to="/login">Sign in</Link>
-                      </Button>
-                      <Button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600" asChild>
-                        <Link to="/signup">Sign up</Link>
-                      </Button>
-                    </>
-                  )}
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link to="/login">Sign in</Link>
+                  </Button>
+                  <Button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600" asChild>
+                    <Link to="/signup">Sign up</Link>
+                  </Button>
                 </div>
               </div>
             </SheetContent>
@@ -176,19 +158,25 @@ const PageLayout = ({
               <h3 className="text-lg font-semibold mb-4">Product</h3>
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><Link to="/features" className="hover:text-white transition-colors">Features</Link></li>
-                <li><Link to="/events" className="hover:text-white transition-colors">Browse Events</Link></li>
+                <li><Link to="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
+                <li><Link to="#" className="hover:text-white transition-colors">Case Studies</Link></li>
+                <li><Link to="#" className="hover:text-white transition-colors">API</Link></li>
               </ul>
             </div>
             <div>
               <h3 className="text-lg font-semibold mb-4">Resources</h3>
               <ul className="space-y-2 text-sm text-gray-400">
+                <li><Link to="#" className="hover:text-white transition-colors">Documentation</Link></li>
+                <li><Link to="#" className="hover:text-white transition-colors">Guides</Link></li>
                 <li><Link to="/faq" className="hover:text-white transition-colors">FAQ</Link></li>
+                <li><Link to="#" className="hover:text-white transition-colors">Blog</Link></li>
               </ul>
             </div>
             <div>
               <h3 className="text-lg font-semibold mb-4">Company</h3>
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><Link to="#" className="hover:text-white transition-colors">About</Link></li>
+                <li><Link to="#" className="hover:text-white transition-colors">Careers</Link></li>
                 <li><Link to="#" className="hover:text-white transition-colors">Contact</Link></li>
                 <li><Link to="#" className="hover:text-white transition-colors">Privacy Policy</Link></li>
               </ul>

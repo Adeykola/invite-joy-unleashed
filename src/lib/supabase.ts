@@ -1,124 +1,103 @@
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js';
+import { initStorageBuckets, checkStorageAvailability } from "./storage";
 
-export const supabase = createClient(
-  "https://ttlqxvpcjpxpbzkgbyod.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0bHF4dnBjanB4cGJ6a2dieW9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTExNTcsImV4cCI6MjA2MTI2NzE1N30.Z4xL_q3N4AkRSHgNE0py7ZPrDwxuo1ihHHkrL01CGoI"
-);
+// Using direct values instead of environment variables
+const supabaseUrl = "https://ttlqxvpcjpxpbzkgbyod.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0bHF4dnBjanB4cGJ6a2dieW9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU2OTExNTcsImV4cCI6MjA2MTI2NzE1N30.Z4xL_q3N4AkRSHgNE0py7ZPrDwxuo1ihHHkrL01CGoI";
 
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    storage: localStorage,
+    persistSession: true,
+    autoRefreshToken: true,
+  }
+});
+
+// Create a function to check if the Supabase client is properly configured
 export const isSupabaseConfigured = () => {
-  return true; // We are using Supabase, so it is configured
+  return true; // We're now using hardcoded values, so it's always configured
 };
 
-// Enhanced function to create and configure storage buckets
+// Automatically create storage buckets if they don't exist
 export const ensureStorageBuckets = async () => {
-  try {
-    console.log("Starting storage bucket verification");
+  console.log("Checking if storage buckets need to be created...");
+  const isAvailable = await checkStorageAvailability();
+  
+  if (!isAvailable) {
+    console.log("Storage buckets not found, attempting to create them...");
+    
     // First check if user is authenticated
-    const { data: authData } = await supabase.auth.getSession();
-    if (!authData.session) {
-      console.log("User not authenticated, can't access storage");
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.session) {
+      console.log("User not authenticated, cannot create storage buckets");
       return false;
     }
     
-    // Check if buckets exist and create them if they don't
-    const { data: buckets, error } = await supabase.storage.listBuckets();
-    
-    if (error) {
-      console.error('Error listing storage buckets:', error);
-      return false;
+    const success = await initStorageBuckets();
+    console.log("Storage bucket creation result:", success ? "Success" : "Failed");
+    return success;
+  }
+  
+  return true;
+};
+
+// Add a helper function to initialize storage when the app loads
+// This function now has a "viewOnly" mode that doesn't try to initialize storage
+export const initializeStorageOnStartup = async (options = { quietMode: false, viewOnly: false }) => {
+  try {
+    if (!options.quietMode) {
+      console.log("Checking storage availability...");
     }
     
-    // Check for event-logos bucket
-    const logoBucket = buckets?.find(b => b.name === 'event-logos');
-    if (!logoBucket) {
-      console.log("Creating event-logos bucket");
-      const { error: createLogoError } = await supabase.storage.createBucket('event-logos', {
-        public: true,
-        fileSizeLimit: 10485760, // 10MB
-        allowedMimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'image/svg+xml']
-      });
+    // If in viewOnly mode, just check if storage is available but don't try to initialize it
+    const isAvailable = await checkStorageAvailability();
+    
+    // In viewOnly mode, just return the availability status without trying to initialize
+    if (options.viewOnly) {
+      return isAvailable;
+    }
+    
+    if (!isAvailable) {
+      if (!options.quietMode) {
+        console.log("Storage buckets not found on startup, initializing...");
+      }
       
-      if (createLogoError) {
-        console.error('Error creating event-logos bucket:', createLogoError);
-        if (!createLogoError.message.includes('already exists')) {
-          return false;
-        }
-      }
-    }
-    
-    // Check for event-banners bucket
-    const bannerBucket = buckets?.find(b => b.name === 'event-banners');
-    if (!bannerBucket) {
-      console.log("Creating event-banners bucket");
-      const { error: createBannerError } = await supabase.storage.createBucket('event-banners', {
-        public: true,
-        fileSizeLimit: 10485760, // 10MB
-        allowedMimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'image/svg+xml']
+      // Use a timeout to avoid blocking the UI
+      return new Promise((resolve) => {
+        // Delay storage initialization to not block critical UI rendering
+        setTimeout(async () => {
+          try {
+            const success = await initStorageBuckets();
+            if (!options.quietMode) {
+              console.log("Storage initialization result:", success ? "Success" : "Failed");
+            }
+            resolve(success);
+          } catch (error) {
+            console.error("Error in delayed storage initialization:", error);
+            resolve(false);
+          }
+        }, 1000);
       });
-      
-      if (createBannerError) {
-        console.error('Error creating event-banners bucket:', createBannerError);
-        if (!createBannerError.message.includes('already exists')) {
-          return false;
-        }
+    } else {
+      if (!options.quietMode) {
+        console.log("Storage buckets verified on startup");
       }
+      return true;
     }
-    
-    // Set public access policies for both buckets
-    const setupPolicy = async (bucketName: string) => {
-      try {
-        // In the latest Supabase JavaScript client, getPublicUrl doesn't return an error property
-        // The method has changed to only return { data: { publicUrl: string } }
-        // So we just need to check if we can get a public URL without checking for errors
-        const { data } = supabase.storage.from(bucketName).getPublicUrl('test-policy-file');
-        if (data) {
-          console.log(`Public access confirmed for ${bucketName}`);
-        }
-      } catch (e) {
-        console.log(`Note: Policy check failed for ${bucketName}, but this is often expected:`, e);
-        // This is often expected and not a true error
-      }
-    };
-    
-    await setupPolicy('event-logos');
-    await setupPolicy('event-banners');
-    
-    console.log("Storage buckets verified and configured successfully");
-    return true;
   } catch (error) {
-    console.error('Unexpected error ensuring storage buckets:', error);
+    console.error("Error initializing storage on startup:", error);
     return false;
   }
 };
 
-// Function to run necessary database migrations
-export const runMigrations = async () => {
+// Helper function to check if a user is authenticated
+export const isUserAuthenticated = async () => {
   try {
-    // Check if checked_in column exists in rsvps table
-    const { data: columns, error } = await supabase.rpc('get_column_info', {
-      target_table: 'rsvps',
-      target_column: 'checked_in'
-    });
-    
-    if (error) {
-      console.error('Error checking column:', error);
-      return false;
-    }
-    
-    // If column doesn't exist, add it
-    if (!columns || columns.length === 0) {
-      const { error: addColumnError } = await supabase.rpc('add_rsvp_checkin_columns');
-      
-      if (addColumnError) {
-        console.error('Error adding columns:', addColumnError);
-        return false;
-      }
-    }
-    
-    return true;
+    const { data: { session } } = await supabase.auth.getSession();
+    return !!session;
   } catch (error) {
-    console.error('Migration error:', error);
+    console.error("Error checking authentication status:", error);
     return false;
   }
 };

@@ -1,46 +1,58 @@
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import QRCodeStyling from 'qr-code-styling';
 
 interface QRCodeProps {
   value: string;
   size?: number;
+  color?: string;
   bgColor?: string;
-  fgColor?: string;
-  level?: "L" | "M" | "Q" | "H";
-  includeMargin?: boolean;
-  className?: string;
 }
 
-// A simple QR code placeholder component
-// In a real application, you would use a proper QR code library
-const QRCode: React.FC<QRCodeProps> = ({
-  value,
-  size = 200,
-  bgColor = "#ffffff",
-  fgColor = "#000000",
-  level = "L",
-  includeMargin = false,
-  className,
+const QRCode: React.FC<QRCodeProps> = ({ 
+  value, 
+  size = 200, 
+  color = '#000000', 
+  bgColor = '#ffffff' 
 }) => {
-  // Generate a base64 mock QR code image
-  // This is just for demonstration purposes
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}`;
-
-  return (
-    <div className={className}>
-      <img 
-        src={qrCodeUrl} 
-        alt="QR Code" 
-        width={size} 
-        height={size} 
-        style={{
-          backgroundColor: bgColor,
-          display: 'block',
-          maxWidth: '100%'
-        }}
-      />
-    </div>
-  );
+  const ref = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    if (ref.current) {
+      // Clear existing QR code
+      while (ref.current.firstChild) {
+        ref.current.removeChild(ref.current.firstChild);
+      }
+      
+      // Generate new QR code
+      const qrCode = new QRCodeStyling({
+        width: size,
+        height: size,
+        data: value,
+        dotsOptions: {
+          color: color,
+          type: 'rounded'
+        },
+        backgroundOptions: {
+          color: bgColor,
+        },
+        cornersSquareOptions: {
+          type: 'extra-rounded'
+        },
+        cornersDotOptions: {
+          type: 'dot'
+        },
+        imageOptions: {
+          crossOrigin: 'anonymous',
+          margin: 10
+        }
+      });
+      
+      qrCode.append(ref.current);
+    }
+  }, [value, size, color, bgColor]);
+  
+  return <div ref={ref} />;
 };
 
 export default QRCode;

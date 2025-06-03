@@ -1,4 +1,5 @@
 
+// Update CreateEventDialog.tsx to use the improved storage initialization
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -76,7 +77,7 @@ export function CreateEventDialog({ storageInitialized = false }: CreateEventDia
         toast({
           title: "Storage Warning",
           description: "Storage access is limited. You can still create events, but image uploads may not work.",
-          variant: "destructive",  // Changed from "warning" to "destructive" to match allowed variants
+          variant: "warning",
         });
         
         // Still set storageReady to true to allow event creation without images
@@ -132,7 +133,7 @@ export function CreateEventDialog({ storageInitialized = false }: CreateEventDia
           </div>
         ) : errorMessage ? (
           <div className="py-8">
-            <Alert variant="destructive" className="mb-4">
+            <Alert variant="warning" className="mb-4">
               <AlertTitle>Storage Notice</AlertTitle>
               <AlertDescription>
                 <p>{errorMessage}</p>

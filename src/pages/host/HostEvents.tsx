@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, ArrowLeft, Info } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert-custom";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
 import { ensureStorageBuckets } from "@/lib/supabase";
 
@@ -69,7 +69,7 @@ const HostEvents = () => {
       setErrorMessage(errorMsg);
       
       toast({
-        variant: "default",
+        variant: "warning",
         title: "Storage Access Limited",
         description: "Some features may not work properly. Core event functionality will still be available.",
       });
@@ -89,7 +89,7 @@ const HostEvents = () => {
   };
 
   const handleBack = () => {
-    navigate('/host');
+    navigate(-1);
   };
   
   return (
@@ -100,7 +100,13 @@ const HostEvents = () => {
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleBack}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
+              Back
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/host-dashboard">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Dashboard
+              </Link>
             </Button>
           </div>
         </div>
