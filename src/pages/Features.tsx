@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import FeatureSection from "@/components/FeatureSection";
-import PageLayout from "@/components/layouts/PageLayout";
+import PageLayout from "@/components/PageLayout";
 import { Link } from "react-router-dom";
 
 const Features = () => {

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import PageLayout from '@/components/layouts/PageLayout';
+import PageLayout from '@/components/PageLayout';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { useEventDetails } from '@/hooks/useEventDetails';
 import { EventBanner } from '@/components/events/EventBanner';
