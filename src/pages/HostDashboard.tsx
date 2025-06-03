@@ -1,264 +1,191 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
-import { format } from "date-fns";
-import { useState } from "react";
+import { CalendarDays, Users, Settings, MessageCircle, Smartphone, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Calendar, Users, Activity } from "lucide-react";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { WhatsAppConnection } from "@/components/whatsapp/WhatsAppConnection";
 
 const HostDashboard = () => {
-  const [summary, setSummary] = useState({
-    total: 0,
-    confirmed: 0,
-    declined: 0,
-    pending: 0
-  });
+  const { user } = useAuth();
 
-  // Query to get all RSVPs for statistics
-  const { data: rsvpStats } = useQuery({
-    queryKey: ["rsvps-stats"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("rsvps")
-        .select(`
-          id,
-          response_status
-        `);
-
-      if (error) throw error;
-      
-      // Calculate summary stats
-      const stats = {
-        total: data.length,
-        confirmed: data.filter(rsvp => rsvp.response_status === 'confirmed').length,
-        declined: data.filter(rsvp => rsvp.response_status === 'declined').length,
-        pending: data.filter(rsvp => rsvp.response_status === 'maybe').length
-      };
-      
-      setSummary(stats);
-      return data;
-    },
-  });
-
-  // Query to get upcoming events
-  const { data: upcomingEvents } = useQuery({
-    queryKey: ["upcoming-events"],
-    queryFn: async () => {
-      const today = new Date().toISOString();
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .gt("date", today)
-        .order("date", { ascending: true })
-        .limit(3);
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Query to get event statistics
+  // Fetch event stats
   const { data: eventStats } = useQuery({
-    queryKey: ["event-stats"],
+    queryKey: ["event-stats", user?.id],
     queryFn: async () => {
+      if (!user?.id) return null;
+      
       const { data: events, error } = await supabase
         .from("events")
-        .select("*");
+        .select("*, rsvps(response_status)")
+        .eq("host_id", user.id);
 
       if (error) throw error;
       
-      // Calculate stats
-      const today = new Date();
       const total = events?.length || 0;
-      const upcoming = events?.filter(event => new Date(event.date) > today).length || 0;
-      const past = events?.filter(event => new Date(event.date) <= today).length || 0;
+      const upcoming = events?.filter(event => new Date(event.date) > new Date()).length || 0;
+      const totalRsvps = events?.reduce((acc, event) => acc + (event.rsvps?.length || 0), 0) || 0;
+      const confirmedRsvps = events?.reduce((acc, event) => 
+        acc + (event.rsvps?.filter((rsvp: any) => rsvp.response_status === 'confirmed').length || 0), 0) || 0;
       
-      return { total, upcoming, past };
+      return { total, upcoming, totalRsvps, confirmedRsvps };
     },
+    enabled: !!user?.id,
+  });
+
+  // Fetch WhatsApp session status
+  const { data: whatsappSession } = useQuery({
+    queryKey: ['whatsapp-session', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('whatsapp_sessions')
+        .select('status')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+    enabled: !!user?.id,
   });
 
   return (
     <DashboardLayout userType="host">
       <div className="space-y-8">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Host Dashboard</h2>
-          <Link to="/host-dashboard/events">
-            <Button>Manage Events</Button>
-          </Link>
-        </div>
-        
-        {/* Event Statistics */}
         <div>
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <Activity className="mr-2 h-5 w-5" />
-            Event Statistics
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total Events
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{eventStats?.total || 0}</div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Upcoming Events
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">{eventStats?.upcoming || 0}</div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Past Events
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-500">{eventStats?.past || 0}</div>
-              </CardContent>
-            </Card>
-          </div>
+          <h1 className="text-3xl font-bold text-gray-900">Host Dashboard</h1>
+          <p className="text-gray-600 mt-2">Manage your events and connect with guests</p>
         </div>
-        
-        {/* RSVP Summary */}
-        <div>
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <Users className="mr-2 h-5 w-5" />
-            RSVP Summary
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total RSVPs
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{summary.total}</div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Confirmed Guests
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">{summary.confirmed}</div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Declined RSVPs
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-600">{summary.declined}</div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Pending Responses
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-amber-600">{summary.pending}</div>
-              </CardContent>
-            </Card>
-          </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Events</CardTitle>
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{eventStats?.total || 0}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">{eventStats?.upcoming || 0}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total RSVPs</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{eventStats?.totalRsvps || 0}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Confirmed</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{eventStats?.confirmedRsvps || 0}</div>
+            </CardContent>
+          </Card>
         </div>
-        
-        {/* Upcoming Events */}
-        <div>
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <Calendar className="mr-2 h-5 w-5" />
-            Upcoming Events
-          </h3>
-          {upcomingEvents && upcomingEvents.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {upcomingEvents.map(event => (
-                <Link to={`/event/${event.id}`} key={event.id}>
-                  <Card className="bg-muted/50 hover:bg-muted transition-colors">
-                    <CardContent className="p-4">
-                      <p className="font-semibold truncate">{event.title}</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {format(new Date(event.date), "PPP")}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Location: {event.location}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="p-6 text-center">
-                <p className="text-muted-foreground">No upcoming events scheduled.</p>
-                <Link to="/host-dashboard/events">
-                  <Button variant="outline" className="mt-4">Create Your First Event</Button>
-                </Link>
-              </CardContent>
-            </Card>
-          )}
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Button asChild className="w-full">
+                  <Link to="/host-dashboard/events">
+                    <CalendarDays className="mr-2 h-4 w-4" />
+                    Manage Events
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full">
+                  <Link to="/host-dashboard/guests">
+                    <Users className="mr-2 h-4 w-4" />
+                    View Guests
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full">
+                  <Link to="/host-dashboard/calendar">
+                    <CalendarDays className="mr-2 h-4 w-4" />
+                    Calendar View
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full">
+                  <Link to="/host-dashboard/settings">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* WhatsApp Quick Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Smartphone className="w-5 h-5 mr-2 text-green-600" />
+                WhatsApp Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Connection Status:</span>
+                  <span className={`text-sm font-medium ${
+                    whatsappSession?.status === 'connected' ? 'text-green-600' : 'text-gray-500'
+                  }`}>
+                    {whatsappSession?.status === 'connected' ? 'Connected' : 'Not Connected'}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <Button asChild variant="outline" className="w-full">
+                    <Link to="/host-dashboard/whatsapp">
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      Manage WhatsApp
+                    </Link>
+                  </Button>
+                  {whatsappSession?.status === 'connected' && (
+                    <Button asChild size="sm" className="w-full bg-green-600 hover:bg-green-700">
+                      <Link to="/host-dashboard/whatsapp?tab=broadcasts">
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        Send Broadcast
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        
-        {/* Quick Links */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link to="/host-dashboard/events">
-            <Card className="hover:bg-muted/50 transition-colors">
-              <CardContent className="p-6 flex flex-col items-center text-center">
-                <Calendar className="h-8 w-8 mb-2" />
-                <h4 className="font-semibold text-lg">Manage Events</h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Create, edit, and delete your events
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-          
-          <Link to="/host-dashboard/guests">
-            <Card className="hover:bg-muted/50 transition-colors">
-              <CardContent className="p-6 flex flex-col items-center text-center">
-                <Users className="h-8 w-8 mb-2" />
-                <h4 className="font-semibold text-lg">Guest Lists</h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  View and manage your event attendees
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-          
-          <Link to="/host-dashboard/calendar">
-            <Card className="hover:bg-muted/50 transition-colors">
-              <CardContent className="p-6 flex flex-col items-center text-center">
-                <Calendar className="h-8 w-8 mb-2" />
-                <h4 className="font-semibold text-lg">Calendar View</h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  See all your events in a calendar format
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-        </div>
+
+        {/* WhatsApp Connection Widget */}
+        {(!whatsappSession || whatsappSession.status !== 'connected') && (
+          <WhatsAppConnection />
+        )}
       </div>
     </DashboardLayout>
   );

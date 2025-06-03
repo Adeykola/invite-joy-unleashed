@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,6 +22,7 @@ import Event from "./pages/Event";
 import PublicEvents from "./pages/PublicEvents";
 import GuestPortal from "./components/events/GuestPortal";
 import GuestCheckInConfirmation from "./pages/GuestCheckInConfirmation";
+import HostWhatsApp from "./pages/host/HostWhatsApp";
 
 const ProtectedRoute = ({ children, allowedRoles = ["admin", "host", "user"] }: { children: JSX.Element, allowedRoles?: string[] }) => {
   const { user, profile, loading } = useAuth();
@@ -91,6 +91,7 @@ const App = () => (
             <Route path="/host-dashboard/guests" element={<HostRoute><HostGuests /></HostRoute>} />
             <Route path="/host-dashboard/calendar" element={<HostRoute><HostCalendar /></HostRoute>} />
             <Route path="/host-dashboard/settings" element={<HostRoute><HostSettings /></HostRoute>} />
+            <Route path="/host-dashboard/whatsapp" element={<HostRoute><HostWhatsApp /></HostRoute>} />
             <Route path="/host-dashboard/check-in/:eventId" element={<HostRoute><CheckIn /></HostRoute>} />
             <Route path="/user-dashboard" element={<UserRoute><UserDashboard /></UserRoute>} />
             
