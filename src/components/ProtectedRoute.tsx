@@ -26,7 +26,7 @@ const ProtectedRoute = ({
     }
 
     if (requiredRole && profile?.role !== requiredRole) {
-      // Redirect based on actual user role
+      // Redirect based on actual user role to their proper dashboard
       if (profile?.role === 'admin') {
         navigate('/admin');
       } else if (profile?.role === 'host') {

@@ -89,7 +89,7 @@ const HostEvents = () => {
   };
 
   const handleBack = () => {
-    navigate(-1);
+    navigate('/host');
   };
   
   return (
@@ -100,13 +100,7 @@ const HostEvents = () => {
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleBack}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/host-dashboard">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Link>
+              Back to Dashboard
             </Button>
           </div>
         </div>

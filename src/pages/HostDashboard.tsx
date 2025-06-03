@@ -85,7 +85,7 @@ const HostDashboard = () => {
       <div className="space-y-8">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">Host Dashboard</h2>
-          <Link to="/host-dashboard/events">
+          <Link to="/host/events">
             <Button>Manage Events</Button>
           </Link>
         </div>
@@ -213,7 +213,7 @@ const HostDashboard = () => {
             <Card>
               <CardContent className="p-6 text-center">
                 <p className="text-muted-foreground">No upcoming events scheduled.</p>
-                <Link to="/host-dashboard/events">
+                <Link to="/host/events">
                   <Button variant="outline" className="mt-4">Create Your First Event</Button>
                 </Link>
               </CardContent>
@@ -222,8 +222,8 @@ const HostDashboard = () => {
         </div>
         
         {/* Quick Links */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link to="/host-dashboard/events">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Link to="/host/events">
             <Card className="hover:bg-muted/50 transition-colors">
               <CardContent className="p-6 flex flex-col items-center text-center">
                 <Calendar className="h-8 w-8 mb-2" />
@@ -235,7 +235,7 @@ const HostDashboard = () => {
             </Card>
           </Link>
           
-          <Link to="/host-dashboard/guests">
+          <Link to="/host/guests">
             <Card className="hover:bg-muted/50 transition-colors">
               <CardContent className="p-6 flex flex-col items-center text-center">
                 <Users className="h-8 w-8 mb-2" />
@@ -247,13 +247,25 @@ const HostDashboard = () => {
             </Card>
           </Link>
           
-          <Link to="/host-dashboard/calendar">
+          <Link to="/host/calendar">
             <Card className="hover:bg-muted/50 transition-colors">
               <CardContent className="p-6 flex flex-col items-center text-center">
                 <Calendar className="h-8 w-8 mb-2" />
                 <h4 className="font-semibold text-lg">Calendar View</h4>
                 <p className="text-sm text-muted-foreground mt-1">
                   See all your events in a calendar format
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link to="/host/whatsapp">
+            <Card className="hover:bg-muted/50 transition-colors">
+              <CardContent className="p-6 flex flex-col items-center text-center">
+                <Users className="h-8 w-8 mb-2" />
+                <h4 className="font-semibold text-lg">WhatsApp</h4>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Send messages and manage broadcasts
                 </p>
               </CardContent>
             </Card>
