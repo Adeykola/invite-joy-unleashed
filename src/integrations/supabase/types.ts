@@ -60,6 +60,13 @@ export type Database = {
             referencedRelation: "whatsapp_broadcasts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_broadcast_recipients_broadcast_id"
+            columns: ["broadcast_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_broadcasts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       event_guests: {
@@ -287,6 +294,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_whatsapp_broadcasts_event_id"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_whatsapp_broadcasts_template_id"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "message_templates"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "whatsapp_broadcasts_event_id_fkey"
             columns: ["event_id"]
