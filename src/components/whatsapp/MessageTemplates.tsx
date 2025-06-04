@@ -202,7 +202,7 @@ export const MessageTemplates = () => {
                     required
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Available variables: {{guest_name}}, {{event_title}}, {{event_date}}, {{event_location}}, {{rsvp_link}}
+                    Available variables: guest_name, event_title, event_date, event_location, rsvp_link
                   </p>
                 </div>
                 <div className="flex justify-end space-x-2">

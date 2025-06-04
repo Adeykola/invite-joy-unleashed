@@ -69,7 +69,6 @@ const HostEvents = () => {
       setErrorMessage(errorMsg);
       
       toast({
-        variant: "warning",
         title: "Storage Access Limited",
         description: "Some features may not work properly. Core event functionality will still be available.",
       });
@@ -112,7 +111,7 @@ const HostEvents = () => {
         </div>
         
         {errorMessage && !storageInitialized && (
-          <Alert variant="warning">
+          <Alert>
             <AlertTitle className="font-medium mb-1">Storage Access Notice</AlertTitle>
             <AlertDescription>
               <p className="text-sm">{errorMessage}</p>

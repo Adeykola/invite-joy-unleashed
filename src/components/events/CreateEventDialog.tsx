@@ -77,7 +77,6 @@ export function CreateEventDialog({ storageInitialized = false }: CreateEventDia
         toast({
           title: "Storage Warning",
           description: "Storage access is limited. You can still create events, but image uploads may not work.",
-          variant: "warning",
         });
         
         // Still set storageReady to true to allow event creation without images
@@ -133,7 +132,7 @@ export function CreateEventDialog({ storageInitialized = false }: CreateEventDia
           </div>
         ) : errorMessage ? (
           <div className="py-8">
-            <Alert variant="warning" className="mb-4">
+            <Alert className="mb-4">
               <AlertTitle>Storage Notice</AlertTitle>
               <AlertDescription>
                 <p>{errorMessage}</p>
