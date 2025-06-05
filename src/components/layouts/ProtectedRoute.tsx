@@ -28,12 +28,7 @@ export const ProtectedRoute = ({ children, allowedRoles, redirectTo }: Protected
   }
   
   if (profile && !allowedRoles.includes(profile.role)) {
-    // Redirect based on user role if they don't have access
-    if (redirectTo) {
-      return <Navigate to={redirectTo} replace />;
-    }
-    
-    // Default redirects based on role
+    // Strict redirect based on user role - no cross-access allowed
     if (profile.role === "admin") {
       return <Navigate to="/admin-dashboard" replace />;
     } else if (profile.role === "host") {
@@ -46,15 +41,15 @@ export const ProtectedRoute = ({ children, allowedRoles, redirectTo }: Protected
   return <>{children}</>;
 };
 
-// Specific route components for different roles
+// Specific route components for different roles - now with strict separation
 export const AdminRoute = ({ children }: { children: ReactNode }) => (
   <ProtectedRoute allowedRoles={["admin"]}>{children}</ProtectedRoute>
 );
 
 export const HostRoute = ({ children }: { children: ReactNode }) => (
-  <ProtectedRoute allowedRoles={["host", "admin"]}>{children}</ProtectedRoute>
+  <ProtectedRoute allowedRoles={["host"]}>{children}</ProtectedRoute>
 );
 
 export const UserRoute = ({ children }: { children: ReactNode }) => (
-  <ProtectedRoute allowedRoles={["user", "admin"]}>{children}</ProtectedRoute>
+  <ProtectedRoute allowedRoles={["user"]}>{children}</ProtectedRoute>
 );
