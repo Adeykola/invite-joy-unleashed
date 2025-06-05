@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
+import HostDashboardLayout from "@/components/layouts/HostDashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -59,7 +58,7 @@ const HostGuests = () => {
   });
 
   return (
-    <DashboardLayout userType="host">
+    <HostDashboardLayout>
       <div className="space-y-8">
         <h2 className="text-2xl font-bold">Guest Lists</h2>
         
@@ -129,7 +128,7 @@ const HostGuests = () => {
         isOpen={isRsvpDialogOpen}
         onOpenChange={setIsRsvpDialogOpen}
       />
-    </DashboardLayout>
+    </HostDashboardLayout>
   );
 };
 

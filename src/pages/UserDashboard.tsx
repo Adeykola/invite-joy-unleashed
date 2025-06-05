@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -7,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, CheckCircle, Clock, MapPin } from "lucide-react";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
+import UserDashboardLayout from "@/components/layouts/UserDashboardLayout";
 import { useState } from "react";
 
 const UserDashboard = () => {
@@ -51,19 +50,19 @@ const UserDashboard = () => {
 
   if (isLoading) {
     return (
-      <DashboardLayout userType="user">
+      <UserDashboardLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto"></div>
             <p className="mt-3 text-gray-600">Loading events...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </UserDashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout userType="user">
+    <UserDashboardLayout>
       <div className="space-y-8">
         <div>
           <h2 className="text-2xl font-bold mb-6">Welcome to Our Event Platform!</h2>
@@ -186,7 +185,7 @@ const UserDashboard = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </UserDashboardLayout>
   );
 };
 

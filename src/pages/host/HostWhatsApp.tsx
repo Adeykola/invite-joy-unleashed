@@ -1,12 +1,12 @@
 
-import DashboardLayout from "@/components/layouts/DashboardLayout";
+import HostDashboardLayout from "@/components/layouts/HostDashboardLayout";
 import { WhatsAppDashboard } from "@/components/whatsapp/WhatsAppDashboard";
 
 const HostWhatsApp = () => {
   return (
-    <DashboardLayout userType="host">
+    <HostDashboardLayout>
       <WhatsAppDashboard />
-    </DashboardLayout>
+    </HostDashboardLayout>
   );
 };
 

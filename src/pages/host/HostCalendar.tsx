@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -10,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
+import HostDashboardLayout from "@/components/layouts/HostDashboardLayout";
 
 const HostCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -44,7 +43,7 @@ const HostCalendar = () => {
   const eventDates = events?.map(event => new Date(event.date)) || [];
   
   return (
-    <DashboardLayout userType="host">
+    <HostDashboardLayout>
       <div className="space-y-8">
         <h2 className="text-2xl font-bold">Event Calendar</h2>
         
@@ -154,7 +153,7 @@ const HostCalendar = () => {
           </Card>
         </div>
       </div>
-    </DashboardLayout>
+    </HostDashboardLayout>
   );
 };
 

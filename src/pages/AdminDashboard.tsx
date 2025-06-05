@@ -1,7 +1,6 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
+import AdminDashboardLayout from "@/components/layouts/AdminDashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -118,7 +117,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <DashboardLayout userType="admin">
+    <AdminDashboardLayout>
       <div className="space-y-8">
         <h2 className="text-3xl font-bold">Admin Dashboard</h2>
         <p className="text-gray-600">
@@ -318,7 +317,7 @@ const AdminDashboard = () => {
           </DialogContent>
         </Dialog>
       </div>
-    </DashboardLayout>
+    </AdminDashboardLayout>
   );
 };
 

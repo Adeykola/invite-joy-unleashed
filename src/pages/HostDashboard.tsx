@@ -1,9 +1,8 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CalendarDays, Users, Settings, MessageCircle, Smartphone, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
+import HostDashboardLayout from "@/components/layouts/HostDashboardLayout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -57,7 +56,7 @@ const HostDashboard = () => {
   });
 
   return (
-    <DashboardLayout userType="host">
+    <HostDashboardLayout>
       <div className="space-y-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Host Dashboard</h1>
@@ -187,7 +186,7 @@ const HostDashboard = () => {
           <WhatsAppConnection />
         )}
       </div>
-    </DashboardLayout>
+    </HostDashboardLayout>
   );
 };
 

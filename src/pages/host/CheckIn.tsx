@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
+import HostDashboardLayout from "@/components/layouts/HostDashboardLayout";
 import { CheckInSystem } from "@/components/events/CheckInSystem";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
@@ -33,17 +32,17 @@ const CheckIn = () => {
 
   if (isLoading) {
     return (
-      <DashboardLayout userType="host">
+      <HostDashboardLayout>
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
         </div>
-      </DashboardLayout>
+      </HostDashboardLayout>
     );
   }
 
   if (!event) {
     return (
-      <DashboardLayout userType="host">
+      <HostDashboardLayout>
         <div className="text-center p-8">
           <h2 className="text-2xl font-bold text-red-500">Event not found</h2>
           <p className="mt-2">The event you're looking for doesn't exist or you don't have permission to view it.</p>
@@ -51,12 +50,12 @@ const CheckIn = () => {
             <Link to="/host-dashboard/events">Back to Events</Link>
           </Button>
         </div>
-      </DashboardLayout>
+      </HostDashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout userType="host">
+    <HostDashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -82,7 +81,7 @@ const CheckIn = () => {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </HostDashboardLayout>
   );
 };
 
