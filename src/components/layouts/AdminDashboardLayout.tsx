@@ -12,7 +12,13 @@ import {
   X,
   Bell,
   User,
-  ChevronDown
+  ChevronDown,
+  BarChart3,
+  MessageSquare,
+  Shield,
+  Database,
+  UserCheck,
+  Zap
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -45,14 +51,44 @@ const AdminDashboardLayout = ({ children }: AdminDashboardLayoutProps) => {
       icon: <LayoutDashboard className="h-5 w-5" />,
     },
     {
+      name: "Analytics",
+      href: "/admin-dashboard/analytics",
+      icon: <BarChart3 className="h-5 w-5" />,
+    },
+    {
       name: "All Events",
       href: "/admin-dashboard/events",
       icon: <Calendar className="h-5 w-5" />,
     },
     {
-      name: "Users",
+      name: "Users Management",
       href: "/admin-dashboard/users",
       icon: <Users className="h-5 w-5" />,
+    },
+    {
+      name: "User Roles",
+      href: "/admin-dashboard/roles",
+      icon: <UserCheck className="h-5 w-5" />,
+    },
+    {
+      name: "Communications",
+      href: "/admin-dashboard/communications",
+      icon: <MessageSquare className="h-5 w-5" />,
+    },
+    {
+      name: "System Health",
+      href: "/admin-dashboard/system",
+      icon: <Database className="h-5 w-5" />,
+    },
+    {
+      name: "Security",
+      href: "/admin-dashboard/security",
+      icon: <Shield className="h-5 w-5" />,
+    },
+    {
+      name: "Integrations",
+      href: "/admin-dashboard/integrations",
+      icon: <Zap className="h-5 w-5" />,
     },
     {
       name: "Settings",
