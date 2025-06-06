@@ -180,6 +180,7 @@ const AdminEvents = () => {
                   events.map((event) => {
                     const status = getEventStatus(event.date);
                     const rsvpData = rsvpCounts?.[event.id] || { confirmed: 0, pending: 0, declined: 0 };
+                    const hostProfile = Array.isArray(event.profiles) ? event.profiles[0] : event.profiles;
                     
                     return (
                       <TableRow key={event.id}>
@@ -194,10 +195,10 @@ const AdminEvents = () => {
                         <TableCell>
                           <div>
                             <div className="font-medium">
-                              {event.profiles?.full_name || "Unknown Host"}
+                              {hostProfile?.full_name || "Unknown Host"}
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              {event.profiles?.email}
+                              {hostProfile?.email}
                             </div>
                           </div>
                         </TableCell>

@@ -41,6 +41,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+type UserRole = "admin" | "host" | "user";
+
 const AdminUsers = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -61,7 +63,7 @@ const AdminUsers = () => {
       }
 
       if (roleFilter !== "all") {
-        query = query.eq("role", roleFilter);
+        query = query.eq("role", roleFilter as UserRole);
       }
 
       const { data, error } = await query;
@@ -72,7 +74,7 @@ const AdminUsers = () => {
 
   // Update user role mutation
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: UserRole }) => {
       const { error } = await supabase
         .from("profiles")
         .update({ role: newRole })
@@ -97,11 +99,11 @@ const AdminUsers = () => {
     },
   });
 
-  const handleRoleChange = (userId: string, newRole: string) => {
+  const handleRoleChange = (userId: string, newRole: UserRole) => {
     updateRoleMutation.mutate({ userId, newRole });
   };
 
-  const getRoleBadgeVariant = (role: string) => {
+  const getRoleBadgeVariant = (role: string | null) => {
     switch (role) {
       case "admin":
         return "destructive";
