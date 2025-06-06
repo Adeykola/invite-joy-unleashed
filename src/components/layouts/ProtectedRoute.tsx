@@ -12,6 +12,8 @@ interface ProtectedRouteProps {
 export const ProtectedRoute = ({ children, allowedRoles, redirectTo }: ProtectedRouteProps) => {
   const { user, profile, loading } = useAuth();
   
+  console.log('ProtectedRoute check:', { user: !!user, profile, loading, allowedRoles });
+  
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -23,18 +25,26 @@ export const ProtectedRoute = ({ children, allowedRoles, redirectTo }: Protected
     );
   }
   
+  // If no user is logged in, redirect to login
   if (!user) {
+    console.log('No user found, redirecting to login');
     return <Navigate to="/login" replace />;
   }
   
-  if (profile && !allowedRoles.includes(profile.role)) {
+  // If user is logged in but no profile or role doesn't match, enforce strict role-based access
+  if (!profile || !allowedRoles.includes(profile.role)) {
+    console.log('Role mismatch or no profile:', profile?.role, 'allowed:', allowedRoles);
+    
     // Strict redirect based on user role - no cross-access allowed
-    if (profile.role === "admin") {
+    if (profile?.role === "admin") {
       return <Navigate to="/admin-dashboard" replace />;
-    } else if (profile.role === "host") {
+    } else if (profile?.role === "host") {
       return <Navigate to="/host-dashboard" replace />;
-    } else {
+    } else if (profile?.role === "user") {
       return <Navigate to="/user-dashboard" replace />;
+    } else {
+      // If no valid role, redirect to login
+      return <Navigate to="/login" replace />;
     }
   }
   

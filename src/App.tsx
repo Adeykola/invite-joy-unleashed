@@ -5,9 +5,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { AdminRoute, HostRoute, UserRoute } from "./components/layouts/ProtectedRoute";
 import Index from "./pages/Index";
 import Event from "./pages/Event";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/AdminDashboard";
 import HostDashboard from "./pages/HostDashboard";
 import UserDashboard from "./pages/UserDashboard";
@@ -43,33 +46,35 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/event/:id" element={<Event />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             
-            {/* Admin Dashboard Routes */}
-            <Route path="/admin-dashboard" element={<AdminDashboard />} />
-            <Route path="/admin-dashboard/analytics" element={<AdminAnalytics />} />
-            <Route path="/admin-dashboard/events" element={<AdminEvents />} />
-            <Route path="/admin-dashboard/users" element={<AdminUsers />} />
-            <Route path="/admin-dashboard/roles" element={<AdminRoles />} />
-            <Route path="/admin-dashboard/communications" element={<AdminCommunications />} />
-            <Route path="/admin-dashboard/system" element={<AdminSystem />} />
-            <Route path="/admin-dashboard/security" element={<AdminSecurity />} />
-            <Route path="/admin-dashboard/integrations" element={<AdminIntegrations />} />
-            <Route path="/admin-dashboard/settings" element={<AdminSettings />} />
+            {/* Admin Dashboard Routes - Protected */}
+            <Route path="/admin-dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+            <Route path="/admin-dashboard/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
+            <Route path="/admin-dashboard/events" element={<AdminRoute><AdminEvents /></AdminRoute>} />
+            <Route path="/admin-dashboard/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+            <Route path="/admin-dashboard/roles" element={<AdminRoute><AdminRoles /></AdminRoute>} />
+            <Route path="/admin-dashboard/communications" element={<AdminRoute><AdminCommunications /></AdminRoute>} />
+            <Route path="/admin-dashboard/system" element={<AdminRoute><AdminSystem /></AdminRoute>} />
+            <Route path="/admin-dashboard/security" element={<AdminRoute><AdminSecurity /></AdminRoute>} />
+            <Route path="/admin-dashboard/integrations" element={<AdminRoute><AdminIntegrations /></AdminRoute>} />
+            <Route path="/admin-dashboard/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
             
-            {/* Host Dashboard Routes */}
-            <Route path="/host-dashboard" element={<HostDashboard />} />
-            <Route path="/host-dashboard/analytics" element={<HostAnalytics />} />
-            <Route path="/host-dashboard/events" element={<HostEvents />} />
-            <Route path="/host-dashboard/guests" element={<HostGuests />} />
-            <Route path="/host-dashboard/calendar" element={<HostCalendar />} />
-            <Route path="/host-dashboard/check-in" element={<CheckIn />} />
-            <Route path="/host-dashboard/whatsapp" element={<HostWhatsApp />} />
-            <Route path="/host-dashboard/settings" element={<HostSettings />} />
+            {/* Host Dashboard Routes - Protected */}
+            <Route path="/host-dashboard" element={<HostRoute><HostDashboard /></HostRoute>} />
+            <Route path="/host-dashboard/analytics" element={<HostRoute><HostAnalytics /></HostRoute>} />
+            <Route path="/host-dashboard/events" element={<HostRoute><HostEvents /></HostRoute>} />
+            <Route path="/host-dashboard/guests" element={<HostRoute><HostGuests /></HostRoute>} />
+            <Route path="/host-dashboard/calendar" element={<HostRoute><HostCalendar /></HostRoute>} />
+            <Route path="/host-dashboard/check-in" element={<HostRoute><CheckIn /></HostRoute>} />
+            <Route path="/host-dashboard/whatsapp" element={<HostRoute><HostWhatsApp /></HostRoute>} />
+            <Route path="/host-dashboard/settings" element={<HostRoute><HostSettings /></HostRoute>} />
             
-            {/* User Dashboard Routes */}
-            <Route path="/user-dashboard" element={<UserDashboard />} />
-            <Route path="/user-dashboard/events" element={<UserEvents />} />
-            <Route path="/user-dashboard/profile" element={<UserProfile />} />
+            {/* User Dashboard Routes - Protected */}
+            <Route path="/user-dashboard" element={<UserRoute><UserDashboard /></UserRoute>} />
+            <Route path="/user-dashboard/events" element={<UserRoute><UserEvents /></UserRoute>} />
+            <Route path="/user-dashboard/profile" element={<UserRoute><UserProfile /></UserRoute>} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>

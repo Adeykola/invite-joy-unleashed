@@ -22,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      console.log('Auth state changed:', event, newSession?.user?.email);
       setSession(newSession);
       setUser(newSession?.user ?? null);
       
@@ -29,12 +30,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (newSession?.user?.id) {
         setTimeout(async () => {
           try {
-            const { data } = await supabase
+            const { data, error } = await supabase
               .from('profiles')
               .select('*')
               .eq('id', newSession.user.id)
               .single();
               
+            if (error && error.code !== 'PGRST116') {
+              console.error('Error fetching profile:', error);
+            }
             setProfile(data);
           } catch (error) {
             console.error('Error fetching profile:', error);
@@ -54,12 +58,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(initialSession?.user ?? null);
         
         if (initialSession?.user?.id) {
-          const { data } = await supabase
+          const { data, error } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', initialSession.user.id)
             .single();
             
+          if (error && error.code !== 'PGRST116') {
+            console.error('Error fetching profile:', error);
+          }
           setProfile(data);
         }
       } catch (error) {
