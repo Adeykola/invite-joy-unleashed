@@ -5,13 +5,15 @@ import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
   Calendar,
+  User,
   Settings,
   LogOut,
   Menu,
   X,
   Bell,
-  User,
-  ChevronDown
+  ChevronDown,
+  Heart,
+  Star
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -44,9 +46,24 @@ const UserDashboardLayout = ({ children }: UserDashboardLayoutProps) => {
       icon: <LayoutDashboard className="h-5 w-5" />,
     },
     {
-      name: "My RSVPs",
-      href: "/user-dashboard/rsvps",
+      name: "My Events",
+      href: "/user-dashboard/events",
       icon: <Calendar className="h-5 w-5" />,
+    },
+    {
+      name: "Favorites",
+      href: "/user-dashboard/favorites",
+      icon: <Heart className="h-5 w-5" />,
+    },
+    {
+      name: "Reviews",
+      href: "/user-dashboard/reviews",
+      icon: <Star className="h-5 w-5" />,
+    },
+    {
+      name: "Profile",
+      href: "/user-dashboard/profile",
+      icon: <User className="h-5 w-5" />,
     },
     {
       name: "Settings",
@@ -172,7 +189,7 @@ const UserDashboardLayout = ({ children }: UserDashboardLayoutProps) => {
           <div className="flex-1 flex justify-between px-4 md:px-0">
             <div className="flex-1 flex md:ml-6 items-center">
               <h1 className="text-lg font-semibold text-gray-800 md:ml-6">
-                My Account
+                My Dashboard
               </h1>
             </div>
             <div className="ml-4 flex items-center md:ml-6 space-x-4">

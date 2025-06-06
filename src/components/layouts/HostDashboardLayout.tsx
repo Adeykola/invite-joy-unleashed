@@ -13,7 +13,10 @@ import {
   Bell,
   User,
   ChevronDown,
-  MessageCircle
+  BarChart3,
+  MessageSquare,
+  UserCheck,
+  CheckSquare
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -46,12 +49,17 @@ const HostDashboardLayout = ({ children }: HostDashboardLayoutProps) => {
       icon: <LayoutDashboard className="h-5 w-5" />,
     },
     {
-      name: "Events",
+      name: "Analytics",
+      href: "/host-dashboard/analytics",
+      icon: <BarChart3 className="h-5 w-5" />,
+    },
+    {
+      name: "My Events",
       href: "/host-dashboard/events",
       icon: <Calendar className="h-5 w-5" />,
     },
     {
-      name: "Guest Lists",
+      name: "Guest Management",
       href: "/host-dashboard/guests",
       icon: <Users className="h-5 w-5" />,
     },
@@ -61,9 +69,14 @@ const HostDashboardLayout = ({ children }: HostDashboardLayoutProps) => {
       icon: <Calendar className="h-5 w-5" />,
     },
     {
+      name: "Check-in",
+      href: "/host-dashboard/check-in",
+      icon: <CheckSquare className="h-5 w-5" />,
+    },
+    {
       name: "WhatsApp",
       href: "/host-dashboard/whatsapp",
-      icon: <MessageCircle className="h-5 w-5" />,
+      icon: <MessageSquare className="h-5 w-5" />,
     },
     {
       name: "Settings",
@@ -189,7 +202,7 @@ const HostDashboardLayout = ({ children }: HostDashboardLayoutProps) => {
           <div className="flex-1 flex justify-between px-4 md:px-0">
             <div className="flex-1 flex md:ml-6 items-center">
               <h1 className="text-lg font-semibold text-gray-800 md:ml-6">
-                Event Host Dashboard
+                Host Dashboard
               </h1>
             </div>
             <div className="ml-4 flex items-center md:ml-6 space-x-4">
