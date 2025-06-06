@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -54,7 +55,8 @@ const Signup = () => {
           data: {
             full_name: name,
             role: userRole,
-          }
+          },
+          emailRedirectTo: `${window.location.origin}/login`
         }
       });
       
@@ -63,38 +65,30 @@ const Signup = () => {
       }
       
       if (data.user) {
-        // Create a profile record in the profiles table
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            { 
-              id: data.user.id, 
-              full_name: name, 
-              email, 
-              role: userRole 
-            }
-          ]);
-          
-        if (profileError) {
-          throw profileError;
-        }
+        toast({
+          title: "Account created successfully!",
+          description: "Please check your email to verify your account, then you can log in.",
+        });
+        
+        // Redirect to login after successful signup
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
       }
-      
-      toast({
-        title: "Account created successfully!",
-        description: "Please check your email to verify your account.",
-      });
-      
-      // Wait a moment and redirect to login
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
       
     } catch (error: any) {
       console.error("Signup error:", error);
+      
+      let errorMessage = "There was a problem creating your account. Please try again.";
+      if (error.message.includes("User already registered")) {
+        errorMessage = "An account with this email already exists. Please try logging in instead.";
+      } else if (error.message.includes("Password should be")) {
+        errorMessage = "Password should be at least 6 characters long.";
+      }
+      
       toast({
         title: "Signup failed",
-        description: error.message || "There was a problem creating your account. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -116,7 +110,7 @@ const Signup = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/user-dashboard`
+          redirectTo: `${window.location.origin}`
         }
       });
       
@@ -201,7 +195,7 @@ const Signup = () => {
                   </button>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Password must be at least 8 characters long and include a number and a special character.
+                  Password must be at least 8 characters long.
                 </p>
               </div>
               

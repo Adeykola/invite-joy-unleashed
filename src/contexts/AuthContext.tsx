@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
+import { useNavigate } from 'react-router-dom';
 
 type AuthContextType = {
   session: Session | null;
@@ -18,6 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -26,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(newSession);
       setUser(newSession?.user ?? null);
       
-      // Using setTimeout to prevent potential deadlocks
+      // Handle profile fetching and routing
       if (newSession?.user?.id) {
         setTimeout(async () => {
           try {
@@ -38,12 +40,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               
             if (error && error.code !== 'PGRST116') {
               console.error('Error fetching profile:', error);
+              setProfile(null);
+            } else {
+              setProfile(data);
+              
+              // Handle automatic redirection after login
+              if (event === 'SIGNED_IN' && data?.role) {
+                console.log('Redirecting user with role:', data.role);
+                const currentPath = window.location.pathname;
+                
+                // Don't redirect if already on correct dashboard or public pages
+                if (!currentPath.includes('dashboard') && 
+                    currentPath !== '/' && 
+                    currentPath !== '/login' && 
+                    currentPath !== '/signup') {
+                  return;
+                }
+                
+                // Redirect based on role
+                switch (data.role) {
+                  case 'admin':
+                    navigate('/admin-dashboard', { replace: true });
+                    break;
+                  case 'host':
+                    navigate('/host-dashboard', { replace: true });
+                    break;
+                  case 'user':
+                  default:
+                    navigate('/user-dashboard', { replace: true });
+                    break;
+                }
+              }
             }
-            setProfile(data);
           } catch (error) {
             console.error('Error fetching profile:', error);
+            setProfile(null);
           }
-        }, 0);
+        }, 100);
       } else {
         setProfile(null);
       }
@@ -81,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   const signOut = async () => {
     try {
@@ -89,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setSession(null);
       setProfile(null);
+      navigate('/login', { replace: true });
     } catch (error) {
       console.error('Error signing out:', error);
     }

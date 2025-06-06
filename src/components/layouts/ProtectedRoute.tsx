@@ -9,10 +9,15 @@ interface ProtectedRouteProps {
   redirectTo?: string;
 }
 
-export const ProtectedRoute = ({ children, allowedRoles, redirectTo }: ProtectedRouteProps) => {
+export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const { user, profile, loading } = useAuth();
   
-  console.log('ProtectedRoute check:', { user: !!user, profile, loading, allowedRoles });
+  console.log('ProtectedRoute check:', { 
+    user: !!user, 
+    profile: profile?.role, 
+    loading, 
+    allowedRoles 
+  });
   
   if (loading) {
     return (
@@ -31,27 +36,34 @@ export const ProtectedRoute = ({ children, allowedRoles, redirectTo }: Protected
     return <Navigate to="/login" replace />;
   }
   
-  // If user is logged in but no profile or role doesn't match, enforce strict role-based access
-  if (!profile || !allowedRoles.includes(profile.role)) {
-    console.log('Role mismatch or no profile:', profile?.role, 'allowed:', allowedRoles);
+  // If user is logged in but no profile exists, redirect to login
+  if (!profile) {
+    console.log('No profile found, redirecting to login');
+    return <Navigate to="/login" replace />;
+  }
+  
+  // If user has a role but it's not in the allowed roles, redirect to their correct dashboard
+  if (!allowedRoles.includes(profile.role)) {
+    console.log('Role mismatch:', profile.role, 'allowed:', allowedRoles);
     
-    // Strict redirect based on user role - no cross-access allowed
-    if (profile?.role === "admin") {
-      return <Navigate to="/admin-dashboard" replace />;
-    } else if (profile?.role === "host") {
-      return <Navigate to="/host-dashboard" replace />;
-    } else if (profile?.role === "user") {
-      return <Navigate to="/user-dashboard" replace />;
-    } else {
-      // If no valid role, redirect to login
-      return <Navigate to="/login" replace />;
+    // Redirect to the correct dashboard based on user role
+    switch (profile.role) {
+      case "admin":
+        return <Navigate to="/admin-dashboard" replace />;
+      case "host":
+        return <Navigate to="/host-dashboard" replace />;
+      case "user":
+        return <Navigate to="/user-dashboard" replace />;
+      default:
+        // If no valid role, redirect to login
+        return <Navigate to="/login" replace />;
     }
   }
   
   return <>{children}</>;
 };
 
-// Specific route components for different roles - now with strict separation
+// Specific route components for different roles
 export const AdminRoute = ({ children }: { children: ReactNode }) => (
   <ProtectedRoute allowedRoles={["admin"]}>{children}</ProtectedRoute>
 );

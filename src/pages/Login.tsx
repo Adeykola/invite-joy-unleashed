@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +15,6 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const supabaseConfigured = isSupabaseConfigured();
 
@@ -47,25 +47,21 @@ const Login = () => {
         description: "Redirecting you to the dashboard...",
       });
       
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', data.user.id)
-        .single();
-      
-      if (profile?.role === 'admin') {
-        navigate('/admin-dashboard');
-      } else if (profile?.role === 'host') {
-        navigate('/host-dashboard');
-      } else {
-        navigate('/user-dashboard');
-      }
+      // Let AuthContext handle the redirection based on user role
       
     } catch (error: any) {
       console.error("Login error:", error);
+      
+      let errorMessage = "Please check your credentials and try again.";
+      if (error.message.includes("Invalid login credentials")) {
+        errorMessage = "Invalid email or password. Please try again.";
+      } else if (error.message.includes("Email not confirmed")) {
+        errorMessage = "Please check your email and confirm your account before logging in.";
+      }
+      
       toast({
         title: "Login failed",
-        description: "Please check your credentials and try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -87,7 +83,7 @@ const Login = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/user-dashboard`
+          redirectTo: `${window.location.origin}`
         }
       });
       
