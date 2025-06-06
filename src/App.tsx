@@ -7,8 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import Event from "./pages/Event";
-import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
+import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import HostDashboard from "./pages/HostDashboard";
 import UserDashboard from "./pages/UserDashboard";
@@ -43,8 +42,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/event/:id" element={<Event />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/login" element={<Login />} />
             
             {/* Admin Dashboard Routes */}
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
