@@ -78,7 +78,7 @@ const App = () => (
             {/* User Dashboard Routes - Protected */}
             <Route path="/user-dashboard" element={<UserRoute><UserDashboard /></UserRoute>} />
             <Route path="/user-dashboard/events" element={<UserRoute><UserEvents /></UserRoute>} />
-            <Route path="/user-dashboard/profile" element={<UserRoute><UserProfile /></HostRoute>} />
+            <Route path="/user-dashboard/profile" element={<UserRoute><UserProfile /></UserRoute>} />
             <Route path="/user-dashboard/favorites" element={<UserRoute><UserFavorites /></UserRoute>} />
             <Route path="/user-dashboard/reviews" element={<UserRoute><UserReviews /></UserRoute>} />
           </Routes>
