@@ -49,14 +49,14 @@ const Signup = () => {
     try {
       console.log('Attempting signup with role:', userRole);
       
-      // Sign up user with Supabase - cast role to proper type
+      // Sign up user with Supabase
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: name,
-            role: userRole as 'admin' | 'host' | 'user',
+            role: userRole,
           },
           emailRedirectTo: `${window.location.origin}/login`
         }
@@ -98,8 +98,8 @@ const Signup = () => {
         errorMessage = "Password should be at least 6 characters long.";
       } else if (error.message.includes("Invalid email")) {
         errorMessage = "Please enter a valid email address.";
-      } else if (error.message.includes("role")) {
-        errorMessage = "There was an issue with account setup. Please try again.";
+      } else if (error.message.includes("Database error")) {
+        errorMessage = "There was a database error. Please try again in a moment.";
       }
       
       toast({
@@ -240,9 +240,6 @@ const Signup = () => {
                     </Label>
                   </div>
                 </RadioGroup>
-                <p className="text-xs text-gray-500 mt-2">
-                  Need admin access? Contact your system administrator.
-                </p>
               </div>
               
               <Button 
