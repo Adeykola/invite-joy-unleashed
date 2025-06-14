@@ -140,28 +140,45 @@ export const WhatsAppMessageSender = () => {
     }
   };
 
-  // Safe filtering for events with proper validation
-  const safeEvents = Array.isArray(events) ? events.filter(event => {
-    return event && 
-           typeof event === 'object' && 
-           event.id && 
-           typeof event.id === 'string' && 
-           event.id.trim().length > 0 && 
-           event.title && 
-           typeof event.title === 'string' && 
-           event.title.trim().length > 0;
+  // Helper function to generate safe IDs that are never empty strings
+  const generateSafeId = (id: any, prefix: string, index: number): string => {
+    if (id && typeof id === 'string' && id.trim().length > 0) {
+      return id.trim();
+    }
+    return `${prefix}-${index}-${Date.now()}`;
+  };
+
+  // Helper function to get safe display text that's never empty
+  const getSafeDisplayText = (text: any, fallback: string): string => {
+    if (text && typeof text === 'string' && text.trim().length > 0) {
+      return text.trim();
+    }
+    return fallback;
+  };
+
+  // Ultra-safe filtering for events
+  const safeEvents = Array.isArray(events) ? events.filter((event, index) => {
+    const hasValidId = event && event.id && typeof event.id === 'string' && event.id.trim().length > 0;
+    const hasValidTitle = event && event.title && typeof event.title === 'string' && event.title.trim().length > 0;
+    
+    if (!hasValidId || !hasValidTitle) {
+      console.warn(`Filtering out invalid event at index ${index}:`, event);
+      return false;
+    }
+    return true;
   }) : [];
 
-  // Safe filtering for templates with proper validation
-  const safeTemplates = Array.isArray(templates) ? templates.filter(template => {
-    return template && 
-           typeof template === 'object' && 
-           template.id && 
-           typeof template.id === 'string' && 
-           template.id.trim().length > 0 && 
-           template.title && 
-           typeof template.title === 'string' && 
-           template.title.trim().length > 0;
+  // Ultra-safe filtering for templates
+  const safeTemplates = Array.isArray(templates) ? templates.filter((template, index) => {
+    const hasValidId = template && template.id && typeof template.id === 'string' && template.id.trim().length > 0;
+    const hasValidTitle = template && template.title && typeof template.title === 'string' && template.title.trim().length > 0;
+    const hasValidContent = template && template.content && typeof template.content === 'string';
+    
+    if (!hasValidId || !hasValidTitle || !hasValidContent) {
+      console.warn(`Filtering out invalid template at index ${index}:`, template);
+      return false;
+    }
+    return true;
   }) : [];
 
   return (
@@ -197,10 +214,9 @@ export const WhatsAppMessageSender = () => {
                   <SelectValue placeholder="Choose a template..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {safeTemplates.map((template) => {
-                    // Final safety check before rendering SelectItem
-                    const valueId = String(template.id || `template-${Math.random()}`);
-                    const displayTitle = String(template.title || 'Untitled Template');
+                  {safeTemplates.map((template, index) => {
+                    const valueId = generateSafeId(template.id, 'template', index);
+                    const displayTitle = getSafeDisplayText(template.title, `Template ${index + 1}`);
                     
                     return (
                       <SelectItem key={valueId} value={valueId}>
@@ -257,10 +273,9 @@ export const WhatsAppMessageSender = () => {
                   <SelectValue placeholder="Choose an event..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {safeEvents.map((event) => {
-                    // Final safety check before rendering SelectItem
-                    const valueId = String(event.id || `event-${Math.random()}`);
-                    const displayTitle = String(event.title || 'Untitled Event');
+                  {safeEvents.map((event, index) => {
+                    const valueId = generateSafeId(event.id, 'event', index);
+                    const displayTitle = getSafeDisplayText(event.title, `Event ${index + 1}`);
                     const eventDate = event.date ? new Date(event.date).toLocaleDateString() : 'No Date';
                     
                     return (
