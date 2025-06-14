@@ -34,7 +34,7 @@ const HostEvents = () => {
         return false;
       }
       
-      // First try simple check
+      // First try simple check with retry parameter
       const isAvailable = await checkStorageAvailability(2);
       
       if (isAvailable) {

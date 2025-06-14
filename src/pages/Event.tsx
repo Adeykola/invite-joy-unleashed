@@ -37,7 +37,7 @@ export default function EventPage() {
       console.log("Event page: Checking storage availability...");
       setStorageStatus(prev => ({ ...prev, isChecking: true }));
       
-      // Increase retry count to 2 for better reliability
+      // Use the updated function with retry parameter
       const isAvailable = await checkStorageAvailability(2);
       setStorageStatus({
         isChecking: false,

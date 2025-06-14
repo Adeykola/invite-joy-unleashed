@@ -1,18 +1,39 @@
 import { supabase } from "./supabase";
 
-// Function to check if a storage bucket exists
-export const checkStorageAvailability = async () => {
-  try {
-    const { data, error } = await supabase.storage.getBucket('avatars');
-    if (error) {
-      console.warn("Error checking storage availability:", error.message);
-      return false;
-    }
-    return !!data;
-  } catch (error) {
-    console.error("Error checking storage availability:", error);
+// Function to validate image files
+export const validateImageFile = (file: File): boolean => {
+  // Check file size (max 10MB)
+  const maxSize = 10 * 1024 * 1024;
+  if (file.size > maxSize) {
     return false;
   }
+  
+  // Check file type
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+  if (!allowedTypes.includes(file.type)) {
+    return false;
+  }
+  
+  return true;
+};
+
+// Function to check if a storage bucket exists
+export const checkStorageAvailability = async (retries: number = 1) => {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const { data, error } = await supabase.storage.getBucket('avatars');
+      if (error) {
+        console.warn("Error checking storage availability:", error.message);
+        if (attempt === retries - 1) return false;
+        continue;
+      }
+      return !!data;
+    } catch (error) {
+      console.error("Error checking storage availability:", error);
+      if (attempt === retries - 1) return false;
+    }
+  }
+  return false;
 };
 
 // Function to create the storage bucket
