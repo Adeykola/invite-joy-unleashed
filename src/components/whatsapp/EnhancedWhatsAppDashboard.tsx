@@ -1,0 +1,301 @@
+
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  MessageSquare, 
+  Send, 
+  Users, 
+  TrendingUp, 
+  Phone,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Wifi,
+  WifiOff,
+  Monitor,
+  Building,
+  Upload,
+  Calendar,
+  BarChart3
+} from "lucide-react";
+import { useEnhancedWhatsApp } from "@/hooks/useEnhancedWhatsApp";
+import { MediaUploadComponent } from "./MediaUploadComponent";
+import { ContactManager } from "./ContactManager";
+import { EnhancedMessageComposer } from "./EnhancedMessageComposer";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+export const EnhancedWhatsAppDashboard = () => {
+  const [connectionTypeDialog, setConnectionTypeDialog] = useState(false);
+  
+  const {
+    session,
+    sessionLoading,
+    connectionType,
+    isConnected,
+    qrCode,
+    isConnecting,
+    initializeConnection,
+    messageQueue,
+    contacts,
+    mediaUploads
+  } = useEnhancedWhatsApp();
+
+  const getConnectionStatus = () => {
+    if (sessionLoading) return { icon: Clock, text: "Loading...", color: "text-gray-500" };
+    if (isConnecting) return { icon: Clock, text: "Connecting...", color: "text-blue-500" };
+    if (isConnected) return { icon: Wifi, text: "Connected", color: "text-green-500" };
+    return { icon: WifiOff, text: "Disconnected", color: "text-red-500" };
+  };
+
+  const connectionStatus = getConnectionStatus();
+  const StatusIcon = connectionStatus.icon;
+
+  const handleConnectionChoice = (type: 'web' | 'business_api') => {
+    initializeConnection(type);
+    setConnectionTypeDialog(false);
+  };
+
+  // Calculate stats
+  const stats = {
+    totalMessages: messageQueue.filter(m => m.status === 'sent').length,
+    pendingMessages: messageQueue.filter(m => m.status === 'pending').length,
+    failedMessages: messageQueue.filter(m => m.status === 'failed').length,
+    deliveryRate: messageQueue.length > 0 
+      ? ((messageQueue.filter(m => m.status === 'sent').length / messageQueue.length) * 100).toFixed(1)
+      : 0
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Connection Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              WhatsApp Integration
+            </div>
+            <div className="flex items-center gap-2">
+              <StatusIcon className={`h-4 w-4 ${connectionStatus.color}`} />
+              <span className={`text-sm ${connectionStatus.color}`}>
+                {connectionStatus.text}
+              </span>
+              {isConnected && (
+                <Badge variant="outline">
+                  {session?.connection_type === 'web' ? 'WhatsApp Web' : 'Business API'}
+                </Badge>
+              )}
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!isConnected ? (
+            <div className="space-y-4">
+              <p className="text-muted-foreground">
+                Choose your WhatsApp integration method to start sending messages to your event guests.
+              </p>
+              <div className="grid md:grid-cols-2 gap-4">
+                <Card className="cursor-pointer hover:shadow-md transition-shadow" 
+                      onClick={() => handleConnectionChoice('web')}>
+                  <CardContent className="p-4 text-center">
+                    <Monitor className="h-8 w-8 mx-auto mb-2 text-blue-600" />
+                    <h3 className="font-medium mb-2">WhatsApp Web</h3>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Connect your personal WhatsApp account for immediate messaging with media support.
+                    </p>
+                    <div className="space-y-1 text-xs text-muted-foreground">
+                      <div>✓ Personal WhatsApp account</div>
+                      <div>✓ Full media support</div>
+                      <div>✓ Bulk messaging</div>
+                      <div>✓ Easy setup</div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => handleConnectionChoice('business_api')}>
+                  <CardContent className="p-4 text-center">
+                    <Building className="h-8 w-8 mx-auto mb-2 text-green-600" />
+                    <h3 className="font-medium mb-2">Business API</h3>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Professional WhatsApp Business API with advanced features and analytics.
+                    </p>
+                    <div className="space-y-1 text-xs text-muted-foreground">
+                      <div>✓ Business account</div>
+                      <div>✓ Template messages</div>
+                      <div>✓ Advanced analytics</div>
+                      <div>✓ Webhook support</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {qrCode && (
+                <div className="mt-4 p-4 border rounded-lg bg-white text-center">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Scan this QR code with your WhatsApp Business app:
+                  </p>
+                  <img 
+                    src={qrCode} 
+                    alt="WhatsApp QR Code" 
+                    className="mx-auto w-64 h-64 border"
+                  />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Open WhatsApp → Settings → Linked Devices → Link a Device
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <div>
+                  <p className="font-medium text-green-800">WhatsApp Connected</p>
+                  <p className="text-sm text-green-600">
+                    {session?.connection_type === 'web' ? 'WhatsApp Web' : 'Business API'} • 
+                    {session?.phone_number || 'Ready to send messages'}
+                  </p>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50">
+                Disconnect
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Statistics */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Messages Sent</CardTitle>
+            <Send className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalMessages}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats.pendingMessages} pending
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Delivery Rate</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.deliveryRate}%</div>
+            <p className="text-xs text-muted-foreground">
+              {stats.failedMessages} failed
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Contacts</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{contacts.length}</div>
+            <p className="text-xs text-muted-foreground">Active contacts</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Media Files</CardTitle>
+            <Upload className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{mediaUploads.length}</div>
+            <p className="text-xs text-muted-foreground">Uploaded files</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="composer" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="composer">
+            <Send className="w-4 h-4 mr-2" />
+            Compose
+          </TabsTrigger>
+          <TabsTrigger value="contacts">
+            <Users className="w-4 h-4 mr-2" />
+            Contacts
+          </TabsTrigger>
+          <TabsTrigger value="media">
+            <Upload className="w-4 h-4 mr-2" />
+            Media
+          </TabsTrigger>
+          <TabsTrigger value="analytics">
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Analytics
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="composer" className="space-y-4">
+          <EnhancedMessageComposer />
+        </TabsContent>
+
+        <TabsContent value="contacts" className="space-y-4">
+          <ContactManager />
+        </TabsContent>
+
+        <TabsContent value="media" className="space-y-4">
+          <MediaUploadComponent />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Message Analytics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-muted-foreground">
+                Analytics dashboard coming soon...
+                <br />
+                Track delivery rates, engagement, and campaign performance.
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {!isConnected && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-orange-800">Enhanced WhatsApp Integration</h3>
+                <p className="text-sm text-orange-700 mt-1">
+                  This enhanced version supports both WhatsApp Web and Business API integration
+                  with full media support, contact management, and advanced messaging features.
+                </p>
+                <p className="text-xs text-orange-600 mt-2">
+                  Connect your WhatsApp account above to start using the enhanced features.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+};
+
+export default EnhancedWhatsAppDashboard;

@@ -247,6 +247,8 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          media_id: string | null
+          template_type: string | null
           title: string
           updated_at: string
           user_id: string
@@ -255,6 +257,8 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          media_id?: string | null
+          template_type?: string | null
           title: string
           updated_at?: string
           user_id: string
@@ -263,11 +267,21 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          media_id?: string | null
+          template_type?: string | null
           title?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "message_templates_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_media_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -371,6 +385,8 @@ export type Database = {
           event_id: string | null
           failed_count: number | null
           id: string
+          media_id: string | null
+          message_type: string | null
           name: string
           read_count: number | null
           scheduled_for: string | null
@@ -387,6 +403,8 @@ export type Database = {
           event_id?: string | null
           failed_count?: number | null
           id?: string
+          media_id?: string | null
+          message_type?: string | null
           name: string
           read_count?: number | null
           scheduled_for?: string | null
@@ -403,6 +421,8 @@ export type Database = {
           event_id?: string | null
           failed_count?: number | null
           id?: string
+          media_id?: string | null
+          message_type?: string | null
           name?: string
           read_count?: number | null
           scheduled_for?: string | null
@@ -436,6 +456,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "whatsapp_broadcasts_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_media_uploads"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "whatsapp_broadcasts_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
@@ -444,9 +471,189 @@ export type Database = {
           },
         ]
       }
+      whatsapp_contacts: {
+        Row: {
+          created_at: string
+          custom_fields: Json | null
+          email: string | null
+          id: string
+          is_active: boolean
+          last_message_at: string | null
+          name: string
+          phone_number: string
+          tags: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_fields?: Json | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          last_message_at?: string | null
+          name: string
+          phone_number: string
+          tags?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_fields?: Json | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          last_message_at?: string | null
+          name?: string
+          phone_number?: string
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_delivery_status: {
+        Row: {
+          created_at: string
+          id: string
+          message_queue_id: string
+          phone_number: string
+          status: string
+          timestamp: string
+          webhook_data: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_queue_id: string
+          phone_number: string
+          status: string
+          timestamp?: string
+          webhook_data?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_queue_id?: string
+          phone_number?: string
+          status?: string
+          timestamp?: string
+          webhook_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_delivery_status_message_queue_id_fkey"
+            columns: ["message_queue_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_message_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_media_uploads: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          media_type: string
+          mime_type: string
+          updated_at: string
+          upload_status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size: number
+          id?: string
+          media_type: string
+          mime_type: string
+          updated_at?: string
+          upload_status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          media_type?: string
+          mime_type?: string
+          updated_at?: string
+          upload_status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_message_queue: {
+        Row: {
+          attempts: number
+          created_at: string
+          error_message: string | null
+          id: string
+          max_attempts: number
+          media_id: string | null
+          message_content: string
+          personalization_data: Json | null
+          recipient_phone: string
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          max_attempts?: number
+          media_id?: string | null
+          message_content: string
+          personalization_data?: Json | null
+          recipient_phone: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          max_attempts?: number
+          media_id?: string | null
+          message_content?: string
+          personalization_data?: Json | null
+          recipient_phone?: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_message_queue_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_media_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_sessions: {
         Row: {
+          capabilities: string[] | null
           connection_attempts: number
+          connection_type: string | null
           created_at: string
           display_name: string | null
           encrypted_session_key: string
@@ -459,7 +666,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          capabilities?: string[] | null
           connection_attempts?: number
+          connection_type?: string | null
           created_at?: string
           display_name?: string | null
           encrypted_session_key: string
@@ -472,7 +681,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          capabilities?: string[] | null
           connection_attempts?: number
+          connection_type?: string | null
           created_at?: string
           display_name?: string | null
           encrypted_session_key?: string

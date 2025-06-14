@@ -3,3 +3,6 @@ project_id = "ttlqxvpcjpxpbzkgbyod"
 
 [functions.whatsapp-session]
 verify_jwt = false
+
+[functions.whatsapp-enhanced]
+verify_jwt = false
