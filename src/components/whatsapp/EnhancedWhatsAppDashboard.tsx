@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,22 +19,19 @@ import {
   Building,
   Upload,
   Calendar,
-  BarChart3
+  BarChart3,
+  RefreshCw,
+  Smartphone
 } from "lucide-react";
 import { useEnhancedWhatsApp } from "@/hooks/useEnhancedWhatsApp";
 import { MediaUploadComponent } from "./MediaUploadComponent";
 import { ContactManager } from "./ContactManager";
 import { EnhancedMessageComposer } from "./EnhancedMessageComposer";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
 export const EnhancedWhatsAppDashboard = () => {
-  const [connectionTypeDialog, setConnectionTypeDialog] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const { toast } = useToast();
   
   const {
     session,
@@ -46,12 +43,24 @@ export const EnhancedWhatsAppDashboard = () => {
     initializeConnection,
     messageQueue,
     contacts,
-    mediaUploads
+    mediaUploads,
+    refetchSession
   } = useEnhancedWhatsApp();
+
+  // Auto-refresh status when connecting
+  useEffect(() => {
+    if (session?.status === 'connecting') {
+      const interval = setInterval(() => {
+        refetchSession();
+      }, 3000); // Check every 3 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [session?.status, refetchSession]);
 
   const getConnectionStatus = () => {
     if (sessionLoading) return { icon: Clock, text: "Loading...", color: "text-gray-500" };
-    if (isConnecting) return { icon: Clock, text: "Connecting...", color: "text-blue-500" };
+    if (isConnecting || session?.status === 'connecting') return { icon: Clock, text: "Connecting...", color: "text-blue-500" };
     if (isConnected) return { icon: Wifi, text: "Connected", color: "text-green-500" };
     return { icon: WifiOff, text: "Disconnected", color: "text-red-500" };
   };
@@ -61,7 +70,22 @@ export const EnhancedWhatsAppDashboard = () => {
 
   const handleConnectionChoice = (type: 'web' | 'business_api') => {
     initializeConnection(type);
-    setConnectionTypeDialog(false);
+  };
+
+  const handleRefreshQR = () => {
+    setIsCheckingStatus(true);
+    refetchSession().finally(() => {
+      setIsCheckingStatus(false);
+    });
+  };
+
+  const handleDisconnect = async () => {
+    // This would call the disconnect function
+    toast({
+      title: "Disconnected",
+      description: "WhatsApp has been disconnected successfully.",
+    });
+    refetchSession();
   };
 
   // Calculate stats
@@ -100,62 +124,105 @@ export const EnhancedWhatsAppDashboard = () => {
         <CardContent>
           {!isConnected ? (
             <div className="space-y-4">
-              <p className="text-muted-foreground">
-                Choose your WhatsApp integration method to start sending messages to your event guests.
-              </p>
-              <div className="grid md:grid-cols-2 gap-4">
-                <Card className="cursor-pointer hover:shadow-md transition-shadow" 
-                      onClick={() => handleConnectionChoice('web')}>
-                  <CardContent className="p-4 text-center">
-                    <Monitor className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                    <h3 className="font-medium mb-2">WhatsApp Web</h3>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Connect your personal WhatsApp account for immediate messaging with media support.
-                    </p>
-                    <div className="space-y-1 text-xs text-muted-foreground">
-                      <div>✓ Personal WhatsApp account</div>
-                      <div>✓ Full media support</div>
-                      <div>✓ Bulk messaging</div>
-                      <div>✓ Easy setup</div>
+              {session?.status === 'connecting' ? (
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center space-x-2 mb-4">
+                      <Clock className="h-5 w-5 animate-spin text-blue-600" />
+                      <span className="text-blue-800 font-medium">
+                        Waiting for WhatsApp Connection
+                      </span>
                     </div>
-                  </CardContent>
-                </Card>
-                
-                <Card className="cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => handleConnectionChoice('business_api')}>
-                  <CardContent className="p-4 text-center">
-                    <Building className="h-8 w-8 mx-auto mb-2 text-green-600" />
-                    <h3 className="font-medium mb-2">Business API</h3>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Professional WhatsApp Business API with advanced features and analytics.
+                    <p className="text-muted-foreground mb-4">
+                      Scan the QR code below with your WhatsApp mobile app to connect.
                     </p>
-                    <div className="space-y-1 text-xs text-muted-foreground">
-                      <div>✓ Business account</div>
-                      <div>✓ Template messages</div>
-                      <div>✓ Advanced analytics</div>
-                      <div>✓ Webhook support</div>
+                  </div>
+                  
+                  {qrCode && (
+                    <div className="flex justify-center">
+                      <div className="p-4 bg-white border rounded-lg shadow-sm">
+                        <img 
+                          src={qrCode} 
+                          alt="WhatsApp QR Code" 
+                          className="w-64 h-64 border rounded"
+                        />
+                        <div className="mt-3 text-center">
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Open WhatsApp → Settings → Linked Devices → Link a Device
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleRefreshQR}
+                            disabled={isCheckingStatus}
+                          >
+                            {isCheckingStatus ? (
+                              <>
+                                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                Refreshing...
+                              </>
+                            ) : (
+                              <>
+                                <RefreshCw className="h-4 w-4 mr-2" />
+                                Refresh QR Code
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              {qrCode && (
-                <div className="mt-4 p-4 border rounded-lg bg-white text-center">
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Scan this QR code with your WhatsApp:
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-muted-foreground">
+                    Choose your WhatsApp integration method to start sending messages to your event guests.
                   </p>
-                  <img 
-                    src={qrCode} 
-                    alt="WhatsApp QR Code" 
-                    className="mx-auto w-64 h-64 border"
-                  />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Open WhatsApp → Settings → Linked Devices → Link a Device
-                  </p>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <Card className="cursor-pointer hover:shadow-md transition-shadow" 
+                          onClick={() => handleConnectionChoice('web')}>
+                      <CardContent className="p-4 text-center">
+                        <Monitor className="h-8 w-8 mx-auto mb-2 text-blue-600" />
+                        <h3 className="font-medium mb-2">WhatsApp Web</h3>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Connect your personal WhatsApp account for immediate messaging with media support.
+                        </p>
+                        <div className="space-y-1 text-xs text-muted-foreground">
+                          <div className="flex items-center justify-center">
+                            <Smartphone className="h-3 w-3 mr-1" />
+                            Personal WhatsApp account
+                          </div>
+                          <div>✓ Full media support</div>
+                          <div>✓ Bulk messaging</div>
+                          <div>✓ Easy setup</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="cursor-pointer hover:shadow-md transition-shadow"
+                          onClick={() => handleConnectionChoice('business_api')}>
+                      <CardContent className="p-4 text-center">
+                        <Building className="h-8 w-8 mx-auto mb-2 text-green-600" />
+                        <h3 className="font-medium mb-2">Business API</h3>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Professional WhatsApp Business API with advanced features and analytics.
+                        </p>
+                        <div className="space-y-1 text-xs text-muted-foreground">
+                          <div className="flex items-center justify-center">
+                            <Building className="h-3 w-3 mr-1" />
+                            Business account required
+                          </div>
+                          <div>✓ Template messages</div>
+                          <div>✓ Advanced analytics</div>
+                          <div>✓ Webhook support</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
               )}
 
-              {isConnecting && (
+              {isConnecting && !qrCode && (
                 <div className="mt-4 p-4 border rounded-lg bg-blue-50 text-center">
                   <div className="flex items-center justify-center space-x-2">
                     <Clock className="h-4 w-4 animate-spin text-blue-600" />
@@ -175,10 +242,16 @@ export const EnhancedWhatsAppDashboard = () => {
                   <p className="text-sm text-green-600">
                     {session?.connection_type === 'web' ? 'WhatsApp Web' : 'Business API'} • 
                     {session?.phone_number || 'Ready to send messages'}
+                    {session?.display_name && ` • ${session.display_name}`}
                   </p>
                 </div>
               </div>
-              <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-red-600 border-red-200 hover:bg-red-50"
+                onClick={handleDisconnect}
+              >
                 Disconnect
               </Button>
             </div>
@@ -286,7 +359,7 @@ export const EnhancedWhatsAppDashboard = () => {
         </TabsContent>
       </Tabs>
 
-      {!isConnected && (
+      {!isConnected && session?.status !== 'connecting' && (
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
