@@ -3,7 +3,6 @@ import { ReactNode, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
-  LayoutDashboard,
   Calendar,
   Users,
   Settings,
@@ -13,10 +12,10 @@ import {
   Bell,
   User,
   ChevronDown,
-  BarChart3,
   MessageSquare,
   UserCheck,
-  CheckSquare
+  CheckSquare,
+  Eye
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -44,14 +43,9 @@ const HostDashboardLayout = ({ children }: HostDashboardLayoutProps) => {
 
   const navItems = [
     {
-      name: "Dashboard",
-      href: "/host-dashboard",
-      icon: <LayoutDashboard className="h-5 w-5" />,
-    },
-    {
-      name: "Analytics",
-      href: "/host-dashboard/analytics",
-      icon: <BarChart3 className="h-5 w-5" />,
+      name: "Overview",
+      href: "/host-dashboard/overview",
+      icon: <Eye className="h-5 w-5" />,
     },
     {
       name: "My Events",

@@ -15,12 +15,12 @@ import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/AdminDashboard";
 import HostDashboard from "./pages/HostDashboard";
 import UserDashboard from "./pages/UserDashboard";
+import HostOverview from "./pages/host/HostOverview";
 import HostEvents from "./pages/host/HostEvents";
 import HostGuests from "./pages/host/HostGuests";
 import HostCalendar from "./pages/host/HostCalendar";
 import CheckIn from "./pages/host/CheckIn";
 import HostWhatsApp from "./pages/host/HostWhatsApp";
-import HostAnalytics from "./pages/host/HostAnalytics";
 import HostSettings from "./pages/host/HostSettings";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
@@ -67,7 +67,7 @@ const App = () => (
             
             {/* Host Dashboard Routes - Protected */}
             <Route path="/host-dashboard" element={<HostRoute><HostDashboard /></HostRoute>} />
-            <Route path="/host-dashboard/analytics" element={<HostRoute><HostAnalytics /></HostRoute>} />
+            <Route path="/host-dashboard/overview" element={<HostRoute><HostOverview /></HostRoute>} />
             <Route path="/host-dashboard/events" element={<HostRoute><HostEvents /></HostRoute>} />
             <Route path="/host-dashboard/guests" element={<HostRoute><HostGuests /></HostRoute>} />
             <Route path="/host-dashboard/calendar" element={<HostRoute><HostCalendar /></HostRoute>} />
