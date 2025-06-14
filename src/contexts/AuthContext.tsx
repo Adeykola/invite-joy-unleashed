@@ -38,8 +38,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Handle profile fetching and routing
       if (newSession?.user?.id) {
+        // Use setTimeout to avoid blocking the auth state change
         setTimeout(async () => {
           try {
+            console.log('Fetching profile for user:', newSession.user.id);
             const { data, error } = await supabase
               .from('profiles')
               .select('*')
@@ -50,41 +52,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               console.error('Error fetching profile:', error);
               setProfile(null);
             } else {
+              console.log('Profile fetched:', data);
               setProfile(data);
               
               // Handle automatic redirection after login
               if (event === 'SIGNED_IN' && data?.role) {
-                console.log('Redirecting user with role:', data.role);
+                console.log('User signed in with role:', data.role);
                 const currentPath = window.location.pathname;
+                console.log('Current path:', currentPath);
                 
-                // Don't redirect if already on correct dashboard or public pages
-                if (!currentPath.includes('dashboard') && 
-                    currentPath !== '/' && 
-                    currentPath !== '/login' && 
-                    currentPath !== '/signup') {
-                  return;
-                }
+                // Only redirect if user is on login/signup pages or root
+                const shouldRedirect = currentPath === '/' || 
+                                     currentPath === '/login' || 
+                                     currentPath === '/signup';
                 
-                // Redirect based on role
-                switch (data.role) {
-                  case 'admin':
-                    navigate('/admin-dashboard', { replace: true });
-                    break;
-                  case 'host':
-                    navigate('/host-dashboard', { replace: true });
-                    break;
-                  case 'user':
-                  default:
-                    navigate('/user-dashboard', { replace: true });
-                    break;
+                console.log('Should redirect:', shouldRedirect);
+                
+                if (shouldRedirect) {
+                  // Redirect based on role
+                  switch (data.role) {
+                    case 'admin':
+                      console.log('Redirecting to admin dashboard');
+                      navigate('/admin-dashboard', { replace: true });
+                      break;
+                    case 'host':
+                      console.log('Redirecting to host dashboard');
+                      navigate('/host-dashboard', { replace: true });
+                      break;
+                    case 'user':
+                    default:
+                      console.log('Redirecting to user dashboard');
+                      navigate('/user-dashboard', { replace: true });
+                      break;
+                  }
                 }
               }
             }
           } catch (error) {
-            console.error('Error fetching profile:', error);
+            console.error('Error in profile fetching:', error);
             setProfile(null);
           }
-        }, 100);
+        }, 200); // Increased timeout to give more time for profile fetch
       } else {
         setProfile(null);
       }
@@ -93,12 +101,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // THEN check for existing session
     const getInitialSession = async () => {
       try {
+        console.log('Getting initial session...');
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         
         setSession(initialSession);
         setUser(initialSession?.user ?? null);
         
         if (initialSession?.user?.id) {
+          console.log('Initial session found, fetching profile...');
           const { data, error } = await supabase
             .from('profiles')
             .select('*')
@@ -106,7 +116,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .single();
             
           if (error && error.code !== 'PGRST116') {
-            console.error('Error fetching profile:', error);
+            console.error('Error fetching initial profile:', error);
+          } else {
+            console.log('Initial profile fetched:', data);
           }
           setProfile(data);
         }
@@ -126,6 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
+      console.log('Signing out...');
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
