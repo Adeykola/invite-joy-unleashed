@@ -140,6 +140,10 @@ export const WhatsAppMessageSender = () => {
     }
   };
 
+  // Filter valid events and templates to prevent empty string values
+  const validEvents = events?.filter(event => event && event.id && event.title) || [];
+  const validTemplates = templates?.filter(template => template && template.id && template.title) || [];
+
   return (
     <div className="space-y-6">
       {/* Single Message Sender */}
@@ -165,14 +169,14 @@ export const WhatsAppMessageSender = () => {
           <div>
             <Label htmlFor="template">Message Template (Optional)</Label>
             <Select onValueChange={(value) => {
-              const template = templates?.find(t => t.id === value);
+              const template = validTemplates.find(t => t.id === value);
               if (template) setMessage(template.content);
             }}>
               <SelectTrigger>
                 <SelectValue placeholder="Choose a template..." />
               </SelectTrigger>
               <SelectContent>
-                {templates?.map((template) => (
+                {validTemplates.map((template) => (
                   <SelectItem key={template.id} value={template.id}>
                     {template.title}
                   </SelectItem>
@@ -224,7 +228,7 @@ export const WhatsAppMessageSender = () => {
                 <SelectValue placeholder="Choose an event..." />
               </SelectTrigger>
               <SelectContent>
-                {events?.map((event) => (
+                {validEvents.map((event) => (
                   <SelectItem key={event.id} value={event.id}>
                     {event.title} - {new Date(event.date).toLocaleDateString()}
                   </SelectItem>

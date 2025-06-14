@@ -105,6 +105,9 @@ export function RsvpForm({ eventId, mealOptions }: { eventId: string, mealOption
   const responseStatus = methods.watch("response_status");
   const showDetailFields = responseStatus === "confirmed" || responseStatus === "maybe";
 
+  // Filter out empty meal options to prevent Select.Item errors
+  const validMealOptions = mealOptions?.filter(option => option && option.trim() !== '') || [];
+
   return (
     <FormProvider {...methods}>
       <Form {...methods}>
@@ -178,7 +181,7 @@ export function RsvpForm({ eventId, mealOptions }: { eventId: string, mealOption
 
           {showDetailFields && (
             <>
-              {mealOptions && mealOptions.length > 0 && (
+              {validMealOptions.length > 0 && (
                 <FormField
                   control={methods.control}
                   name="meal_choice"
@@ -192,8 +195,8 @@ export function RsvpForm({ eventId, mealOptions }: { eventId: string, mealOption
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {mealOptions.map((option, index) => (
-                            <SelectItem key={index} value={option}>
+                          {validMealOptions.map((option, index) => (
+                            <SelectItem key={`meal-${index}`} value={option}>
                               {option}
                             </SelectItem>
                           ))}
