@@ -47,17 +47,6 @@ export const EnhancedWhatsAppDashboard = () => {
     refetchSession
   } = useEnhancedWhatsApp();
 
-  // Auto-refresh status when connecting
-  useEffect(() => {
-    if (session?.status === 'connecting') {
-      const interval = setInterval(() => {
-        refetchSession();
-      }, 3000); // Check every 3 seconds
-
-      return () => clearInterval(interval);
-    }
-  }, [session?.status, refetchSession]);
-
   const getConnectionStatus = () => {
     if (sessionLoading) return { icon: Clock, text: "Loading...", color: "text-gray-500" };
     if (isConnecting || session?.status === 'connecting') return { icon: Clock, text: "Connecting...", color: "text-blue-500" };
@@ -80,12 +69,26 @@ export const EnhancedWhatsAppDashboard = () => {
   };
 
   const handleDisconnect = async () => {
-    // This would call the disconnect function
-    toast({
-      title: "Disconnected",
-      description: "WhatsApp has been disconnected successfully.",
-    });
-    refetchSession();
+    try {
+      const { data, error } = await supabase.functions.invoke('whatsapp-enhanced', {
+        body: { action: 'disconnect' }
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Disconnected",
+        description: "WhatsApp has been disconnected successfully.",
+      });
+      refetchSession();
+    } catch (error) {
+      console.error('Disconnect error:', error);
+      toast({
+        title: "Disconnect Failed",
+        description: "Failed to disconnect WhatsApp. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Calculate stats
@@ -130,11 +133,11 @@ export const EnhancedWhatsAppDashboard = () => {
                     <div className="flex items-center justify-center space-x-2 mb-4">
                       <Clock className="h-5 w-5 animate-spin text-blue-600" />
                       <span className="text-blue-800 font-medium">
-                        Waiting for WhatsApp Connection
+                        Initializing WhatsApp Web Connection
                       </span>
                     </div>
                     <p className="text-muted-foreground mb-4">
-                      Scan the QR code below with your WhatsApp mobile app to connect.
+                      Starting WhatsApp Web client and generating QR code...
                     </p>
                   </div>
                   
@@ -159,17 +162,29 @@ export const EnhancedWhatsAppDashboard = () => {
                             {isCheckingStatus ? (
                               <>
                                 <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                Refreshing...
+                                Checking Status...
                               </>
                             ) : (
                               <>
                                 <RefreshCw className="h-4 w-4 mr-2" />
-                                Refresh QR Code
+                                Check Connection Status
                               </>
                             )}
                           </Button>
                         </div>
                       </div>
+                    </div>
+                  )}
+                  
+                  {!qrCode && (
+                    <div className="text-center py-8">
+                      <Clock className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+                      <p className="text-muted-foreground">
+                        Initializing WhatsApp Web client...
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        This may take a few moments
+                      </p>
                     </div>
                   )}
                 </div>
@@ -185,16 +200,16 @@ export const EnhancedWhatsAppDashboard = () => {
                         <Monitor className="h-8 w-8 mx-auto mb-2 text-blue-600" />
                         <h3 className="font-medium mb-2">WhatsApp Web</h3>
                         <p className="text-sm text-muted-foreground mb-3">
-                          Connect your personal WhatsApp account for immediate messaging with media support.
+                          Connect your personal WhatsApp account for immediate messaging with full features.
                         </p>
                         <div className="space-y-1 text-xs text-muted-foreground">
                           <div className="flex items-center justify-center">
                             <Smartphone className="h-3 w-3 mr-1" />
-                            Personal WhatsApp account
+                            Real WhatsApp Web integration
                           </div>
                           <div>✓ Full media support</div>
-                          <div>✓ Bulk messaging</div>
-                          <div>✓ Easy setup</div>
+                          <div>✓ Real-time messaging</div>
+                          <div>✓ Complete WhatsApp features</div>
                         </div>
                       </CardContent>
                     </Card>
@@ -210,7 +225,7 @@ export const EnhancedWhatsAppDashboard = () => {
                         <div className="space-y-1 text-xs text-muted-foreground">
                           <div className="flex items-center justify-center">
                             <Building className="h-3 w-3 mr-1" />
-                            Business account required
+                            Requires API credentials
                           </div>
                           <div>✓ Template messages</div>
                           <div>✓ Advanced analytics</div>
@@ -222,12 +237,12 @@ export const EnhancedWhatsAppDashboard = () => {
                 </div>
               )}
 
-              {isConnecting && !qrCode && (
+              {isConnecting && !qrCode && session?.status !== 'connecting' && (
                 <div className="mt-4 p-4 border rounded-lg bg-blue-50 text-center">
                   <div className="flex items-center justify-center space-x-2">
                     <Clock className="h-4 w-4 animate-spin text-blue-600" />
                     <span className="text-blue-800">
-                      Initializing WhatsApp connection...
+                      Starting WhatsApp Web client...
                     </span>
                   </div>
                 </div>
@@ -365,13 +380,13 @@ export const EnhancedWhatsAppDashboard = () => {
             <div className="flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
               <div>
-                <h3 className="font-medium text-blue-800">WhatsApp Integration Required</h3>
+                <h3 className="font-medium text-blue-800">Real WhatsApp Integration</h3>
                 <p className="text-sm text-blue-700 mt-1">
-                  Connect your WhatsApp account to start sending messages to your event guests.
-                  Choose between WhatsApp Web for personal accounts or Business API for professional use.
+                  This implementation uses the real WhatsApp Web protocol through the Baileys library.
+                  When you scan the QR code, you'll be connecting to actual WhatsApp servers and can send real messages.
                 </p>
                 <p className="text-xs text-blue-600 mt-2">
-                  Select a connection type above to get started.
+                  Select WhatsApp Web above to start the real integration process.
                 </p>
               </div>
             </div>

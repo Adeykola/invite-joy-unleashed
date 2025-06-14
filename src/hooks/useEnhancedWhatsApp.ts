@@ -56,11 +56,17 @@ export const useEnhancedWhatsApp = () => {
         .from('whatsapp_sessions')
         .select('*')
         .eq('user_id', user.user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
+    refetchInterval: (data) => {
+      // Poll more frequently when connecting
+      return data?.status === 'connecting' ? 2000 : 30000;
+    }
   });
 
   // Fetch media uploads
@@ -151,6 +157,11 @@ export const useEnhancedWhatsApp = () => {
           description: `Your WhatsApp ${connectionType === 'web' ? 'Web' : 'Business API'} is now connected.`,
         });
         refetchSession();
+      } else if (data.status === 'connecting') {
+        toast({
+          title: "QR Code Generated",
+          description: "Scan the QR code with your WhatsApp mobile app to connect.",
+        });
       }
     },
     onError: (error: any) => {
@@ -165,6 +176,16 @@ export const useEnhancedWhatsApp = () => {
       setIsConnecting(false);
     }
   });
+
+  // Check for QR code updates from session data
+  useEffect(() => {
+    if (session?.session_data?.qr_code && session.status === 'connecting') {
+      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(session.session_data.qr_code)}`;
+      setQrCode(qrCodeUrl);
+    } else if (session?.status === 'connected') {
+      setQrCode(null);
+    }
+  }, [session]);
 
   // Upload media file
   const uploadMedia = useMutation({
@@ -238,7 +259,7 @@ export const useEnhancedWhatsApp = () => {
     }
   });
 
-  // Send message with media support
+  // Send message with real WhatsApp integration
   const sendMessage = useMutation({
     mutationFn: async (messageData: {
       to: string | string[];
@@ -250,9 +271,23 @@ export const useEnhancedWhatsApp = () => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
 
+      // For single message, send directly through WhatsApp
+      if (typeof messageData.to === 'string' && !messageData.scheduled_for) {
+        const { data, error } = await supabase.functions.invoke('whatsapp-enhanced', {
+          body: {
+            action: 'send_message',
+            to: messageData.to,
+            message: messageData.message
+          }
+        });
+
+        if (error) throw error;
+        return [data];
+      }
+
+      // For bulk messages or scheduled messages, use queue
       const recipients = Array.isArray(messageData.to) ? messageData.to : [messageData.to];
       
-      // Add messages to queue
       const queueItems = recipients.map(phone => ({
         user_id: user.user.id,
         recipient_phone: phone,
@@ -268,33 +303,27 @@ export const useEnhancedWhatsApp = () => {
         .select();
 
       if (error) throw error;
-
-      // Process messages immediately if not scheduled
-      if (!messageData.scheduled_for) {
-        const { data: processData, error: processError } = await supabase.functions.invoke('whatsapp-enhanced', {
-          body: {
-            action: 'process_queue',
-            queue_ids: data.map(item => item.id)
-          }
-        });
-
-        if (processError) throw processError;
-      }
-
       return data;
     },
     onSuccess: (data, variables) => {
       const recipientCount = Array.isArray(variables.to) ? variables.to.length : 1;
+      const isDirectSend = typeof variables.to === 'string' && !variables.scheduled_for;
+      
       toast({
-        title: "Messages Queued",
-        description: `${recipientCount} message(s) have been queued for sending.`,
+        title: isDirectSend ? "Message Sent" : "Messages Queued",
+        description: isDirectSend 
+          ? `Message sent to ${variables.to}` 
+          : `${recipientCount} message(s) have been queued for sending.`,
       });
-      refetchQueue();
+      
+      if (isDirectSend) {
+        refetchQueue();
+      }
     },
     onError: (error: any) => {
       toast({
         title: "Send Failed",
-        description: error.message || "Failed to queue messages.",
+        description: error.message || "Failed to send message.",
         variant: "destructive",
       });
     }
