@@ -375,6 +375,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      create_admin_user: {
+        Args: { admin_email: string; admin_password: string }
+        Returns: undefined
+      }
       get_column_info: {
         Args: { target_table: string; target_column: string }
         Returns: {

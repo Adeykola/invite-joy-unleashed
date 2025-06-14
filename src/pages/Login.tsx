@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Lock, Mail, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, AlertCircle, Shield } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 const Login = () => {
@@ -68,6 +68,100 @@ const Login = () => {
       toast({
         title: "Login failed",
         description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAdminLogin = async () => {
+    setEmail("admin@rsvpplatform.com");
+    setPassword("admin123");
+    
+    // Auto-submit the form with admin credentials
+    setIsLoading(true);
+    
+    try {
+      console.log('Attempting admin login');
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: "admin@rsvpplatform.com",
+        password: "admin123",
+      });
+      
+      if (error) {
+        // If admin user doesn't exist, create them
+        if (error.message.includes("Invalid login credentials")) {
+          toast({
+            title: "Creating admin user...",
+            description: "Setting up admin account for first time use.",
+          });
+          
+          const { data: signupData, error: signupError } = await supabase.auth.signUp({
+            email: "admin@rsvpplatform.com",
+            password: "admin123",
+            options: {
+              data: {
+                full_name: "System Administrator",
+                role: "admin",
+              },
+              emailRedirectTo: `${window.location.origin}/login`
+            }
+          });
+          
+          if (signupError) {
+            throw signupError;
+          }
+          
+          if (signupData.user && signupData.session) {
+            // Update the user role to admin in the database
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update({ role: 'admin' })
+              .eq('id', signupData.user.id);
+              
+            if (updateError) {
+              console.error('Error updating admin role:', updateError);
+            }
+            
+            toast({
+              title: "Admin account created and logged in!",
+              description: "Redirecting to admin dashboard...",
+            });
+          } else {
+            toast({
+              title: "Admin account created!",
+              description: "Please check email to verify, then try logging in again.",
+            });
+          }
+        } else {
+          throw error;
+        }
+      } else {
+        console.log('Admin login successful:', data.user?.id);
+        
+        // Ensure the user has admin role
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ role: 'admin' })
+          .eq('id', data.user.id);
+          
+        if (updateError) {
+          console.error('Error updating admin role:', updateError);
+        }
+        
+        toast({
+          title: "Admin login successful!",
+          description: "Redirecting to admin dashboard...",
+        });
+      }
+      
+    } catch (error: any) {
+      console.error("Admin login error:", error);
+      toast({
+        title: "Admin login failed",
+        description: "Could not create or login admin user. Please try manual login.",
         variant: "destructive",
       });
     } finally {
@@ -174,6 +268,22 @@ const Login = () => {
               </Button>
             </div>
           </form>
+          
+          {/* Admin Login Section */}
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <Button 
+              onClick={handleAdminLogin}
+              variant="outline" 
+              className="w-full border-orange-200 text-orange-700 hover:bg-orange-50"
+              disabled={isLoading}
+            >
+              <Shield className="mr-2 h-4 w-4" />
+              {isLoading ? "Processing..." : "Quick Admin Login"}
+            </Button>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              Admin credentials: admin@rsvpplatform.com / admin123
+            </p>
+          </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <div className="relative flex items-center w-full">

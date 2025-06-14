@@ -237,16 +237,10 @@ const Signup = () => {
                       </div>
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-gray-50">
-                    <RadioGroupItem value="admin" id="admin" />
-                    <Label htmlFor="admin" className="flex-1 cursor-pointer">
-                      <div>
-                        <div className="font-medium">Administrator</div>
-                        <div className="text-sm text-gray-500">Full system access</div>
-                      </div>
-                    </Label>
-                  </div>
                 </RadioGroup>
+                <p className="text-xs text-gray-500 mt-2">
+                  Need admin access? Contact your system administrator.
+                </p>
               </div>
               
               <Button 
