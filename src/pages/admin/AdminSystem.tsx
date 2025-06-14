@@ -19,6 +19,14 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
+interface SystemMetric {
+  id: string;
+  metric_name: string;
+  metric_value: number;
+  metric_unit: string;
+  recorded_at: string;
+}
+
 const AdminSystem = () => {
   // Fetch real system metrics
   const { data: metrics, isLoading, refetch } = useQuery({
@@ -37,7 +45,7 @@ const AdminSystem = () => {
           acc[metric.metric_name] = metric;
         }
         return acc;
-      }, {} as Record<string, any>);
+      }, {} as Record<string, SystemMetric>);
 
       return latestMetrics;
     },

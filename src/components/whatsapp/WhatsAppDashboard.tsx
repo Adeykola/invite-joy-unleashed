@@ -31,7 +31,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-const WhatsAppDashboard = () => {
+export const WhatsAppDashboard = () => {
   const [isQuickSendOpen, setIsQuickSendOpen] = useState(false);
   const [quickMessage, setQuickMessage] = useState({ phone: "", message: "" });
   const { toast } = useToast();
@@ -93,6 +93,14 @@ const WhatsAppDashboard = () => {
     setIsQuickSendOpen(false);
   };
 
+  const handleInitializeConnection = () => {
+    initializeConnection();
+  };
+
+  const handleDisconnect = () => {
+    disconnect();
+  };
+
   const getConnectionStatus = () => {
     if (sessionLoading) return { icon: Clock, text: "Loading...", color: "text-gray-500" };
     if (isConnecting) return { icon: Clock, text: "Connecting...", color: "text-blue-500" };
@@ -129,7 +137,7 @@ const WhatsAppDashboard = () => {
               </p>
               <div className="flex gap-2">
                 <Button 
-                  onClick={initializeConnection}
+                  onClick={handleInitializeConnection}
                   disabled={isConnecting}
                   className="bg-green-600 hover:bg-green-700"
                 >
@@ -168,7 +176,7 @@ const WhatsAppDashboard = () => {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={disconnect}
+                  onClick={handleDisconnect}
                   disabled={isDisconnecting}
                   className="text-red-600 border-red-200 hover:bg-red-50"
                 >
