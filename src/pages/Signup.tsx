@@ -36,10 +36,10 @@ const Signup = () => {
     
     setIsLoading(true);
     
-    if (password.length < 8) {
+    if (password.length < 6) {
       toast({
         title: "Error",
-        description: "Password must be at least 8 characters long",
+        description: "Password must be at least 6 characters long",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -47,6 +47,8 @@ const Signup = () => {
     }
     
     try {
+      console.log('Attempting signup with role:', userRole);
+      
       // Sign up user with Supabase
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -65,10 +67,20 @@ const Signup = () => {
       }
       
       if (data.user) {
-        toast({
-          title: "Account created successfully!",
-          description: "Please check your email to verify your account, then you can log in.",
-        });
+        console.log('User created successfully:', data.user.id);
+        
+        // Check if email confirmation is required
+        if (!data.session) {
+          toast({
+            title: "Account created successfully!",
+            description: "Please check your email to verify your account, then you can log in.",
+          });
+        } else {
+          toast({
+            title: "Account created successfully!",
+            description: "You will be redirected to your dashboard shortly.",
+          });
+        }
         
         // Redirect to login after successful signup
         setTimeout(() => {
@@ -84,6 +96,8 @@ const Signup = () => {
         errorMessage = "An account with this email already exists. Please try logging in instead.";
       } else if (error.message.includes("Password should be")) {
         errorMessage = "Password should be at least 6 characters long.";
+      } else if (error.message.includes("Invalid email")) {
+        errorMessage = "Please enter a valid email address.";
       }
       
       toast({
@@ -110,7 +124,10 @@ const Signup = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}`
+          redirectTo: `${window.location.origin}`,
+          queryParams: {
+            role: userRole
+          }
         }
       });
       
@@ -195,20 +212,39 @@ const Signup = () => {
                   </button>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Password must be at least 8 characters long.
+                  Password must be at least 6 characters long.
                 </p>
               </div>
               
               <div className="space-y-2">
-                <Label>I want to...</Label>
+                <Label>Account Type</Label>
                 <RadioGroup defaultValue={userRole} onValueChange={setUserRole} className="grid grid-cols-1 gap-3">
                   <div className="flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-gray-50">
-                    <RadioGroupItem value="host" id="host" />
-                    <Label htmlFor="host" className="flex-1 cursor-pointer">Create and host events</Label>
+                    <RadioGroupItem value="user" id="user" />
+                    <Label htmlFor="user" className="flex-1 cursor-pointer">
+                      <div>
+                        <div className="font-medium">Event Attendee</div>
+                        <div className="text-sm text-gray-500">RSVP and attend events</div>
+                      </div>
+                    </Label>
                   </div>
                   <div className="flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-gray-50">
-                    <RadioGroupItem value="user" id="user" />
-                    <Label htmlFor="user" className="flex-1 cursor-pointer">Respond to invitations</Label>
+                    <RadioGroupItem value="host" id="host" />
+                    <Label htmlFor="host" className="flex-1 cursor-pointer">
+                      <div>
+                        <div className="font-medium">Event Host</div>
+                        <div className="text-sm text-gray-500">Create and manage events</div>
+                      </div>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-gray-50">
+                    <RadioGroupItem value="admin" id="admin" />
+                    <Label htmlFor="admin" className="flex-1 cursor-pointer">
+                      <div>
+                        <div className="font-medium">Administrator</div>
+                        <div className="text-sm text-gray-500">Full system access</div>
+                      </div>
+                    </Label>
                   </div>
                 </RadioGroup>
               </div>

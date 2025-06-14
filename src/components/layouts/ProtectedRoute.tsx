@@ -47,17 +47,19 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
     console.log('Role mismatch:', profile.role, 'allowed:', allowedRoles);
     
     // Redirect to the correct dashboard based on user role
-    switch (profile.role) {
-      case "admin":
-        return <Navigate to="/admin-dashboard" replace />;
-      case "host":
-        return <Navigate to="/host-dashboard" replace />;
-      case "user":
-        return <Navigate to="/user-dashboard" replace />;
-      default:
-        // If no valid role, redirect to login
-        return <Navigate to="/login" replace />;
+    const dashboardMap = {
+      admin: '/admin-dashboard',
+      host: '/host-dashboard',
+      user: '/user-dashboard'
+    };
+    
+    const correctDashboard = dashboardMap[profile.role];
+    if (correctDashboard) {
+      return <Navigate to={correctDashboard} replace />;
     }
+    
+    // If no valid role, redirect to login
+    return <Navigate to="/login" replace />;
   }
   
   return <>{children}</>;

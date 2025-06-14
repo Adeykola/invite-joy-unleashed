@@ -33,6 +33,8 @@ const Login = () => {
     setIsLoading(true);
     
     try {
+      console.log('Attempting login for:', email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -42,12 +44,14 @@ const Login = () => {
         throw error;
       }
       
+      console.log('Login successful for user:', data.user?.id);
+      
       toast({
         title: "Login successful!",
         description: "Redirecting you to the dashboard...",
       });
       
-      // Let AuthContext handle the redirection based on user role
+      // AuthContext will handle the redirection based on user role
       
     } catch (error: any) {
       console.error("Login error:", error);
@@ -57,6 +61,8 @@ const Login = () => {
         errorMessage = "Invalid email or password. Please try again.";
       } else if (error.message.includes("Email not confirmed")) {
         errorMessage = "Please check your email and confirm your account before logging in.";
+      } else if (error.message.includes("Too many requests")) {
+        errorMessage = "Too many login attempts. Please wait a moment before trying again.";
       }
       
       toast({

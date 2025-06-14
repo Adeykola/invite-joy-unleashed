@@ -29,109 +29,111 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Fetch user profile
+  const fetchProfile = async (userId: string): Promise<UserProfile | null> => {
+    try {
+      console.log('Fetching profile for user:', userId);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return null;
+      }
+      
+      console.log('Profile fetched successfully:', data);
+      return data;
+    } catch (error) {
+      console.error('Exception fetching profile:', error);
+      return null;
+    }
+  };
+
+  // Handle redirection based on user role
+  const handleRedirection = (userProfile: UserProfile) => {
+    const currentPath = window.location.pathname;
+    console.log('Current path:', currentPath, 'User role:', userProfile.role);
+    
+    // Only redirect from auth pages or root
+    const shouldRedirect = ['/login', '/signup', '/'].includes(currentPath);
+    
+    if (shouldRedirect) {
+      const dashboardMap = {
+        admin: '/admin-dashboard',
+        host: '/host-dashboard',
+        user: '/user-dashboard'
+      };
+      
+      const targetPath = dashboardMap[userProfile.role];
+      console.log('Redirecting to:', targetPath);
+      navigate(targetPath, { replace: true });
+    }
+  };
+
   useEffect(() => {
-    // Set up auth state listener FIRST
+    let mounted = true;
+
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       console.log('Auth state changed:', event, newSession?.user?.email);
+      
+      if (!mounted) return;
+
       setSession(newSession);
       setUser(newSession?.user ?? null);
       
-      // Handle profile fetching and routing
       if (newSession?.user?.id) {
-        // Use setTimeout to avoid blocking the auth state change
-        setTimeout(async () => {
-          try {
-            console.log('Fetching profile for user:', newSession.user.id);
-            const { data, error } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', newSession.user.id)
-              .single();
-              
-            if (error && error.code !== 'PGRST116') {
-              console.error('Error fetching profile:', error);
-              setProfile(null);
-            } else {
-              console.log('Profile fetched:', data);
-              setProfile(data);
-              
-              // Handle automatic redirection after login
-              if (event === 'SIGNED_IN' && data?.role) {
-                console.log('User signed in with role:', data.role);
-                const currentPath = window.location.pathname;
-                console.log('Current path:', currentPath);
-                
-                // Only redirect if user is on login/signup pages or root
-                const shouldRedirect = currentPath === '/' || 
-                                     currentPath === '/login' || 
-                                     currentPath === '/signup';
-                
-                console.log('Should redirect:', shouldRedirect);
-                
-                if (shouldRedirect) {
-                  // Redirect based on role
-                  switch (data.role) {
-                    case 'admin':
-                      console.log('Redirecting to admin dashboard');
-                      navigate('/admin-dashboard', { replace: true });
-                      break;
-                    case 'host':
-                      console.log('Redirecting to host dashboard');
-                      navigate('/host-dashboard', { replace: true });
-                      break;
-                    case 'user':
-                    default:
-                      console.log('Redirecting to user dashboard');
-                      navigate('/user-dashboard', { replace: true });
-                      break;
-                  }
-                }
-              }
-            }
-          } catch (error) {
-            console.error('Error in profile fetching:', error);
-            setProfile(null);
+        // Fetch profile for authenticated user
+        const userProfile = await fetchProfile(newSession.user.id);
+        
+        if (mounted) {
+          setProfile(userProfile);
+          
+          // Handle redirection only on sign in
+          if (event === 'SIGNED_IN' && userProfile) {
+            handleRedirection(userProfile);
           }
-        }, 200); // Increased timeout to give more time for profile fetch
+        }
       } else {
-        setProfile(null);
+        if (mounted) {
+          setProfile(null);
+        }
       }
     });
 
-    // THEN check for existing session
-    const getInitialSession = async () => {
+    // Check for existing session
+    const initializeAuth = async () => {
       try {
-        console.log('Getting initial session...');
+        console.log('Checking for existing session...');
         const { data: { session: initialSession } } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
         
         setSession(initialSession);
         setUser(initialSession?.user ?? null);
         
         if (initialSession?.user?.id) {
-          console.log('Initial session found, fetching profile...');
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', initialSession.user.id)
-            .single();
-            
-          if (error && error.code !== 'PGRST116') {
-            console.error('Error fetching initial profile:', error);
-          } else {
-            console.log('Initial profile fetched:', data);
+          const userProfile = await fetchProfile(initialSession.user.id);
+          if (mounted) {
+            setProfile(userProfile);
           }
-          setProfile(data);
         }
       } catch (error) {
-        console.error('Error getting initial session:', error);
+        console.error('Error initializing auth:', error);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
-    
-    getInitialSession();
+
+    initializeAuth();
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [navigate]);
