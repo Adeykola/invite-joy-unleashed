@@ -142,7 +142,7 @@ export const EnhancedWhatsAppDashboard = () => {
               {qrCode && (
                 <div className="mt-4 p-4 border rounded-lg bg-white text-center">
                   <p className="text-sm text-muted-foreground mb-3">
-                    Scan this QR code with your WhatsApp Business app:
+                    Scan this QR code with your WhatsApp:
                   </p>
                   <img 
                     src={qrCode} 
@@ -152,6 +152,17 @@ export const EnhancedWhatsAppDashboard = () => {
                   <p className="text-xs text-muted-foreground mt-2">
                     Open WhatsApp → Settings → Linked Devices → Link a Device
                   </p>
+                </div>
+              )}
+
+              {isConnecting && (
+                <div className="mt-4 p-4 border rounded-lg bg-blue-50 text-center">
+                  <div className="flex items-center justify-center space-x-2">
+                    <Clock className="h-4 w-4 animate-spin text-blue-600" />
+                    <span className="text-blue-800">
+                      Initializing WhatsApp connection...
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
@@ -276,18 +287,18 @@ export const EnhancedWhatsAppDashboard = () => {
       </Tabs>
 
       {!isConnected && (
-        <Card className="border-orange-200 bg-orange-50">
+        <Card className="border-blue-200 bg-blue-50">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
               <div>
-                <h3 className="font-medium text-orange-800">Enhanced WhatsApp Integration</h3>
-                <p className="text-sm text-orange-700 mt-1">
-                  This enhanced version supports both WhatsApp Web and Business API integration
-                  with full media support, contact management, and advanced messaging features.
+                <h3 className="font-medium text-blue-800">WhatsApp Integration Required</h3>
+                <p className="text-sm text-blue-700 mt-1">
+                  Connect your WhatsApp account to start sending messages to your event guests.
+                  Choose between WhatsApp Web for personal accounts or Business API for professional use.
                 </p>
-                <p className="text-xs text-orange-600 mt-2">
-                  Connect your WhatsApp account above to start using the enhanced features.
+                <p className="text-xs text-blue-600 mt-2">
+                  Select a connection type above to get started.
                 </p>
               </div>
             </div>

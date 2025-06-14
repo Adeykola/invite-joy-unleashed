@@ -129,45 +129,20 @@ export const useEnhancedWhatsApp = () => {
       setConnectionType(type);
       setQrCode(null);
 
-      try {
-        const { data, error } = await supabase.functions.invoke('whatsapp-enhanced', {
-          body: { 
-            action: 'initialize',
-            connection_type: type
-          }
-        });
-
-        if (error) throw error;
-
-        if (data.qrCode && type === 'web') {
-          setQrCode(data.qrCode);
+      const { data, error } = await supabase.functions.invoke('whatsapp-enhanced', {
+        body: { 
+          action: 'initialize',
+          connection_type: type
         }
+      });
 
-        return data;
-      } catch (error) {
-        console.error('WhatsApp initialization error:', error);
-        
-        // Demo mode fallback for development
-        if (type === 'web') {
-          const demoQRCode = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(
-            JSON.stringify({
-              action: 'whatsapp_web',
-              timestamp: Date.now(),
-              session_id: Math.random().toString(36).substring(7),
-              connection_type: type
-            })
-          )}`;
-          setQrCode(demoQRCode);
-        }
-        
-        toast({
-          title: "Demo Mode",
-          description: `WhatsApp ${type === 'web' ? 'Web' : 'Business API'} integration is running in demo mode.`,
-          variant: "default",
-        });
+      if (error) throw error;
 
-        return { status: 'demo', qrCode: type === 'web' ? demoQRCode : null };
+      if (data.qrCode && type === 'web') {
+        setQrCode(data.qrCode);
       }
+
+      return data;
     },
     onSuccess: (data) => {
       if (data.status === 'connected') {
@@ -178,11 +153,11 @@ export const useEnhancedWhatsApp = () => {
         refetchSession();
       }
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Connection error:', error);
       toast({
         title: "Connection Failed",
-        description: "Could not connect to WhatsApp. Please try again.",
+        description: error.message || "Could not connect to WhatsApp. Please try again.",
         variant: "destructive",
       });
     },
@@ -296,19 +271,14 @@ export const useEnhancedWhatsApp = () => {
 
       // Process messages immediately if not scheduled
       if (!messageData.scheduled_for) {
-        try {
-          const { data: processData, error: processError } = await supabase.functions.invoke('whatsapp-enhanced', {
-            body: {
-              action: 'process_queue',
-              queue_ids: data.map(item => item.id)
-            }
-          });
+        const { data: processData, error: processError } = await supabase.functions.invoke('whatsapp-enhanced', {
+          body: {
+            action: 'process_queue',
+            queue_ids: data.map(item => item.id)
+          }
+        });
 
-          if (processError) throw processError;
-        } catch (processError) {
-          console.error('Queue processing error:', processError);
-          // Continue even if processing fails - messages are queued
-        }
+        if (processError) throw processError;
       }
 
       return data;
