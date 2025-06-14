@@ -13,17 +13,21 @@ import {
   Users,
   CheckCircle,
   XCircle,
-  Eye
+  Eye,
+  AlertTriangle
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const UserEvents = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
-  const { data: userRsvps, isLoading } = useQuery({
+  const { data: userRsvps, isLoading: rsvpsLoading, error } = useQuery({
     queryKey: ["user-events", user?.email],
     queryFn: async () => {
-      if (!user?.email) return [];
+      if (!user?.email) {
+        console.log("No user email available for fetching RSVPs");
+        return [];
+      }
       
       const { data, error } = await supabase
         .from("rsvps")
@@ -42,10 +46,14 @@ const UserEvents = () => {
         .eq("guest_email", user.email)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error("Error fetching user RSVPs:", error);
+        throw error;
+      }
+      return data || [];
     },
-    enabled: !!user?.email,
+    enabled: !!user?.email && !authLoading,
+    retry: 2,
   });
 
   const getStatusBadge = (status: string) => {
@@ -73,6 +81,52 @@ const UserEvents = () => {
       return { label: "Upcoming", variant: "default" as const };
     }
   };
+
+  // Show loading state
+  if (authLoading) {
+    return (
+      <UserDashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto"></div>
+            <p className="mt-3 text-gray-600">Loading your account...</p>
+          </div>
+        </div>
+      </UserDashboardLayout>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <UserDashboardLayout>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">My Events</h1>
+            <p className="text-muted-foreground">
+              View all events you've been invited to and manage your RSVPs
+            </p>
+          </div>
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center py-8">
+                <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-red-500" />
+                <p className="text-red-600 font-medium">Failed to load your events</p>
+                <p className="text-gray-500 mt-2">Please try refreshing the page</p>
+                <Button 
+                  onClick={() => window.location.reload()} 
+                  className="mt-4"
+                  variant="outline"
+                >
+                  Refresh Page
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </UserDashboardLayout>
+    );
+  }
 
   return (
     <UserDashboardLayout>
@@ -139,9 +193,10 @@ const UserEvents = () => {
             <CardTitle>Your Event Invitations</CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {rsvpsLoading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500 mx-auto"></div>
+                <p className="mt-3 text-gray-600">Loading your events...</p>
               </div>
             ) : userRsvps && userRsvps.length > 0 ? (
               <div className="space-y-4">

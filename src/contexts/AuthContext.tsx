@@ -18,6 +18,7 @@ type AuthContextType = {
   profile: UserProfile | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  clearAndRestart: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,6 +29,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  // Function to clear all auth state and restart
+  const clearAndRestart = () => {
+    console.log('Clearing all auth state and restarting...');
+    localStorage.clear();
+    sessionStorage.clear();
+    setSession(null);
+    setUser(null);
+    setProfile(null);
+    setLoading(false);
+    navigate('/login', { replace: true });
+  };
 
   // Fetch user profile
   const fetchProfile = async (userId: string): Promise<UserProfile | null> => {
@@ -75,6 +88,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    let timeoutId: NodeJS.Timeout;
+
+    // Safety timeout to prevent infinite loading
+    const safetyTimeout = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn('Auth initialization timed out, clearing loading state');
+        setLoading(false);
+      }
+    }, 10000); // 10 second timeout
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
@@ -82,24 +104,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (!mounted) return;
 
+      // Clear any existing timeout
+      if (timeoutId) clearTimeout(timeoutId);
+
       setSession(newSession);
       setUser(newSession?.user ?? null);
       
       if (newSession?.user?.id) {
-        // Fetch profile for authenticated user
-        const userProfile = await fetchProfile(newSession.user.id);
-        
-        if (mounted) {
-          setProfile(userProfile);
+        // Fetch profile for authenticated user with timeout
+        timeoutId = setTimeout(async () => {
+          if (!mounted) return;
           
-          // Handle redirection only on sign in
-          if (event === 'SIGNED_IN' && userProfile) {
-            handleRedirection(userProfile);
+          const userProfile = await fetchProfile(newSession.user.id);
+          
+          if (mounted) {
+            setProfile(userProfile);
+            
+            // Handle redirection only on sign in
+            if (event === 'SIGNED_IN' && userProfile) {
+              handleRedirection(userProfile);
+            }
+            setLoading(false);
           }
-        }
+        }, 100);
       } else {
         if (mounted) {
           setProfile(null);
+          setLoading(false);
         }
       }
     });
@@ -134,6 +165,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false;
+      clearTimeout(safetyTimeout);
+      if (timeoutId) clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, [navigate]);
@@ -141,13 +174,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       console.log('Signing out...');
+      setLoading(true);
       await supabase.auth.signOut();
+      
+      // Clear all local state
       setUser(null);
       setSession(null);
       setProfile(null);
+      
+      // Clear browser storage
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      setLoading(false);
       navigate('/login', { replace: true });
     } catch (error) {
       console.error('Error signing out:', error);
+      setLoading(false);
+      // Force clear even if signOut fails
+      clearAndRestart();
     }
   };
 
@@ -156,7 +201,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     profile,
     loading,
-    signOut
+    signOut,
+    clearAndRestart
   };
 
   return (

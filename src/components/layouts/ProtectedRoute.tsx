@@ -2,6 +2,8 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -10,7 +12,7 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, clearAndRestart } = useAuth();
   
   console.log('ProtectedRoute check:', { 
     user: !!user, 
@@ -25,6 +27,26 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto"></div>
           <p className="mt-3 text-gray-600">Loading...</p>
+          <div className="mt-4 space-y-2">
+            <p className="text-sm text-gray-500">Taking too long?</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => window.location.reload()}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh Page
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={clearAndRestart}
+              className="text-red-600 hover:text-red-700"
+            >
+              <AlertTriangle className="h-4 w-4 mr-2" />
+              Clear & Restart
+            </Button>
+          </div>
         </div>
       </div>
     );
