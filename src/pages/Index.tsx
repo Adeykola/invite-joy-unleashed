@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -75,7 +74,7 @@ const Index = () => {
                 </Link>
               )}
               <Link to="/events">
-                <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-green-600 text-lg px-8 py-4 font-semibold">
+                <Button size="lg" variant="outline" className="border-2 border-white text-green-300 bg-transparent hover:bg-transparent hover:text-white text-lg px-8 py-4 font-semibold">
                   Browse Events
                 </Button>
               </Link>
