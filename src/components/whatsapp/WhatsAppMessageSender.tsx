@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -140,42 +139,29 @@ export const WhatsAppMessageSender = () => {
     }
   };
 
-  // Ultra-safe filtering for events
-  const safeEvents = Array.isArray(events) ? events.filter((event, index) => {
-    const hasValidId = event && event.id && typeof event.id === 'string' && event.id.trim().length > 0;
-    const hasValidTitle = event && event.title && typeof event.title === 'string' && event.title.trim().length > 0;
-    
-    if (!hasValidId || !hasValidTitle) {
-      console.warn(`Filtering out invalid event at index ${index}:`, event);
-      return false;
-    }
-    return true;
+  // Safe filtering for events - only keep events with valid IDs and titles
+  const safeEvents = Array.isArray(events) ? events.filter(event => {
+    return event && 
+           event.id && 
+           typeof event.id === 'string' && 
+           event.id.trim().length > 0 && 
+           event.title && 
+           typeof event.title === 'string' && 
+           event.title.trim().length > 0;
   }) : [];
 
-  // Ultra-safe filtering for templates
-  const safeTemplates = Array.isArray(templates) ? templates.filter((template, index) => {
-    const hasValidId = template && template.id && typeof template.id === 'string' && template.id.trim().length > 0;
-    const hasValidTitle = template && template.title && typeof template.title === 'string' && template.title.trim().length > 0;
-    const hasValidContent = template && template.content && typeof template.content === 'string';
-    
-    if (!hasValidId || !hasValidTitle || !hasValidContent) {
-      console.warn(`Filtering out invalid template at index ${index}:`, template);
-      return false;
-    }
-    return true;
+  // Safe filtering for templates - only keep templates with valid IDs, titles, and content
+  const safeTemplates = Array.isArray(templates) ? templates.filter(template => {
+    return template && 
+           template.id && 
+           typeof template.id === 'string' && 
+           template.id.trim().length > 0 && 
+           template.title && 
+           typeof template.title === 'string' && 
+           template.title.trim().length > 0 &&
+           template.content &&
+           typeof template.content === 'string';
   }) : [];
-
-  // Create mappings for safe ID resolution
-  const templateIdMap = new Map();
-  const eventIdMap = new Map();
-
-  safeTemplates.forEach((template) => {
-    templateIdMap.set(template.id, template);
-  });
-
-  safeEvents.forEach((event) => {
-    eventIdMap.set(event.id, event);
-  });
 
   return (
     <div className="space-y-6">
@@ -203,7 +189,7 @@ export const WhatsAppMessageSender = () => {
             <div>
               <Label htmlFor="template">Message Template (Optional)</Label>
               <Select onValueChange={(value) => {
-                const template = templateIdMap.get(value);
+                const template = safeTemplates.find(t => t.id === value);
                 if (template && template.content) setMessage(template.content);
               }}>
                 <SelectTrigger>
