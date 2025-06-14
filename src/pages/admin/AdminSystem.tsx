@@ -135,7 +135,7 @@ const AdminSystem = () => {
   // Get the latest timestamp for display
   const getLatestTimestamp = () => {
     if (!metrics || Object.keys(metrics).length === 0) return 'Never';
-    const latestMetric = Object.values(metrics)[0];
+    const latestMetric = Object.values(metrics)[0] as SystemMetric;
     return new Date(latestMetric.recorded_at).toLocaleString();
   };
 
