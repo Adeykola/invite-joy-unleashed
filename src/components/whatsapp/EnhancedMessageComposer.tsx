@@ -202,7 +202,7 @@ export const EnhancedMessageComposer = () => {
             {message.length} characters
             {personalizationEnabled && (
               <span className="ml-2 text-blue-600">
-                • Personalization enabled (use {{name}}, {{event}} variables)
+                • Personalization enabled (use variables like: guest name, event details)
               </span>
             )}
           </div>

@@ -149,7 +149,7 @@ export const useEnhancedWhatsApp = () => {
         
         // Demo mode fallback for development
         if (type === 'web') {
-          const demoQR = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(
+          const demoQRCode = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(
             JSON.stringify({
               action: 'whatsapp_web',
               timestamp: Date.now(),
@@ -157,7 +157,7 @@ export const useEnhancedWhatsApp = () => {
               connection_type: type
             })
           )}`;
-          setQrCode(demoQR);
+          setQrCode(demoQRCode);
         }
         
         toast({
@@ -166,7 +166,7 @@ export const useEnhancedWhatsApp = () => {
           variant: "default",
         });
 
-        return { status: 'demo', qrCode: type === 'web' ? demoQR : null };
+        return { status: 'demo', qrCode: type === 'web' ? demoQRCode : null };
       }
     },
     onSuccess: (data) => {
