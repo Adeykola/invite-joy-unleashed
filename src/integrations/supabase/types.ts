@@ -9,6 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: unknown | null
+          resource_id: string | null
+          resource_type: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          resource_id?: string | null
+          resource_type: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          resource_id?: string | null
+          resource_type?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       broadcast_recipients: {
         Row: {
           broadcast_id: string
@@ -69,6 +105,60 @@ export type Database = {
           },
         ]
       }
+      communication_campaigns: {
+        Row: {
+          content: string
+          created_at: string
+          failed_sends: number | null
+          id: string
+          name: string
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string
+          subject: string | null
+          successful_sends: number | null
+          target_audience: Json | null
+          total_recipients: number | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          failed_sends?: number | null
+          id?: string
+          name: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          successful_sends?: number | null
+          target_audience?: Json | null
+          total_recipients?: number | null
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          failed_sends?: number | null
+          id?: string
+          name?: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          successful_sends?: number | null
+          target_audience?: Json | null
+          total_recipients?: number | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       event_guests: {
         Row: {
           created_at: string | null
@@ -78,6 +168,7 @@ export type Database = {
           invite_sent: boolean | null
           invited_at: string | null
           name: string
+          phone_number: string | null
         }
         Insert: {
           created_at?: string | null
@@ -87,6 +178,7 @@ export type Database = {
           invite_sent?: boolean | null
           invited_at?: string | null
           name: string
+          phone_number?: string | null
         }
         Update: {
           created_at?: string | null
@@ -96,6 +188,7 @@ export type Database = {
           invite_sent?: boolean | null
           invited_at?: string | null
           name?: string
+          phone_number?: string | null
         }
         Relationships: [
           {
@@ -210,6 +303,7 @@ export type Database = {
           guest_email: string
           guest_name: string
           id: string
+          phone_number: string | null
           response_status: string
         }
         Insert: {
@@ -221,6 +315,7 @@ export type Database = {
           guest_email: string
           guest_name: string
           id?: string
+          phone_number?: string | null
           response_status: string
         }
         Update: {
@@ -232,6 +327,7 @@ export type Database = {
           guest_email?: string
           guest_name?: string
           id?: string
+          phone_number?: string | null
           response_status?: string
         }
         Relationships: [
@@ -243,6 +339,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      system_metrics: {
+        Row: {
+          id: string
+          metric_name: string
+          metric_unit: string | null
+          metric_value: number
+          recorded_at: string
+        }
+        Insert: {
+          id?: string
+          metric_name: string
+          metric_unit?: string | null
+          metric_value: number
+          recorded_at?: string
+        }
+        Update: {
+          id?: string
+          metric_name?: string
+          metric_unit?: string | null
+          metric_value?: number
+          recorded_at?: string
+        }
+        Relationships: []
       }
       whatsapp_broadcasts: {
         Row: {
@@ -256,7 +376,7 @@ export type Database = {
           scheduled_for: string | null
           sent_count: number | null
           status: string
-          template_id: string
+          template_id: string | null
           total_recipients: number | null
           updated_at: string
           user_id: string
@@ -272,7 +392,7 @@ export type Database = {
           scheduled_for?: string | null
           sent_count?: number | null
           status?: string
-          template_id: string
+          template_id?: string | null
           total_recipients?: number | null
           updated_at?: string
           user_id: string
@@ -288,7 +408,7 @@ export type Database = {
           scheduled_for?: string | null
           sent_count?: number | null
           status?: string
-          template_id?: string
+          template_id?: string | null
           total_recipients?: number | null
           updated_at?: string
           user_id?: string
@@ -395,6 +515,23 @@ export type Database = {
           invited_at: string
           invite_sent: boolean
         }[]
+      }
+      log_admin_action: {
+        Args: {
+          p_action: string
+          p_resource_type: string
+          p_resource_id?: string
+          p_details?: Json
+        }
+        Returns: undefined
+      }
+      record_system_metric: {
+        Args: {
+          p_metric_name: string
+          p_metric_value: number
+          p_metric_unit?: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
