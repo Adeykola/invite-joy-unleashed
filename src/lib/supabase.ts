@@ -1,6 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { initStorageBuckets, checkStorageAvailability } from "./storage";
+import { checkStorageAvailability, createEventStorageBuckets } from "./storage";
 
 // Using direct values instead of environment variables
 const supabaseUrl = "https://ttlqxvpcjpxpbzkgbyod.supabase.co";
@@ -21,11 +21,11 @@ export const isSupabaseConfigured = () => {
 
 // Automatically create storage buckets if they don't exist
 export const ensureStorageBuckets = async () => {
-  console.log("Checking if storage buckets need to be created...");
+  console.log("Checking if event storage buckets need to be created...");
   const isAvailable = await checkStorageAvailability();
   
   if (!isAvailable) {
-    console.log("Storage buckets not found, attempting to create them...");
+    console.log("Event storage buckets not found, attempting to create them...");
     
     // First check if user is authenticated
     const { data: session } = await supabase.auth.getSession();
@@ -34,23 +34,23 @@ export const ensureStorageBuckets = async () => {
       return false;
     }
     
-    const success = await initStorageBuckets();
-    console.log("Storage bucket creation result:", success ? "Success" : "Failed");
+    const success = await createEventStorageBuckets();
+    console.log("Event storage bucket creation result:", success ? "Success" : "Failed");
     return success;
   }
   
+  console.log("Event storage buckets are available");
   return true;
 };
 
 // Add a helper function to initialize storage when the app loads
-// This function now has a "viewOnly" mode that doesn't try to initialize storage
 export const initializeStorageOnStartup = async (options = { quietMode: false, viewOnly: false }) => {
   try {
     if (!options.quietMode) {
-      console.log("Checking storage availability...");
+      console.log("Checking event storage availability...");
     }
     
-    // If in viewOnly mode, just check if storage is available but don't try to initialize it
+    // Check if event storage buckets are available
     const isAvailable = await checkStorageAvailability();
     
     // In viewOnly mode, just return the availability status without trying to initialize
@@ -60,17 +60,16 @@ export const initializeStorageOnStartup = async (options = { quietMode: false, v
     
     if (!isAvailable) {
       if (!options.quietMode) {
-        console.log("Storage buckets not found on startup, initializing...");
+        console.log("Event storage buckets not found on startup, initializing...");
       }
       
       // Use a timeout to avoid blocking the UI
       return new Promise((resolve) => {
-        // Delay storage initialization to not block critical UI rendering
         setTimeout(async () => {
           try {
-            const success = await initStorageBuckets();
+            const success = await createEventStorageBuckets();
             if (!options.quietMode) {
-              console.log("Storage initialization result:", success ? "Success" : "Failed");
+              console.log("Event storage initialization result:", success ? "Success" : "Failed");
             }
             resolve(success);
           } catch (error) {
@@ -81,7 +80,7 @@ export const initializeStorageOnStartup = async (options = { quietMode: false, v
       });
     } else {
       if (!options.quietMode) {
-        console.log("Storage buckets verified on startup");
+        console.log("Event storage buckets verified on startup");
       }
       return true;
     }

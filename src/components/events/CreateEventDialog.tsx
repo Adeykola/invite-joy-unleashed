@@ -1,5 +1,4 @@
 
-// Update CreateEventDialog.tsx to use the improved storage initialization
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { EventWizard } from "./EventWizard";
 import { useToast } from "@/hooks/use-toast";
-import { checkStorageAvailability, initStorageBuckets } from "@/lib/storage";
+import { checkStorageAvailability } from "@/lib/storage";
 import { Loader2, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,7 +24,6 @@ export function CreateEventDialog({ storageInitialized = false }: CreateEventDia
   const [isOpen, setIsOpen] = useState(false);
   const [storageReady, setStorageReady] = useState(false);
   const [isCheckingStorage, setIsCheckingStorage] = useState(false);
-  const [initRetries, setInitRetries] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -46,7 +44,7 @@ export function CreateEventDialog({ storageInitialized = false }: CreateEventDia
         setIsCheckingStorage(true);
         setErrorMessage(null);
         
-        console.log("Starting storage preparation process...");
+        console.log("Starting event storage preparation process...");
         
         // If storage is already initialized from the parent component, use that
         if (storageInitialized) {
@@ -56,44 +54,53 @@ export function CreateEventDialog({ storageInitialized = false }: CreateEventDia
           return;
         }
         
-        // Use improved storage initialization with automatic bucket creation
-        const success = await ensureStorageBuckets();
+        // Check if event storage buckets are available
+        const isAvailable = await checkStorageAvailability();
         
-        if (success) {
-          console.log("Storage is ready for use");
+        if (isAvailable) {
+          console.log("Event storage buckets are available");
           setStorageReady(true);
         } else {
-          console.log("Storage initialization failed, proceed anyway...");
-          // Still allow the user to create events, but warn them about image uploads
-          setErrorMessage("Storage buckets could not be accessed. You can still create events, but image uploads may not work.");
-          setStorageReady(true);  // Allow them to continue anyway
+          console.log("Event storage buckets not available, attempting to create...");
+          const createSuccess = await ensureStorageBuckets();
+          
+          if (createSuccess) {
+            console.log("Successfully created event storage buckets");
+            setStorageReady(true);
+            toast({
+              title: "Storage Ready",
+              description: "File storage for event images is now available.",
+            });
+          } else {
+            // Allow event creation without images
+            console.log("Couldn't create event storage buckets, proceeding with limited functionality");
+            setStorageReady(true);
+            setErrorMessage("Image uploads are currently unavailable. You can still create events with text and templates.");
+          }
         }
       } catch (error: any) {
-        console.error("Failed to initialize storage:", error);
-        
-        const errorMsg = error?.message || "Could not prepare storage for uploads";
+        console.error("Error checking event storage:", error);
+        const errorMsg = error?.message || "Could not access storage for image uploads";
         setErrorMessage(errorMsg);
+        
+        // Still allow event creation
+        setStorageReady(true);
         
         toast({
           title: "Storage Warning",
-          description: "Storage access is limited. You can still create events, but image uploads may not work.",
+          description: "Image uploads may not work properly. Core event functionality will still be available.",
         });
-        
-        // Still set storageReady to true to allow event creation without images
-        console.log("Setting storageReady to true despite errors to allow event creation");
-        setStorageReady(true);
       } finally {
         setIsCheckingStorage(false);
       }
     };
     
     prepareStorage();
-  }, [isOpen, storageReady, isCheckingStorage, toast, initRetries, storageInitialized, user]);
+  }, [isOpen, storageReady, isCheckingStorage, toast, storageInitialized, user]);
 
   const handleStorageRetry = () => {
     setErrorMessage(null);
     setStorageReady(false);
-    setInitRetries(prev => prev + 1);
     setIsCheckingStorage(false);
   };
 
@@ -126,8 +133,8 @@ export function CreateEventDialog({ storageInitialized = false }: CreateEventDia
           <div className="py-8 flex flex-col items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin mb-2 text-primary" />
             <div className="text-center">
-              <p>Preparing storage for uploads...</p>
-              <p className="text-xs text-muted-foreground mt-1">This may take a few moments</p>
+              <p>Preparing event storage...</p>
+              <p className="text-xs text-muted-foreground mt-1">Setting up image upload functionality</p>
             </div>
           </div>
         ) : errorMessage ? (
@@ -136,7 +143,6 @@ export function CreateEventDialog({ storageInitialized = false }: CreateEventDia
               <AlertTitle>Storage Notice</AlertTitle>
               <AlertDescription>
                 <p>{errorMessage}</p>
-                <p className="text-sm mt-2">You can still create an event, but custom images may not work properly.</p>
                 <Button 
                   variant="outline" 
                   size="sm"
