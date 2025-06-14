@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -139,26 +140,31 @@ export const WhatsAppMessageSender = () => {
     }
   };
 
-  // More robust filtering to prevent empty string values in Select components
-  const validEvents = events?.filter(event => 
-    event && 
-    event.id && 
-    typeof event.id === 'string' && 
-    event.id.trim() !== '' && 
-    event.title && 
-    typeof event.title === 'string' && 
-    event.title.trim() !== ''
-  ) || [];
+  // Ultra-safe filtering with detailed validation
+  const validEvents = (events || []).filter(event => {
+    console.log('Event validation:', event);
+    return event && 
+           event.id && 
+           typeof event.id === 'string' && 
+           event.id.trim().length > 0 && 
+           event.title && 
+           typeof event.title === 'string' && 
+           event.title.trim().length > 0;
+  });
 
-  const validTemplates = templates?.filter(template => 
-    template && 
-    template.id && 
-    typeof template.id === 'string' && 
-    template.id.trim() !== '' && 
-    template.title && 
-    typeof template.title === 'string' && 
-    template.title.trim() !== ''
-  ) || [];
+  const validTemplates = (templates || []).filter(template => {
+    console.log('Template validation:', template);
+    return template && 
+           template.id && 
+           typeof template.id === 'string' && 
+           template.id.trim().length > 0 && 
+           template.title && 
+           typeof template.title === 'string' && 
+           template.title.trim().length > 0;
+  });
+
+  console.log('Valid events after filtering:', validEvents);
+  console.log('Valid templates after filtering:', validTemplates);
 
   return (
     <div className="space-y-6">
@@ -186,6 +192,7 @@ export const WhatsAppMessageSender = () => {
             <div>
               <Label htmlFor="template">Message Template (Optional)</Label>
               <Select onValueChange={(value) => {
+                console.log('Template selected:', value);
                 const template = validTemplates.find(t => t.id === value);
                 if (template && template.content) setMessage(template.content);
               }}>
@@ -193,11 +200,19 @@ export const WhatsAppMessageSender = () => {
                   <SelectValue placeholder="Choose a template..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {validTemplates.map((template) => (
-                    <SelectItem key={template.id} value={template.id}>
-                      {template.title}
-                    </SelectItem>
-                  ))}
+                  {validTemplates.map((template) => {
+                    console.log('Rendering template SelectItem:', template.id, template.title);
+                    // Extra safety check before rendering
+                    if (!template.id || template.id.trim() === '' || !template.title || template.title.trim() === '') {
+                      console.warn('Skipping invalid template:', template);
+                      return null;
+                    }
+                    return (
+                      <SelectItem key={template.id} value={template.id}>
+                        {template.title}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -242,16 +257,27 @@ export const WhatsAppMessageSender = () => {
           {validEvents.length > 0 ? (
             <div>
               <Label htmlFor="event">Select Event</Label>
-              <Select value={selectedEvent} onValueChange={setSelectedEvent}>
+              <Select value={selectedEvent} onValueChange={(value) => {
+                console.log('Event selected:', value);
+                setSelectedEvent(value);
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choose an event..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {validEvents.map((event) => (
-                    <SelectItem key={event.id} value={event.id}>
-                      {event.title} - {new Date(event.date).toLocaleDateString()}
-                    </SelectItem>
-                  ))}
+                  {validEvents.map((event) => {
+                    console.log('Rendering event SelectItem:', event.id, event.title);
+                    // Extra safety check before rendering
+                    if (!event.id || event.id.trim() === '' || !event.title || event.title.trim() === '') {
+                      console.warn('Skipping invalid event:', event);
+                      return null;
+                    }
+                    return (
+                      <SelectItem key={event.id} value={event.id}>
+                        {event.title} - {new Date(event.date).toLocaleDateString()}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
