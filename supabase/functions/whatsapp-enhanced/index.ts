@@ -7,8 +7,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Global map to store active WhatsApp connections
-const activeConnections = new Map();
+// Global map to store active WhatsApp clients
+const activeClients = new Map();
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -76,7 +76,7 @@ async function handleInitialize(supabase: any, params: any) {
         .eq('status', 'connected')
         .maybeSingle();
 
-      if (existingSession && activeConnections.has(user_id)) {
+      if (existingSession && activeClients.has(user_id)) {
         return new Response(
           JSON.stringify({
             status: 'connected',
@@ -113,8 +113,8 @@ async function handleInitialize(supabase: any, params: any) {
 
       if (sessionError) throw sessionError;
 
-      // Start WhatsApp Web client initialization
-      const qrCodeData = await initializeWhatsAppWebClient(user_id, sessionId, supabase);
+      // Start real WhatsApp Web client initialization
+      const qrCodeData = await initializeRealWhatsAppClient(user_id, sessionId, supabase);
 
       return new Response(
         JSON.stringify({
@@ -172,81 +172,158 @@ async function handleInitialize(supabase: any, params: any) {
   throw new Error('Invalid connection type');
 }
 
-async function initializeWhatsAppWebClient(userId: string, sessionId: string, supabase: any) {
+async function initializeRealWhatsAppClient(userId: string, sessionId: string, supabase: any) {
   try {
-    console.log('Starting WhatsApp Web client for user:', userId);
+    console.log('Starting real WhatsApp Web client for user:', userId);
     
-    // Generate a demo QR code for now - in production, this would use real WhatsApp Web protocol
-    const qrPayload = {
-      ref: `${sessionId}.${crypto.randomUUID()}`,
-      publicKey: btoa(crypto.randomUUID()),
-      clientToken: crypto.randomUUID(),
-      serverToken: sessionId,
-      timestamp: Date.now(),
-      webVersion: '2.2.24',
-      browserName: 'Chrome',
-      browserVersion: '91.0.4472.124'
-    };
+    // Import WhatsApp Web.js dynamically
+    const { Client, LocalAuth, MessageMedia } = await import('https://esm.sh/whatsapp-web.js@1.23.0');
     
-    const qrString = JSON.stringify(qrPayload);
+    // Create WhatsApp client with local authentication
+    const client = new Client({
+      authStrategy: new LocalAuth({
+        clientId: sessionId,
+        dataPath: `/tmp/whatsapp-sessions/${userId}`
+      }),
+      puppeteer: {
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-gpu'
+        ]
+      }
+    });
+
+    // Store client reference
+    activeClients.set(userId, client);
+
+    let qrCodeData = null;
+
+    // QR code event
+    client.on('qr', async (qr) => {
+      console.log('QR code received for user:', userId);
+      qrCodeData = qr;
+      
+      // Update session with QR code
+      await supabase
+        .from('whatsapp_sessions')
+        .update({
+          session_data: { 
+            session_id: sessionId,
+            qr_code: qr,
+            qr_generated: true,
+            last_qr_at: new Date().toISOString()
+          }
+        })
+        .eq('id', sessionId);
+    });
+
+    // Ready event - WhatsApp is connected
+    client.on('ready', async () => {
+      console.log('WhatsApp client ready for user:', userId);
+      
+      const clientInfo = client.info;
+      
+      await supabase
+        .from('whatsapp_sessions')
+        .update({
+          status: 'connected',
+          phone_number: clientInfo.wid.user,
+          display_name: clientInfo.pushname || 'WhatsApp User',
+          session_data: {
+            session_id: sessionId,
+            connected_at: new Date().toISOString(),
+            user_info: {
+              name: clientInfo.pushname,
+              id: clientInfo.wid._serialized,
+              phone: clientInfo.wid.user
+            }
+          }
+        })
+        .eq('id', sessionId);
+    });
+
+    // Authentication failure event
+    client.on('auth_failure', async (msg) => {
+      console.error('Authentication failed for user:', userId, msg);
+      
+      await supabase
+        .from('whatsapp_sessions')
+        .update({
+          status: 'error',
+          session_data: {
+            session_id: sessionId,
+            error: 'Authentication failed',
+            error_message: msg,
+            error_at: new Date().toISOString()
+          }
+        })
+        .eq('id', sessionId);
+        
+      activeClients.delete(userId);
+    });
+
+    // Disconnected event
+    client.on('disconnected', async (reason) => {
+      console.log('WhatsApp client disconnected for user:', userId, reason);
+      
+      await supabase
+        .from('whatsapp_sessions')
+        .update({
+          status: 'disconnected',
+          session_data: {
+            session_id: sessionId,
+            disconnected_at: new Date().toISOString(),
+            disconnect_reason: reason
+          }
+        })
+        .eq('id', sessionId);
+        
+      activeClients.delete(userId);
+    });
+
+    // Initialize the client
+    await client.initialize();
     
-    // Update session with QR code
+    // Wait for QR code to be generated (timeout after 30 seconds)
+    let attempts = 0;
+    while (!qrCodeData && attempts < 30) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      attempts++;
+    }
+    
+    if (qrCodeData) {
+      // Generate QR code image URL
+      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrCodeData)}`;
+      return qrCodeUrl;
+    } else {
+      throw new Error('Failed to generate QR code within timeout period');
+    }
+    
+  } catch (error) {
+    console.error('Error initializing real WhatsApp Web client:', error);
+    
+    // Update session with error
     await supabase
       .from('whatsapp_sessions')
       .update({
-        session_data: { 
+        status: 'error',
+        session_data: {
           session_id: sessionId,
-          qr_code: qrString,
-          qr_generated: true,
-          last_qr_at: new Date().toISOString()
+          error: 'Initialization failed',
+          error_message: error.message,
+          error_at: new Date().toISOString()
         }
       })
       .eq('id', sessionId);
-
-    // Generate QR code URL
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrString)}`;
     
-    // Simulate connection after 10 seconds for demo purposes
-    setTimeout(async () => {
-      try {
-        await supabase
-          .from('whatsapp_sessions')
-          .update({
-            status: 'connected',
-            phone_number: '+1234567890',
-            display_name: 'Demo WhatsApp User',
-            session_data: {
-              session_id: sessionId,
-              connected_at: new Date().toISOString(),
-              user_info: {
-                name: 'Demo WhatsApp User',
-                id: '1234567890@c.us'
-              }
-            }
-          })
-          .eq('id', sessionId);
-          
-        console.log('Demo connection established for user:', userId);
-      } catch (error) {
-        console.error('Error simulating connection:', error);
-      }
-    }, 10000);
-    
-    return qrCodeUrl;
-    
-  } catch (error) {
-    console.error('Error initializing WhatsApp Web client:', error);
-    
-    // Fallback to demo QR code
-    const fallbackQR = JSON.stringify({
-      ref: `${sessionId}.${crypto.randomUUID()}`,
-      publicKey: btoa(crypto.randomUUID()),
-      clientToken: crypto.randomUUID(),
-      serverToken: sessionId,
-      timestamp: Date.now()
-    });
-    
-    return `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(fallbackQR)}`;
+    throw error;
   }
 }
 
@@ -276,17 +353,14 @@ async function handleStatus(supabase: any, params: any) {
     );
   }
 
-  if (session.status === 'connecting') {
-    // Generate new QR code if needed
-    const qrCode = session.session_data?.qr_code 
-      ? `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(session.session_data.qr_code)}`
-      : await generateFallbackQR(session.id, user_id);
+  if (session.status === 'connecting' && session.session_data?.qr_code) {
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(session.session_data.qr_code)}`;
     
     return new Response(
       JSON.stringify({
         status: 'connecting',
         connection_type: session.connection_type,
-        qrCode: qrCode,
+        qrCode: qrCodeUrl,
         message: 'Waiting for QR code scan...'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -306,28 +380,21 @@ async function handleStatus(supabase: any, params: any) {
   );
 }
 
-async function generateFallbackQR(sessionId: string, userId: string) {
-  const qrPayload = {
-    ref: `${sessionId}.${crypto.randomUUID()}`,
-    publicKey: btoa(crypto.randomUUID()),
-    clientToken: crypto.randomUUID(),
-    serverToken: sessionId,
-    browserToken: btoa(`${userId}-${Date.now()}`),
-    secret: btoa(crypto.randomUUID()),
-    timestamp: Date.now()
-  };
-  
-  const qrString = JSON.stringify(qrPayload);
-  return `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrString)}`;
-}
-
 async function handleDisconnect(supabase: any, params: any) {
   const { user_id } = params;
   
   console.log('Disconnecting WhatsApp for user:', user_id);
 
-  // Close active connection if exists
-  activeConnections.delete(user_id);
+  // Close active client if exists
+  if (activeClients.has(user_id)) {
+    const client = activeClients.get(user_id);
+    try {
+      await client.destroy();
+    } catch (error) {
+      console.error('Error destroying client:', error);
+    }
+    activeClients.delete(user_id);
+  }
 
   const { error } = await supabase
     .from('whatsapp_sessions')
@@ -367,19 +434,28 @@ async function handleSendMessage(supabase: any, params: any) {
   }
 
   try {
-    // For demo purposes, we'll simulate message sending
-    console.log(`Simulating message send to ${to}: ${message}`);
+    // Get the active client
+    const client = activeClients.get(user_id);
     
-    // In a real implementation, this would use the WhatsApp Web client to send the message
-    const messageId = crypto.randomUUID();
+    if (!client) {
+      throw new Error('WhatsApp client not found. Please reconnect.');
+    }
+
+    // Format phone number for WhatsApp
+    const chatId = to.includes('@c.us') ? to : `${to.replace(/[^\d]/g, '')}@c.us`;
+    
+    // Send the message using the real WhatsApp client
+    const sentMessage = await client.sendMessage(chatId, message);
+    
+    console.log('Message sent successfully:', sentMessage.id._serialized);
     
     return new Response(
       JSON.stringify({
         success: true,
-        message_id: messageId,
+        message_id: sentMessage.id._serialized,
         status: 'sent',
         timestamp: new Date().toISOString(),
-        message: 'Message sent successfully (demo mode)'
+        message: 'Message sent successfully'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

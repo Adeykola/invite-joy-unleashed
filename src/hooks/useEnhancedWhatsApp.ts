@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -64,8 +63,11 @@ export const useEnhancedWhatsApp = () => {
       return data;
     },
     refetchInterval: (query) => {
-      // Poll more frequently when connecting
-      return query.state.data?.status === 'connecting' ? 2000 : 30000;
+      const status = query.state.data?.status;
+      // Poll more frequently when connecting or when we have a connecting status
+      if (status === 'connecting') return 2000;
+      if (status === 'connected') return 30000;
+      return false;
     }
   });
 
@@ -135,6 +137,8 @@ export const useEnhancedWhatsApp = () => {
       setConnectionType(type);
       setQrCode(null);
 
+      console.log('Initializing WhatsApp connection with type:', type);
+
       const { data, error } = await supabase.functions.invoke('whatsapp-enhanced', {
         body: { 
           action: 'initialize',
@@ -142,7 +146,12 @@ export const useEnhancedWhatsApp = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
+
+      console.log('Initialize response:', data);
 
       if (data.qrCode && type === 'web') {
         setQrCode(data.qrCode);
@@ -151,11 +160,14 @@ export const useEnhancedWhatsApp = () => {
       return data;
     },
     onSuccess: (data) => {
+      console.log('Connection initialization successful:', data);
+      
       if (data.status === 'connected') {
         toast({
           title: "WhatsApp Connected!",
           description: `Your WhatsApp ${connectionType === 'web' ? 'Web' : 'Business API'} is now connected.`,
         });
+        setQrCode(null);
         sessionQuery.refetch();
       } else if (data.status === 'connecting') {
         toast({
@@ -179,13 +191,32 @@ export const useEnhancedWhatsApp = () => {
 
   // Check for QR code updates from session data
   useEffect(() => {
-    if (sessionQuery.data?.session_data?.qr_code && sessionQuery.data.status === 'connecting') {
-      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(sessionQuery.data.session_data.qr_code)}`;
+    const sessionData = sessionQuery.data;
+    
+    if (sessionData?.session_data?.qr_code && sessionData.status === 'connecting') {
+      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(sessionData.session_data.qr_code)}`;
       setQrCode(qrCodeUrl);
-    } else if (sessionQuery.data?.status === 'connected') {
+    } else if (sessionData?.status === 'connected') {
       setQrCode(null);
+      if (isConnecting) {
+        toast({
+          title: "WhatsApp Connected!",
+          description: "Your WhatsApp is now connected and ready to send messages.",
+        });
+        setIsConnecting(false);
+      }
+    } else if (sessionData?.status === 'error') {
+      setQrCode(null);
+      if (isConnecting) {
+        toast({
+          title: "Connection Failed",
+          description: sessionData.session_data?.error_message || "Failed to connect to WhatsApp.",
+          variant: "destructive",
+        });
+        setIsConnecting(false);
+      }
     }
-  }, [sessionQuery.data]);
+  }, [sessionQuery.data, isConnecting, toast]);
 
   // Upload media file
   const uploadMedia = useMutation({

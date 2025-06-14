@@ -52,6 +52,7 @@ export const EnhancedWhatsAppDashboard = () => {
     if (sessionLoading) return { icon: Clock, text: "Loading...", color: "text-gray-500" };
     if (isConnecting || session?.status === 'connecting') return { icon: Clock, text: "Connecting...", color: "text-blue-500" };
     if (isConnected) return { icon: Wifi, text: "Connected", color: "text-green-500" };
+    if (session?.status === 'error') return { icon: AlertCircle, text: "Error", color: "text-red-500" };
     return { icon: WifiOff, text: "Disconnected", color: "text-red-500" };
   };
 
@@ -59,6 +60,7 @@ export const EnhancedWhatsAppDashboard = () => {
   const StatusIcon = connectionStatus.icon;
 
   const handleConnectionChoice = (type: 'web' | 'business_api') => {
+    console.log('User selected connection type:', type);
     initializeConnection(type);
   };
 
@@ -134,15 +136,15 @@ export const EnhancedWhatsAppDashboard = () => {
                     <div className="flex items-center justify-center space-x-2 mb-4">
                       <Clock className="h-5 w-5 animate-spin text-blue-600" />
                       <span className="text-blue-800 font-medium">
-                        Initializing WhatsApp Web Connection
+                        Connecting to WhatsApp Web
                       </span>
                     </div>
                     <p className="text-muted-foreground mb-4">
-                      Starting WhatsApp Web client and generating QR code...
+                      Initializing WhatsApp Web client and generating QR code...
                     </p>
                   </div>
                   
-                  {qrCode && (
+                  {qrCode ? (
                     <div className="flex justify-center">
                       <div className="p-4 bg-white border rounded-lg shadow-sm">
                         <img 
@@ -152,7 +154,9 @@ export const EnhancedWhatsAppDashboard = () => {
                         />
                         <div className="mt-3 text-center">
                           <p className="text-sm text-muted-foreground mb-2">
-                            Open WhatsApp → Settings → Linked Devices → Link a Device
+                            1. Open WhatsApp on your phone<br />
+                            2. Go to Settings → Linked Devices<br />
+                            3. Tap "Link a Device" and scan this QR code
                           </p>
                           <Button
                             variant="outline"
@@ -168,26 +172,41 @@ export const EnhancedWhatsAppDashboard = () => {
                             ) : (
                               <>
                                 <RefreshCw className="h-4 w-4 mr-2" />
-                                Check Connection Status
+                                Refresh Status
                               </>
                             )}
                           </Button>
                         </div>
                       </div>
                     </div>
-                  )}
-                  
-                  {!qrCode && (
+                  ) : (
                     <div className="text-center py-8">
                       <Clock className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
                       <p className="text-muted-foreground">
-                        Initializing WhatsApp Web client...
+                        Starting WhatsApp Web client...
                       </p>
                       <p className="text-xs text-muted-foreground mt-2">
-                        This may take a few moments
+                        This may take up to 30 seconds
                       </p>
                     </div>
                   )}
+                </div>
+              ) : session?.status === 'error' ? (
+                <div className="space-y-4">
+                  <div className="p-4 border rounded-lg bg-red-50 text-center">
+                    <AlertCircle className="h-8 w-8 mx-auto mb-2 text-red-600" />
+                    <h3 className="font-medium text-red-800 mb-2">Connection Failed</h3>
+                    <p className="text-sm text-red-600 mb-4">
+                      {session.session_data?.error_message || 'Failed to connect to WhatsApp'}
+                    </p>
+                    <Button 
+                      onClick={() => handleConnectionChoice('web')}
+                      variant="outline"
+                      className="text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      Try Again
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -243,7 +262,7 @@ export const EnhancedWhatsAppDashboard = () => {
                   <div className="flex items-center justify-center space-x-2">
                     <Clock className="h-4 w-4 animate-spin text-blue-600" />
                     <span className="text-blue-800">
-                      Starting WhatsApp Web client...
+                      Initializing WhatsApp Web client...
                     </span>
                   </div>
                 </div>
