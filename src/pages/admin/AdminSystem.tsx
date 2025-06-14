@@ -132,6 +132,13 @@ const AdminSystem = () => {
     memory: getMetricValue('memory_usage') > 85 ? 'warning' : 'healthy'
   };
 
+  // Get the latest timestamp for display
+  const getLatestTimestamp = () => {
+    if (!metrics || Object.keys(metrics).length === 0) return 'Never';
+    const latestMetric = Object.values(metrics)[0];
+    return new Date(latestMetric.recorded_at).toLocaleString();
+  };
+
   return (
     <AdminDashboardLayout>
       <div className="space-y-6">
@@ -319,7 +326,7 @@ const AdminSystem = () => {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Last Updated:</span>
-                  <span>{metrics ? new Date(Object.values(metrics)[0]?.recorded_at).toLocaleString() : 'Never'}</span>
+                  <span>{getLatestTimestamp()}</span>
                 </div>
               </div>
             </CardContent>

@@ -13,8 +13,7 @@ import {
   Bell,
   ChevronDown,
   Heart,
-  Star,
-  AlertTriangle
+  Star
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -38,7 +37,7 @@ const UserDashboardLayout = ({ children }: UserDashboardLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, profile, signOut, clearAndRestart, loading } = useAuth();
+  const { user, profile, signOut, loading } = useAuth();
 
   const navItems = [
     {
@@ -91,14 +90,6 @@ const UserDashboardLayout = ({ children }: UserDashboardLayoutProps) => {
     }
   };
 
-  const handleEmergencyLogout = () => {
-    toast({
-      title: "Emergency logout",
-      description: "Clearing all data and redirecting...",
-    });
-    clearAndRestart();
-  };
-
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar for desktop */}
@@ -127,7 +118,7 @@ const UserDashboardLayout = ({ children }: UserDashboardLayoutProps) => {
                 ))}
               </nav>
             </div>
-            <div className="px-2 mt-4 space-y-2">
+            <div className="px-2 mt-4">
               <Button 
                 variant="outline" 
                 className="w-full justify-start text-gray-600 hover:text-indigo-600"
@@ -136,15 +127,6 @@ const UserDashboardLayout = ({ children }: UserDashboardLayoutProps) => {
               >
                 <LogOut className="mr-2 h-5 w-5" />
                 {loading ? "Logging out..." : "Logout"}
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
-                onClick={handleEmergencyLogout}
-              >
-                <AlertTriangle className="mr-2 h-4 w-4" />
-                Emergency Logout
               </Button>
             </div>
           </div>
@@ -179,7 +161,7 @@ const UserDashboardLayout = ({ children }: UserDashboardLayoutProps) => {
                 </Link>
               ))}
             </nav>
-            <div className="p-4 border-t space-y-2">
+            <div className="p-4 border-t">
               <Button 
                 variant="outline" 
                 className="w-full justify-start text-gray-600 hover:text-indigo-600"
@@ -188,15 +170,6 @@ const UserDashboardLayout = ({ children }: UserDashboardLayoutProps) => {
               >
                 <LogOut className="mr-2 h-5 w-5" />
                 {loading ? "Logging out..." : "Logout"}
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
-                onClick={handleEmergencyLogout}
-              >
-                <AlertTriangle className="mr-2 h-4 w-4" />
-                Emergency Logout
               </Button>
             </div>
           </div>
@@ -243,9 +216,6 @@ const UserDashboardLayout = ({ children }: UserDashboardLayoutProps) => {
                   <DropdownMenuItem>Settings</DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleEmergencyLogout} className="text-red-600">
-                    Emergency Logout
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
