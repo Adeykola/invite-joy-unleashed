@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -140,9 +139,26 @@ export const WhatsAppMessageSender = () => {
     }
   };
 
-  // Filter valid events and templates to prevent empty string values
-  const validEvents = events?.filter(event => event && event.id && event.title) || [];
-  const validTemplates = templates?.filter(template => template && template.id && template.title) || [];
+  // More robust filtering to prevent empty string values in Select components
+  const validEvents = events?.filter(event => 
+    event && 
+    event.id && 
+    typeof event.id === 'string' && 
+    event.id.trim() !== '' && 
+    event.title && 
+    typeof event.title === 'string' && 
+    event.title.trim() !== ''
+  ) || [];
+
+  const validTemplates = templates?.filter(template => 
+    template && 
+    template.id && 
+    typeof template.id === 'string' && 
+    template.id.trim() !== '' && 
+    template.title && 
+    typeof template.title === 'string' && 
+    template.title.trim() !== ''
+  ) || [];
 
   return (
     <div className="space-y-6">
@@ -166,24 +182,26 @@ export const WhatsAppMessageSender = () => {
             />
           </div>
           
-          <div>
-            <Label htmlFor="template">Message Template (Optional)</Label>
-            <Select onValueChange={(value) => {
-              const template = validTemplates.find(t => t.id === value);
-              if (template) setMessage(template.content);
-            }}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose a template..." />
-              </SelectTrigger>
-              <SelectContent>
-                {validTemplates.map((template) => (
-                  <SelectItem key={template.id} value={template.id}>
-                    {template.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {validTemplates.length > 0 && (
+            <div>
+              <Label htmlFor="template">Message Template (Optional)</Label>
+              <Select onValueChange={(value) => {
+                const template = validTemplates.find(t => t.id === value);
+                if (template && template.content) setMessage(template.content);
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a template..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {validTemplates.map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div>
             <Label htmlFor="message">Message</Label>
@@ -221,21 +239,27 @@ export const WhatsAppMessageSender = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="event">Select Event</Label>
-            <Select value={selectedEvent} onValueChange={setSelectedEvent}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose an event..." />
-              </SelectTrigger>
-              <SelectContent>
-                {validEvents.map((event) => (
-                  <SelectItem key={event.id} value={event.id}>
-                    {event.title} - {new Date(event.date).toLocaleDateString()}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {validEvents.length > 0 ? (
+            <div>
+              <Label htmlFor="event">Select Event</Label>
+              <Select value={selectedEvent} onValueChange={setSelectedEvent}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose an event..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {validEvents.map((event) => (
+                    <SelectItem key={event.id} value={event.id}>
+                      {event.title} - {new Date(event.date).toLocaleDateString()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground">
+              No events available for broadcasting. Create an event first.
+            </div>
+          )}
 
           <div>
             <Label htmlFor="broadcast-message">Message</Label>
@@ -248,7 +272,11 @@ export const WhatsAppMessageSender = () => {
             />
           </div>
 
-          <Button onClick={sendToEventGuests} disabled={isSending} className="w-full">
+          <Button 
+            onClick={sendToEventGuests} 
+            disabled={isSending || validEvents.length === 0} 
+            className="w-full"
+          >
             {isSending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
