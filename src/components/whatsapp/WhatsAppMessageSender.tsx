@@ -140,31 +140,29 @@ export const WhatsAppMessageSender = () => {
     }
   };
 
-  // Ultra-safe filtering with detailed validation
-  const validEvents = (events || []).filter(event => {
-    console.log('Event validation:', event);
+  // Safe filtering for events with proper validation
+  const safeEvents = Array.isArray(events) ? events.filter(event => {
     return event && 
+           typeof event === 'object' && 
            event.id && 
            typeof event.id === 'string' && 
            event.id.trim().length > 0 && 
            event.title && 
            typeof event.title === 'string' && 
            event.title.trim().length > 0;
-  });
+  }) : [];
 
-  const validTemplates = (templates || []).filter(template => {
-    console.log('Template validation:', template);
+  // Safe filtering for templates with proper validation
+  const safeTemplates = Array.isArray(templates) ? templates.filter(template => {
     return template && 
+           typeof template === 'object' && 
            template.id && 
            typeof template.id === 'string' && 
            template.id.trim().length > 0 && 
            template.title && 
            typeof template.title === 'string' && 
            template.title.trim().length > 0;
-  });
-
-  console.log('Valid events after filtering:', validEvents);
-  console.log('Valid templates after filtering:', validTemplates);
+  }) : [];
 
   return (
     <div className="space-y-6">
@@ -188,28 +186,25 @@ export const WhatsAppMessageSender = () => {
             />
           </div>
           
-          {validTemplates.length > 0 && (
+          {safeTemplates.length > 0 && (
             <div>
               <Label htmlFor="template">Message Template (Optional)</Label>
               <Select onValueChange={(value) => {
-                console.log('Template selected:', value);
-                const template = validTemplates.find(t => t.id === value);
+                const template = safeTemplates.find(t => t.id === value);
                 if (template && template.content) setMessage(template.content);
               }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a template..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {validTemplates.map((template) => {
-                    console.log('Rendering template SelectItem:', template.id, template.title);
-                    // Extra safety check before rendering
-                    if (!template.id || template.id.trim() === '' || !template.title || template.title.trim() === '') {
-                      console.warn('Skipping invalid template:', template);
-                      return null;
-                    }
+                  {safeTemplates.map((template) => {
+                    // Final safety check before rendering SelectItem
+                    const valueId = String(template.id || `template-${Math.random()}`);
+                    const displayTitle = String(template.title || 'Untitled Template');
+                    
                     return (
-                      <SelectItem key={template.id} value={template.id}>
-                        {template.title}
+                      <SelectItem key={valueId} value={valueId}>
+                        {displayTitle}
                       </SelectItem>
                     );
                   })}
@@ -254,27 +249,23 @@ export const WhatsAppMessageSender = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {validEvents.length > 0 ? (
+          {safeEvents.length > 0 ? (
             <div>
               <Label htmlFor="event">Select Event</Label>
-              <Select value={selectedEvent} onValueChange={(value) => {
-                console.log('Event selected:', value);
-                setSelectedEvent(value);
-              }}>
+              <Select value={selectedEvent} onValueChange={setSelectedEvent}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choose an event..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {validEvents.map((event) => {
-                    console.log('Rendering event SelectItem:', event.id, event.title);
-                    // Extra safety check before rendering
-                    if (!event.id || event.id.trim() === '' || !event.title || event.title.trim() === '') {
-                      console.warn('Skipping invalid event:', event);
-                      return null;
-                    }
+                  {safeEvents.map((event) => {
+                    // Final safety check before rendering SelectItem
+                    const valueId = String(event.id || `event-${Math.random()}`);
+                    const displayTitle = String(event.title || 'Untitled Event');
+                    const eventDate = event.date ? new Date(event.date).toLocaleDateString() : 'No Date';
+                    
                     return (
-                      <SelectItem key={event.id} value={event.id}>
-                        {event.title} - {new Date(event.date).toLocaleDateString()}
+                      <SelectItem key={valueId} value={valueId}>
+                        {displayTitle} - {eventDate}
                       </SelectItem>
                     );
                   })}
@@ -300,7 +291,7 @@ export const WhatsAppMessageSender = () => {
 
           <Button 
             onClick={sendToEventGuests} 
-            disabled={isSending || validEvents.length === 0} 
+            disabled={isSending || safeEvents.length === 0} 
             className="w-full"
           >
             {isSending ? (
