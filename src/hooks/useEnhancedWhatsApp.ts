@@ -46,7 +46,7 @@ export const useEnhancedWhatsApp = () => {
   const queryClient = useQueryClient();
 
   // Fetch WhatsApp session with enhanced data
-  const { data: session, isLoading: sessionLoading, refetch: refetchSession } = useQuery({
+  const sessionQuery = useQuery({
     queryKey: ['enhanced-whatsapp-session'],
     queryFn: async () => {
       const { data: user } = await supabase.auth.getUser();
@@ -63,9 +63,9 @@ export const useEnhancedWhatsApp = () => {
       if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // Poll more frequently when connecting
-      return data?.status === 'connecting' ? 2000 : 30000;
+      return query.state.data?.status === 'connecting' ? 2000 : 30000;
     }
   });
 
@@ -156,7 +156,7 @@ export const useEnhancedWhatsApp = () => {
           title: "WhatsApp Connected!",
           description: `Your WhatsApp ${connectionType === 'web' ? 'Web' : 'Business API'} is now connected.`,
         });
-        refetchSession();
+        sessionQuery.refetch();
       } else if (data.status === 'connecting') {
         toast({
           title: "QR Code Generated",
@@ -179,13 +179,13 @@ export const useEnhancedWhatsApp = () => {
 
   // Check for QR code updates from session data
   useEffect(() => {
-    if (session?.session_data?.qr_code && session.status === 'connecting') {
-      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(session.session_data.qr_code)}`;
+    if (sessionQuery.data?.session_data?.qr_code && sessionQuery.data.status === 'connecting') {
+      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(sessionQuery.data.session_data.qr_code)}`;
       setQrCode(qrCodeUrl);
-    } else if (session?.status === 'connected') {
+    } else if (sessionQuery.data?.status === 'connected') {
       setQrCode(null);
     }
-  }, [session]);
+  }, [sessionQuery.data]);
 
   // Upload media file
   const uploadMedia = useMutation({
@@ -371,10 +371,10 @@ export const useEnhancedWhatsApp = () => {
 
   return {
     // Session data
-    session,
-    sessionLoading,
+    session: sessionQuery.data,
+    sessionLoading: sessionQuery.isLoading,
     connectionType,
-    isConnected: session?.status === 'connected',
+    isConnected: sessionQuery.data?.status === 'connected',
     qrCode,
     isConnecting,
 
@@ -395,7 +395,7 @@ export const useEnhancedWhatsApp = () => {
 
     // Actions
     initializeConnection: initializeConnection.mutate,
-    refetchSession,
+    refetchSession: sessionQuery.refetch,
     refetchMedia,
     refetchContacts,
     refetchQueue

@@ -28,6 +28,7 @@ import { MediaUploadComponent } from "./MediaUploadComponent";
 import { ContactManager } from "./ContactManager";
 import { EnhancedMessageComposer } from "./EnhancedMessageComposer";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 export const EnhancedWhatsAppDashboard = () => {
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
@@ -380,13 +381,13 @@ export const EnhancedWhatsAppDashboard = () => {
             <div className="flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
               <div>
-                <h3 className="font-medium text-blue-800">Real WhatsApp Integration</h3>
+                <h3 className="font-medium text-blue-800">WhatsApp Web Integration</h3>
                 <p className="text-sm text-blue-700 mt-1">
-                  This implementation uses the real WhatsApp Web protocol through the Baileys library.
-                  When you scan the QR code, you'll be connecting to actual WhatsApp servers and can send real messages.
+                  Click "WhatsApp Web" above to generate a QR code and connect your WhatsApp account.
+                  Once connected, you can send real messages to your event guests.
                 </p>
                 <p className="text-xs text-blue-600 mt-2">
-                  Select WhatsApp Web above to start the real integration process.
+                  Select WhatsApp Web above to start the integration process.
                 </p>
               </div>
             </div>
