@@ -4,10 +4,18 @@ import { supabase } from '@/lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 
+type UserProfile = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  role: 'admin' | 'host' | 'user';
+  created_at: string;
+};
+
 type AuthContextType = {
   session: Session | null;
   user: User | null;
-  profile: any | null;
+  profile: UserProfile | null;
   loading: boolean;
   signOut: () => Promise<void>;
 };
@@ -17,7 +25,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<any | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 

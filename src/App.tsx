@@ -8,6 +8,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { AdminRoute, HostRoute, UserRoute } from "./components/layouts/ProtectedRoute";
 import Index from "./pages/Index";
 import Event from "./pages/Event";
+import Features from "./pages/Features";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ResetPassword from "./pages/ResetPassword";
@@ -32,6 +33,8 @@ import AdminIntegrations from "./pages/admin/AdminIntegrations";
 import AdminRoles from "./pages/admin/AdminRoles";
 import UserEvents from "./pages/user/UserEvents";
 import UserProfile from "./pages/user/UserProfile";
+import UserFavorites from "./pages/user/UserFavorites";
+import UserReviews from "./pages/user/UserReviews";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +47,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/features" element={<Features />} />
             <Route path="/event/:id" element={<Event />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
@@ -75,6 +79,8 @@ const App = () => (
             <Route path="/user-dashboard" element={<UserRoute><UserDashboard /></UserRoute>} />
             <Route path="/user-dashboard/events" element={<UserRoute><UserEvents /></UserRoute>} />
             <Route path="/user-dashboard/profile" element={<UserRoute><UserProfile /></UserRoute>} />
+            <Route path="/user-dashboard/favorites" element={<UserRoute><UserFavorites /></UserRoute>} />
+            <Route path="/user-dashboard/reviews" element={<UserRoute><UserReviews /></UserRoute>} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
