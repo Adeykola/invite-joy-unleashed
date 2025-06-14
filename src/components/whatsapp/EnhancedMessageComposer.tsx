@@ -31,7 +31,7 @@ export const EnhancedMessageComposer = () => {
   const [message, setMessage] = useState('');
   const [recipientPhone, setRecipientPhone] = useState('');
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
-  const [selectedMedia, setSelectedMedia] = useState<string>('');
+  const [selectedMedia, setSelectedMedia] = useState<string>('none');
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduledTime, setScheduledTime] = useState('');
   const [personalizationEnabled, setPersonalizationEnabled] = useState(false);
@@ -56,7 +56,7 @@ export const EnhancedMessageComposer = () => {
     const messageData = {
       to: recipients,
       message,
-      media_id: selectedMedia || undefined,
+      media_id: selectedMedia !== 'none' ? selectedMedia : undefined,
       scheduled_for: isScheduled ? scheduledTime : undefined,
       personalization_data: personalizationEnabled ? {
         enable_personalization: true
@@ -69,7 +69,7 @@ export const EnhancedMessageComposer = () => {
     setMessage('');
     setRecipientPhone('');
     setSelectedContacts([]);
-    setSelectedMedia('');
+    setSelectedMedia('none');
     setScheduledTime('');
   };
 
@@ -82,7 +82,7 @@ export const EnhancedMessageComposer = () => {
   };
 
   const getSelectedMediaInfo = () => {
-    if (!selectedMedia) return null;
+    if (selectedMedia === 'none') return null;
     return mediaUploads.find(media => media.id === selectedMedia);
   };
 
@@ -159,7 +159,7 @@ export const EnhancedMessageComposer = () => {
               <SelectValue placeholder="Select media file..." />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No media</SelectItem>
+              <SelectItem value="none">No media</SelectItem>
               {mediaUploads.map((media) => (
                 <SelectItem key={media.id} value={media.id}>
                   <div className="flex items-center space-x-2">
@@ -180,7 +180,7 @@ export const EnhancedMessageComposer = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setSelectedMedia('')}
+                onClick={() => setSelectedMedia('none')}
               >
                 <X className="h-4 w-4" />
               </Button>

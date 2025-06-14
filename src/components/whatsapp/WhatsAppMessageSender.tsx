@@ -140,22 +140,6 @@ export const WhatsAppMessageSender = () => {
     }
   };
 
-  // Helper function to generate safe IDs that are never empty strings
-  const generateSafeId = (id: any, prefix: string, index: number): string => {
-    if (id && typeof id === 'string' && id.trim().length > 0) {
-      return id.trim();
-    }
-    return `${prefix}-${index}-${Date.now()}`;
-  };
-
-  // Helper function to get safe display text that's never empty
-  const getSafeDisplayText = (text: any, fallback: string): string => {
-    if (text && typeof text === 'string' && text.trim().length > 0) {
-      return text.trim();
-    }
-    return fallback;
-  };
-
   // Ultra-safe filtering for events
   const safeEvents = Array.isArray(events) ? events.filter((event, index) => {
     const hasValidId = event && event.id && typeof event.id === 'string' && event.id.trim().length > 0;
@@ -180,6 +164,18 @@ export const WhatsAppMessageSender = () => {
     }
     return true;
   }) : [];
+
+  // Create mappings for safe ID resolution
+  const templateIdMap = new Map();
+  const eventIdMap = new Map();
+
+  safeTemplates.forEach((template) => {
+    templateIdMap.set(template.id, template);
+  });
+
+  safeEvents.forEach((event) => {
+    eventIdMap.set(event.id, event);
+  });
 
   return (
     <div className="space-y-6">
@@ -207,23 +203,18 @@ export const WhatsAppMessageSender = () => {
             <div>
               <Label htmlFor="template">Message Template (Optional)</Label>
               <Select onValueChange={(value) => {
-                const template = safeTemplates.find(t => t.id === value);
+                const template = templateIdMap.get(value);
                 if (template && template.content) setMessage(template.content);
               }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a template..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {safeTemplates.map((template, index) => {
-                    const valueId = generateSafeId(template.id, 'template', index);
-                    const displayTitle = getSafeDisplayText(template.title, `Template ${index + 1}`);
-                    
-                    return (
-                      <SelectItem key={valueId} value={valueId}>
-                        {displayTitle}
-                      </SelectItem>
-                    );
-                  })}
+                  {safeTemplates.map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.title}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -273,14 +264,12 @@ export const WhatsAppMessageSender = () => {
                   <SelectValue placeholder="Choose an event..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {safeEvents.map((event, index) => {
-                    const valueId = generateSafeId(event.id, 'event', index);
-                    const displayTitle = getSafeDisplayText(event.title, `Event ${index + 1}`);
+                  {safeEvents.map((event) => {
                     const eventDate = event.date ? new Date(event.date).toLocaleDateString() : 'No Date';
                     
                     return (
-                      <SelectItem key={valueId} value={valueId}>
-                        {displayTitle} - {eventDate}
+                      <SelectItem key={event.id} value={event.id}>
+                        {event.title} - {eventDate}
                       </SelectItem>
                     );
                   })}
