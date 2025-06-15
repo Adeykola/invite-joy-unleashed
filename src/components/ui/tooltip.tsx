@@ -1,9 +1,13 @@
+
 import * as React from "react"
 import * as TooltipPrimitive from "@radix-ui/react-tooltip"
 
 import { cn } from "@/lib/utils"
 
-const TooltipProvider = TooltipPrimitive.Provider
+// Correctly define TooltipProvider as a React component, not just an alias/object.
+const TooltipProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <TooltipPrimitive.Provider>{children}</TooltipPrimitive.Provider>
+);
 
 const Tooltip = TooltipPrimitive.Root
 
