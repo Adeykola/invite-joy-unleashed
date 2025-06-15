@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import FeatureSection from "@/components/FeatureSection";
@@ -9,43 +8,42 @@ const Features = () => {
   const featureCategories = [
     {
       title: "Create",
-      description: "Everything you need to build and customize your events",
+      description: "All you need to create and customize stunning events, plus custom branding.",
       features: [
-        { title: "Event Registration", description: "Create beautiful registration forms for any event type" },
-        { title: "Online RSVP", description: "Collect responses easily through our intuitive platform" },
-        { title: "Sell Tickets", description: "Set up ticket sales with various pricing tiers" },
-        { title: "Virtual Events", description: "Host online events with integrated video conferencing" },
-        { title: "Event Website Builder", description: "Create custom event websites with our drag-and-drop builder" },
-        { title: "Design & Customization", description: "Customize every aspect of your event branding" },
-        { title: "Secondary Events", description: "Add additional gatherings like rehearsal dinners or after-parties" },
-        { title: "Custom Questions & Data", description: "Collect exactly the information you need from guests" },
-        { title: "Meal & Menu Options", description: "Let guests select their meal preferences" }
+        { title: "Event Registration", description: "Beautiful, branded, mobile-friendly forms for any event type." },
+        { title: "Online RSVP", description: "Collect responses easily through our intuitive platform." },
+        { title: "Flexible Ticketing", description: "Set up ticket sales with pricing tiers and guest limits." },
+        { title: "Virtual Event Support", description: "Host online events with integrated green/yellow styled video calls." },
+        { title: "Event Website Builder", description: "Create custom event websites with our drag-and-drop builder." },
+        { title: "Design & Customization", description: "Every detail reflects your unique identity and colors." },
+        { title: "Secondary Events", description: "Add rehearsal dinners, after-parties, and more with a click." },
+        { title: "Custom Questions", description: "Collect dietary needs, t-shirt sizes, and more from guests." },
+        { title: "Meal & Menu Choices", description: "Let guests select preferences, allergies, or meal types." }
       ]
     },
     {
       title: "Invite",
-      description: "Tools to reach your audience and track responses",
+      description: "Send, manage, and track invitations with our integrated communication tools.",
       features: [
-        { title: "Guest List Management", description: "Organize contacts and track RSVPs in real-time" },
-        { title: "Online Invitations", description: "Send beautiful digital invitations to your guests" },
-        { title: "QR Codes", description: "Generate unique QR codes for check-ins and promotions" },
-        { title: "Embed RSVP Form", description: "Add RSVP forms to any website with our embed code" },
-        { title: "Contact Tagging", description: "Categorize contacts with custom tags for better organization" }
+        { title: "Guest List Management", description: "Organize contacts, track RSVPs, and see real-time status." },
+        { title: "Online Invitations", description: "Send digital invites in a fresh green/yellow style." },
+        { title: "QR Codes", description: "Generate QR codes for check-in with zero extra work." },
+        { title: "Form Embeds", description: "Add RSVP forms anywhere—your website, emails, or social." },
+        { title: "Contact Tagging", description: "Tag and group guests for perfect personalization." }
       ]
     },
     {
       title: "Manage",
-      description: "Powerful tools to run your events smoothly",
+      description: "The best dashboard to keep everything running like clockwork.",
       features: [
-        { title: "Donations & Gifts", description: "Accept donations and manage gift registries" },
-        { title: "Check-In", description: "Streamline the arrival process with our check-in tools" },
-        { title: "Contactless Check-In", description: "Enable safe, touch-free check-in for your events" },
-        { title: "Seating Charts", description: "Create and manage seating arrangements visually" },
-        { title: "Event Dashboards", description: "Get real-time analytics on all aspects of your events" },
-        { title: "Email Reminders & Blasts", description: "Automate communications with scheduled emails" },
-        { title: "Appointment Scheduling", description: "Allow attendees to book specific time slots" },
-        { title: "Data Imports & Exports", description: "Easily move data in and out of the platform" },
-        { title: "Zapier Integration", description: "Connect with thousands of other apps via Zapier" }
+        { title: "Donations & Gifts", description: "Seamlessly accept donations, sell merch, and manage gifts." },
+        { title: "Check-In", description: "Streamline arrivals with instant green or yellow touch-free check-in." },
+        { title: "Dynamic Seating Charts", description: "Drag and drop tables; see it all in green/yellow accents." },
+        { title: "Live Dashboards", description: "Real-time analytics, guest lists, and revenue all in one view." },
+        { title: "Automated Reminders", description: "Schedule reminders, updates, or thank-yous with ease." },
+        { title: "Scheduling", description: "Let attendees book time slots or reserve special activities." },
+        { title: "Data Imports/Exports", description: "Upload spreadsheets or export everything as needed." },
+        { title: "Zapier Integration", description: "Connect to thousands of apps for total automation." }
       ]
     }
   ];
@@ -54,14 +52,13 @@ const Features = () => {
     <PageLayout>
       <div className="container mx-auto py-16 px-4 sm:px-6 md:px-8">
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6">
-            Powerful Features for Every Event
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-600 to-yellow-400 bg-clip-text text-transparent mb-6">
+            The Only Event Platform in Green & Yellow
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Our comprehensive suite of tools helps you create, invite, and manage successful events of any size or type.
+          <p className="text-xl text-green-700 max-w-3xl mx-auto">
+            Everything you need to create, invite, and manage awesome events—styled and branded in refreshing green and yellow.
           </p>
         </div>
-
         {featureCategories.map((category, index) => (
           <FeatureSection 
             key={index}
@@ -71,10 +68,9 @@ const Features = () => {
             isAlternate={index % 2 !== 0}
           />
         ))}
-
         <div className="text-center mt-20">
-          <h2 className="text-3xl font-bold mb-6">Ready to elevate your events?</h2>
-          <Button asChild size="lg" className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-6 text-lg">
+          <h2 className="text-3xl font-bold mb-6 text-green-700">Ready to host in fresh colors?</h2>
+          <Button asChild size="lg" className="bg-gradient-to-r from-green-600 to-yellow-500 text-white px-8 py-6 text-lg shadow-lg hover:from-green-700 hover:to-yellow-400 transition">
             <Link to="/signup">Get Started for Free</Link>
           </Button>
         </div>

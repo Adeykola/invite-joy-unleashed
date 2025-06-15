@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -35,6 +34,7 @@ import UserEvents from "./pages/user/UserEvents";
 import UserProfile from "./pages/user/UserProfile";
 import UserFavorites from "./pages/user/UserFavorites";
 import UserReviews from "./pages/user/UserReviews";
+import PublicEvents from "./pages/PublicEvents";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +48,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/features" element={<Features />} />
+            <Route path="/events" element={<PublicEvents />} />
             <Route path="/event/:id" element={<Event />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
