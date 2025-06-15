@@ -14,10 +14,15 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { RsvpDialog } from "@/components/events/RsvpDialog";
+import { TicketQRCodeDialog } from "@/components/events/TicketQRCodeDialog";
+import { PaymentStatusBadge } from "@/components/events/payments/PaymentStatusBadge";
+import { PayTicketButton } from "@/components/events/payments/PayTicketButton";
+import QRCode from "@/components/QRCode";
 
 const HostGuests = () => {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isRsvpDialogOpen, setIsRsvpDialogOpen] = useState(false);
+  const [qrDialog, setQrDialog] = useState<{ guest: any } | null>(null);
 
   const { data: events } = useQuery({
     queryKey: ["host-events"],
@@ -57,6 +62,15 @@ const HostGuests = () => {
     },
   });
 
+  // New function to get ticket code and payment info. This is just simulated for now.
+  const getGuestExtraInfo = (guest: any) => ({
+    ticketCode: guest.ticket_code || guest.id || "",
+    paymentStatus: guest.payment_status || "pending",
+    isVIP: guest.is_vip,
+    category: guest.category,
+    plusOne: guest.plus_one_name || (guest.plus_one_allowed ? "Allowed" : "-"),
+  });
+
   return (
     <HostDashboardLayout>
       <div className="space-y-8">
@@ -82,6 +96,9 @@ const HostGuests = () => {
                       <TableHead>Total Guests</TableHead>
                       <TableHead>Confirmed</TableHead>
                       <TableHead>Declined</TableHead>
+                      <TableHead>VIPs</TableHead>
+                      <TableHead>Paid</TableHead>
+                      <TableHead>Tickets</TableHead>
                       <TableHead>Guest List</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -93,6 +110,20 @@ const HostGuests = () => {
                         <TableCell>{rsvpStats?.[event.id]?.total || 0}</TableCell>
                         <TableCell className="text-green-600">{rsvpStats?.[event.id]?.confirmed || 0}</TableCell>
                         <TableCell className="text-red-600">{rsvpStats?.[event.id]?.declined || 0}</TableCell>
+                        <TableCell>
+                          {/* Example: Show # of VIPs */}
+                          {(event.guests || []).filter((g: any) => g.is_vip).length ?? 0}
+                        </TableCell>
+                        <TableCell>
+                          {/* Example: Show Paid Badge; replace with real logic as payment data is implemented */}
+                          <PaymentStatusBadge status={event.is_paid ? "pending" : "n/a"} />
+                        </TableCell>
+                        <TableCell>
+                          {/* Example QR for Host's first guest */}
+                          {event.guests && event.guests[0]?.ticket_code && (
+                            <Button variant="ghost" size="sm" onClick={() => setQrDialog({ guest: event.guests[0] })}>Show QR</Button>
+                          )}
+                        </TableCell>
                         <TableCell>
                           <Button
                             variant="outline"
@@ -122,6 +153,16 @@ const HostGuests = () => {
           </CardContent>
         </Card>
       </div>
+
+      {qrDialog && (
+        <TicketQRCodeDialog
+          open={!!qrDialog}
+          onOpenChange={() => setQrDialog(null)}
+          ticketCode={getGuestExtraInfo(qrDialog.guest).ticketCode}
+          guestName={qrDialog.guest.name}
+          guestEmail={qrDialog.guest.email}
+        />
+      )}
 
       <RsvpDialog
         eventId={selectedEventId}

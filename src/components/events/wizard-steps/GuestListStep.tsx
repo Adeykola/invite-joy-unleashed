@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import {
@@ -14,11 +13,17 @@ import { Input } from "@/components/ui/input";
 import { X, Plus, Mail, Users } from "lucide-react";
 import { FormLabel } from "@/components/ui/form";
 import { ImportGuestsDialog } from "./ImportGuestsDialog";
+import { TicketQRCodeDialog } from "../TicketQRCodeDialog";
 
 export interface Guest {
   id?: string;
   name: string;
   email: string;
+  category?: string;
+  is_vip?: boolean;
+  plus_one_name?: string;
+  plus_one_allowed?: boolean;
+  ticket_code?: string;
 }
 
 export function GuestListStep() {
@@ -26,6 +31,7 @@ export function GuestListStep() {
   const [newGuestName, setNewGuestName] = useState("");
   const [newGuestEmail, setNewGuestEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [qrDialogGuest, setQrDialogGuest] = useState<Guest | null>(null);
   
   // Get current guests list
   const guests = useWatch({
@@ -148,13 +154,17 @@ export function GuestListStep() {
           No guests added yet
         </div>
       ) : (
-        <div className="border rounded-md">
+        <div className="border rounded-md overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Guest Name</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead className="w-[100px]">Actions</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>VIP</TableHead>
+                <TableHead>Plus-One</TableHead>
+                <TableHead>QR Ticket</TableHead>
+                <TableHead className="w-[110px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -162,6 +172,22 @@ export function GuestListStep() {
                 <TableRow key={guest.id || index}>
                   <TableCell>{guest.name}</TableCell>
                   <TableCell>{guest.email}</TableCell>
+                  <TableCell>{guest.category || "-"}</TableCell>
+                  <TableCell>
+                    {guest.is_vip ? <span className="text-yellow-900 font-semibold">VIP</span> : "-"}
+                  </TableCell>
+                  <TableCell>
+                    {guest.plus_one_name ? guest.plus_one_name : guest.plus_one_allowed ? "Allowed" : "-"}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setQrDialogGuest(guest)}
+                    >
+                      View QR
+                    </Button>
+                  </TableCell>
                   <TableCell>
                     <Button 
                       variant="ghost" 
@@ -177,6 +203,15 @@ export function GuestListStep() {
             </TableBody>
           </Table>
         </div>
+      )}
+      {qrDialogGuest && (
+        <TicketQRCodeDialog
+          open={!!qrDialogGuest}
+          onOpenChange={() => setQrDialogGuest(null)}
+          ticketCode={qrDialogGuest.ticket_code || ""}
+          guestName={qrDialogGuest.name}
+          guestEmail={qrDialogGuest.email}
+        />
       )}
     </div>
   );

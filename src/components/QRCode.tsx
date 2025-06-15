@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import QRCodeStyling from 'qr-code-styling';
 
@@ -12,7 +11,7 @@ interface QRCodeProps {
 const QRCode: React.FC<QRCodeProps> = ({ 
   value, 
   size = 200, 
-  color = '#000000', 
+  color = '#3b82f6', // blue-500 for event QR codes!
   bgColor = '#ffffff' 
 }) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -52,7 +51,7 @@ const QRCode: React.FC<QRCodeProps> = ({
     }
   }, [value, size, color, bgColor]);
   
-  return <div ref={ref} />;
+  return <div ref={ref} style={{ width: size, height: size }} />;
 };
 
 export default QRCode;
