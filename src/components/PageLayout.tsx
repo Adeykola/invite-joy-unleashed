@@ -48,7 +48,7 @@ const PageLayout = ({
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-40 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 shadow-sm">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link to="/" className="text-xl font-bold text-indigo-600 mr-8">
@@ -61,7 +61,7 @@ const PageLayout = ({
                 {navigation.map((item) => (
                   <NavigationMenuItem key={item.name}>
                     <Link to={item.href}>
-                      <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                      <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "text-gray-700 hover:text-indigo-600")}>
                         {item.name}
                       </NavigationMenuLink>
                     </Link>
@@ -73,15 +73,15 @@ const PageLayout = ({
           
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
-              <Button asChild className="bg-gradient-to-r from-indigo-600 to-purple-600">
+              <Button asChild className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white">
                 <Link to="/user-dashboard">Dashboard</Link>
               </Button>
             ) : (
               <>
-                <Button variant="ghost" asChild>
+                <Button variant="ghost" asChild className="text-gray-700 hover:text-indigo-600">
                   <Link to="/login">Sign in</Link>
                 </Button>
-                <Button asChild className="bg-gradient-to-r from-indigo-600 to-purple-600">
+                <Button asChild className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white">
                   <Link to="/signup">Sign up</Link>
                 </Button>
               </>
@@ -91,19 +91,19 @@ const PageLayout = ({
           {/* Mobile menu button */}
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
+              <Button variant="ghost" size="icon" className="md:hidden text-gray-700 hover:text-indigo-600">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right">
+            <SheetContent side="right" className="bg-white">
               <div className="flex flex-col h-full">
                 <div className="flex items-center justify-between border-b py-4">
                   <Link to="/" className="text-xl font-bold text-indigo-600">
                     RSVPlatform
                   </Link>
                   <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" className="text-gray-700 hover:text-indigo-600">
                       <X className="h-5 w-5" />
                       <span className="sr-only">Close</span>
                     </Button>
@@ -114,7 +114,7 @@ const PageLayout = ({
                     <Link
                       key={item.name}
                       to={item.href}
-                      className="text-lg font-medium px-2 py-1 hover:text-indigo-600"
+                      className="text-lg font-medium px-2 py-1 text-gray-700 hover:text-indigo-600 transition-colors"
                     >
                       {item.name}
                     </Link>
@@ -122,15 +122,15 @@ const PageLayout = ({
                 </nav>
                 <div className="mt-auto border-t py-6 space-y-4">
                   {user ? (
-                    <Button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600" asChild>
+                    <Button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white" asChild>
                       <Link to="/user-dashboard">Dashboard</Link>
                     </Button>
                   ) : (
                     <>
-                      <Button variant="outline" className="w-full" asChild>
+                      <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:text-indigo-600 hover:border-indigo-600" asChild>
                         <Link to="/login">Sign in</Link>
                       </Button>
-                      <Button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600" asChild>
+                      <Button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white" asChild>
                         <Link to="/signup">Sign up</Link>
                       </Button>
                     </>
@@ -149,7 +149,7 @@ const PageLayout = ({
             variant="outline" 
             size="sm" 
             onClick={handleBack} 
-            className="flex items-center"
+            className="flex items-center border-gray-300 text-gray-700 hover:text-indigo-600 hover:border-indigo-600"
           >
             <ChevronLeft className="mr-1 h-4 w-4" />
             {backButtonLabel}

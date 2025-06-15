@@ -107,11 +107,11 @@ const Login = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 p-4">
-      <Card className="w-full max-w-md shadow-xl">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4">
+      <Card className="w-full max-w-md shadow-xl border-0 shadow-indigo-100/50">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl font-bold text-gray-900">Welcome back</CardTitle>
+          <CardDescription className="text-gray-600">
             Enter your credentials to access your account
           </CardDescription>
           {!supabaseConfigured && (
@@ -125,7 +125,7 @@ const Login = () => {
           <form onSubmit={handleLogin}>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-gray-700">Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
@@ -134,14 +134,14 @@ const Login = () => {
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                     required
                   />
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password" className="text-gray-700">Password</Label>
                   <Link to="/reset-password" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
                     Forgot your password?
                   </Link>
@@ -153,7 +153,7 @@ const Login = () => {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10"
+                    className="pl-10 pr-10 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                     required
                   />
                   <button
@@ -167,7 +167,7 @@ const Login = () => {
               </div>
               <Button 
                 type="submit" 
-                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600"
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
                 disabled={isLoading}
               >
                 {isLoading ? "Signing in..." : "Sign in"}
@@ -181,7 +181,7 @@ const Login = () => {
             <span className="mx-4 flex-shrink text-gray-400 text-sm">OR</span>
             <div className="flex-grow border-t border-gray-300"></div>
           </div>
-          <Button variant="outline" className="w-full" onClick={handleGoogleLogin}>
+          <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:text-indigo-600 hover:border-indigo-600" onClick={handleGoogleLogin}>
             Continue with Google
           </Button>
           <p className="text-center text-sm text-gray-600">

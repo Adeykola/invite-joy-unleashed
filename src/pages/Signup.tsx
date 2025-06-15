@@ -147,11 +147,11 @@ const Signup = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 p-4">
-      <Card className="w-full max-w-md shadow-xl">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4">
+      <Card className="w-full max-w-md shadow-xl border-0 shadow-indigo-100/50">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl font-bold text-gray-900">Create an account</CardTitle>
+          <CardDescription className="text-gray-600">
             Enter your information to get started
           </CardDescription>
           {!supabaseConfigured && (
@@ -165,7 +165,7 @@ const Signup = () => {
           <form onSubmit={handleSignup}>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name" className="text-gray-700">Full Name</Label>
                 <div className="relative">
                   <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
@@ -173,13 +173,13 @@ const Signup = () => {
                     placeholder="John Doe"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                     required
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-gray-700">Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
@@ -188,13 +188,13 @@ const Signup = () => {
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                     required
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-gray-700">Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
@@ -202,7 +202,7 @@ const Signup = () => {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10"
+                    className="pl-10 pr-10 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                     required
                   />
                   <button
@@ -219,22 +219,22 @@ const Signup = () => {
               </div>
               
               <div className="space-y-2">
-                <Label>Account Type</Label>
+                <Label className="text-gray-700">Account Type</Label>
                 <RadioGroup defaultValue={userRole} onValueChange={setUserRole} className="grid grid-cols-1 gap-3">
-                  <div className="flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-gray-50">
+                  <div className="flex items-center space-x-2 border border-gray-200 rounded-md p-3 cursor-pointer hover:bg-indigo-50 hover:border-indigo-300">
                     <RadioGroupItem value="user" id="user" />
                     <Label htmlFor="user" className="flex-1 cursor-pointer">
                       <div>
-                        <div className="font-medium">Event Attendee</div>
+                        <div className="font-medium text-gray-900">Event Attendee</div>
                         <div className="text-sm text-gray-500">RSVP and attend events</div>
                       </div>
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-gray-50">
+                  <div className="flex items-center space-x-2 border border-gray-200 rounded-md p-3 cursor-pointer hover:bg-indigo-50 hover:border-indigo-300">
                     <RadioGroupItem value="host" id="host" />
                     <Label htmlFor="host" className="flex-1 cursor-pointer">
                       <div>
-                        <div className="font-medium">Event Host</div>
+                        <div className="font-medium text-gray-900">Event Host</div>
                         <div className="text-sm text-gray-500">Create and manage events</div>
                       </div>
                     </Label>
@@ -244,7 +244,7 @@ const Signup = () => {
               
               <Button 
                 type="submit" 
-                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600"
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
                 disabled={isLoading}
               >
                 {isLoading ? "Creating account..." : "Create account"}
@@ -258,7 +258,7 @@ const Signup = () => {
             <span className="mx-4 flex-shrink text-gray-400 text-sm">OR</span>
             <div className="flex-grow border-t border-gray-300"></div>
           </div>
-          <Button variant="outline" className="w-full" onClick={handleGoogleSignup}>
+          <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:text-indigo-600 hover:border-indigo-600" onClick={handleGoogleSignup}>
             Sign up with Google
           </Button>
           <p className="text-center text-sm text-gray-600">
