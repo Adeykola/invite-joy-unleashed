@@ -1,4 +1,3 @@
-
 import { ReactNode, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,8 @@ import {
   Shield,
   Database,
   UserCheck,
-  Zap
+  Zap,
+  Mail
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -44,6 +44,7 @@ const AdminDashboardLayout = ({ children }: AdminDashboardLayoutProps) => {
   const { toast } = useToast();
   const { user, profile, signOut } = useAuth();
 
+  // Insert "Send Test Invitation" into the navItems after "Communications"
   const navItems = [
     {
       name: "Dashboard",
@@ -74,6 +75,11 @@ const AdminDashboardLayout = ({ children }: AdminDashboardLayoutProps) => {
       name: "Communications",
       href: "/admin-dashboard/communications",
       icon: <MessageSquare className="h-5 w-5" />,
+    },
+    {
+      name: "Send Test Invitation",
+      href: "/admin-dashboard/send-test-invitation",
+      icon: <Mail className="h-5 w-5" />,
     },
     {
       name: "System Health",

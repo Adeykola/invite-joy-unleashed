@@ -35,6 +35,7 @@ import UserProfile from "./pages/user/UserProfile";
 import UserFavorites from "./pages/user/UserFavorites";
 import UserReviews from "./pages/user/UserReviews";
 import PublicEvents from "./pages/PublicEvents";
+import AdminSendTestInvitation from "./pages/admin/AdminSendTestInvitation";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,7 @@ const App = () => (
             <Route path="/admin-dashboard/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
             <Route path="/admin-dashboard/roles" element={<AdminRoute><AdminRoles /></AdminRoute>} />
             <Route path="/admin-dashboard/communications" element={<AdminRoute><AdminCommunications /></AdminRoute>} />
+            <Route path="/admin-dashboard/send-test-invitation" element={<AdminRoute><AdminSendTestInvitation /></AdminRoute>} />
             <Route path="/admin-dashboard/system" element={<AdminRoute><AdminSystem /></AdminRoute>} />
             <Route path="/admin-dashboard/security" element={<AdminRoute><AdminSecurity /></AdminRoute>} />
             <Route path="/admin-dashboard/integrations" element={<AdminRoute><AdminIntegrations /></AdminRoute>} />
