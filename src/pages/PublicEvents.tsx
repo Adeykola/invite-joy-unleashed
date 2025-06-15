@@ -99,7 +99,7 @@ const PublicEvents = () => {
               {filteredEvents?.map((event) => {
                 const eventDate = new Date(event.date);
                 const isPastEvent = eventDate < new Date();
-                const meta = typeof event.meta === 'string' ? JSON.parse(event.meta) : event.meta || {};
+                const meta = typeof event.meta === "string" ? JSON.parse(event.meta) : event.meta || {};
                 const isVirtual = meta?.virtualMeetingUrl || meta?.virtualMeetingId;
                 return (
                   <Card key={event.id} className="overflow-hidden hover:shadow-2xl transition-all border-0 shadow shadow-green-100/30 rounded-lg">
@@ -112,13 +112,19 @@ const PublicEvents = () => {
                       {/* Status badges */}
                       <div className="absolute top-4 left-4 flex gap-2">
                         {isPastEvent && (
-                          <Badge variant="outline" className="bg-gray-100 border-gray-300 text-gray-400">Past</Badge>
+                          <Badge variant="outline" className="bg-gray-100 border-gray-300 text-gray-400">
+                            Past
+                          </Badge>
                         )}
                         {isVirtual && (
-                          <Badge variant="outline" className="bg-yellow-50 border-yellow-400 text-yellow-500">Virtual</Badge>
+                          <Badge variant="outline" className="bg-yellow-50 border-yellow-400 text-yellow-500">
+                            Virtual
+                          </Badge>
                         )}
                         {event.capacity && (
-                          <Badge variant="outline" className="bg-green-50 border-green-300 text-green-700">Cap: {event.capacity}</Badge>
+                          <Badge variant="outline" className="bg-green-50 border-green-300 text-green-700">
+                            Cap: {event.capacity}
+                          </Badge>
                         )}
                       </div>
                     </div>
@@ -141,33 +147,31 @@ const PublicEvents = () => {
                             <MapPin className="mr-2 h-4 w-4 text-yellow-500" />
                             {event.location}
                           </div>
-                          {event.hosts && (
-                            <div className="flex items-center text-yellow-600">
-                              <Users className="mr-2 h-4 w-4 text-green-700" />
-                              Hosts: {Array.isArray(event.hosts) ? event.hosts.join(", ") : event.hosts}
-                            </div>
-                          )}
+                          {/* Hosts field is unavailable, so we skip displaying hosts */}
                         </div>
                       </div>
                       <div className="flex flex-col space-y-2">
                         <Link to={`/guest-portal/${event.id}`} className="w-full">
-                          <Button variant="default" className="w-full bg-gradient-to-r from-green-600 to-yellow-400 hover:from-green-700 hover:to-yellow-400 text-white">
+                          <Button
+                            variant="default"
+                            className="w-full bg-gradient-to-r from-green-600 to-yellow-400 hover:from-green-700 hover:to-yellow-400 text-white"
+                          >
                             View Details
                           </Button>
                         </Link>
                         <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             className="flex-1 border-green-300 text-green-700 hover:text-yellow-600 hover:border-yellow-500"
-                            onClick={() => handleQuickRsvp(event, 'confirmed')}
+                            onClick={() => handleQuickRsvp(event, "confirmed")}
                             disabled={rsvpProcessing[event.id]}
                           >
                             {rsvpProcessing[event.id] ? "..." : "Going"}
                           </Button>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             className="flex-1 border-green-300 text-green-700 hover:text-yellow-600 hover:border-yellow-500"
-                            onClick={() => handleQuickRsvp(event, 'maybe')}
+                            onClick={() => handleQuickRsvp(event, "maybe")}
                             disabled={rsvpProcessing[event.id]}
                           >
                             {rsvpProcessing[event.id] ? "..." : "Maybe"}
