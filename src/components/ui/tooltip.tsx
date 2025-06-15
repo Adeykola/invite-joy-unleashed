@@ -4,9 +4,12 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip"
 
 import { cn } from "@/lib/utils"
 
-// Correctly define TooltipProvider as a React component, not just an alias/object.
-const TooltipProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <TooltipPrimitive.Provider>{children}</TooltipPrimitive.Provider>
+// Support all possible props of TooltipPrimitive.Provider such as delayDuration
+const TooltipProvider: React.FC<React.ComponentProps<typeof TooltipPrimitive.Provider>> = ({
+  children,
+  ...props
+}) => (
+  <TooltipPrimitive.Provider {...props}>{children}</TooltipPrimitive.Provider>
 );
 
 const Tooltip = TooltipPrimitive.Root
@@ -30,3 +33,4 @@ const TooltipContent = React.forwardRef<
 TooltipContent.displayName = TooltipPrimitive.Content.displayName
 
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+
