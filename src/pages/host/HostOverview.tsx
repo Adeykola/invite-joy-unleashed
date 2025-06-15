@@ -90,20 +90,20 @@ const HostOverview = () => {
     <HostDashboardLayout>
       <div className="space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Overview</h1>
-          <p className="text-gray-600 mt-2">Complete dashboard with analytics and quick actions</p>
+          <h1 className="text-3xl font-bold text-green-800">Overview</h1>
+          <p className="text-yellow-600 mt-2">Complete dashboard with analytics and quick actions</p>
         </div>
 
         {/* Key Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Events</CardTitle>
-              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-green-700">Total Events</CardTitle>
+              <CalendarDays className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{overviewStats?.totalEvents || 0}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-2xl font-bold text-green-600">{overviewStats?.totalEvents || 0}</div>
+              <p className="text-xs text-yellow-600 font-semibold">
                 +{overviewStats?.eventsThisMonth || 0} this month
               </p>
             </CardContent>
@@ -111,34 +111,34 @@ const HostOverview = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
-              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-yellow-700">Upcoming Events</CardTitle>
+              <CalendarDays className="h-4 w-4 text-yellow-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{overviewStats?.upcomingEvents || 0}</div>
-              <p className="text-xs text-muted-foreground">Scheduled ahead</p>
+              <div className="text-2xl font-bold text-yellow-500">{overviewStats?.upcomingEvents || 0}</div>
+              <p className="text-xs text-gray-500">Scheduled ahead</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total RSVPs</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-green-700">Total RSVPs</CardTitle>
+              <Users className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{overviewStats?.totalRsvps || 0}</div>
-              <p className="text-xs text-muted-foreground">All time responses</p>
+              <div className="text-2xl font-bold text-green-600">{overviewStats?.totalRsvps || 0}</div>
+              <p className="text-xs text-gray-500">All time responses</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Confirmed</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-green-700">Confirmed</CardTitle>
+              <CheckCircle className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">{overviewStats?.confirmedRsvps || 0}</div>
-              <p className="text-xs text-muted-foreground">Will attend</p>
+              <p className="text-xs text-gray-500">Will attend</p>
             </CardContent>
           </Card>
         </div>
@@ -147,46 +147,46 @@ const HostOverview = () => {
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-2 text-green-800">
+                <Activity className="h-5 w-5 text-green-500" />
                 RSVP Analytics
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Confirmed</span>
-                <span className="font-medium text-green-600">{overviewStats?.confirmedRsvps || 0}</span>
+                <span className="text-sm text-green-600">Confirmed</span>
+                <span className="font-medium text-green-700">{overviewStats?.confirmedRsvps || 0}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Pending</span>
-                <span className="font-medium text-yellow-600">{overviewStats?.pendingRsvps || 0}</span>
+                <span className="text-sm text-yellow-600">Pending</span>
+                <span className="font-medium text-yellow-700">{overviewStats?.pendingRsvps || 0}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Conversion Rate</span>
-                <span className="font-medium">{overviewStats?.conversionRate || 0}%</span>
+                <span className="text-sm text-gray-500">Conversion Rate</span>
+                <span className="font-medium text-green-800">{overviewStats?.conversionRate || 0}%</span>
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-2 text-green-700">
+                <BarChart3 className="h-5 w-5 text-yellow-500" />
                 Event Performance
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Events Created</span>
-                <span className="font-medium">{overviewStats?.totalEvents || 0}</span>
+                <span className="text-sm text-gray-500">Events Created</span>
+                <span className="font-medium text-green-600">{overviewStats?.totalEvents || 0}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">This Month</span>
-                <span className="font-medium text-blue-600">{overviewStats?.eventsThisMonth || 0}</span>
+                <span className="text-sm text-yellow-600">This Month</span>
+                <span className="font-medium text-yellow-600">{overviewStats?.eventsThisMonth || 0}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Avg. Attendance</span>
-                <span className="font-medium">
+                <span className="text-sm text-gray-500">Avg. Attendance</span>
+                <span className="font-medium text-green-700">
                   {overviewStats?.totalEvents ? Math.round((overviewStats.confirmedRsvps || 0) / overviewStats.totalEvents) : 0}
                 </span>
               </div>
@@ -198,29 +198,29 @@ const HostOverview = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
+              <CardTitle className="text-green-700">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Button asChild className="w-full">
+                <Button asChild className="w-full bg-green-600 hover:bg-green-700 text-white">
                   <Link to="/host-dashboard/events">
                     <CalendarDays className="mr-2 h-4 w-4" />
                     Manage Events
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="w-full">
+                <Button asChild variant="outline" className="w-full border-yellow-400 text-yellow-700 hover:bg-yellow-50 hover:text-yellow-800">
                   <Link to="/host-dashboard/guests">
                     <Users className="mr-2 h-4 w-4" />
                     View Guests
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="w-full">
+                <Button asChild variant="outline" className="w-full border-yellow-400 text-yellow-700 hover:bg-yellow-50 hover:text-yellow-800">
                   <Link to="/host-dashboard/calendar">
                     <CalendarDays className="mr-2 h-4 w-4" />
                     Calendar View
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="w-full">
+                <Button asChild variant="outline" className="w-full border-green-400 text-green-700 hover:bg-green-50 hover:text-green-800">
                   <Link to="/host-dashboard/settings">
                     <Settings className="mr-2 h-4 w-4" />
                     Settings
@@ -232,7 +232,7 @@ const HostOverview = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
+              <CardTitle className="flex items-center text-green-700">
                 <Smartphone className="w-5 h-5 mr-2 text-green-600" />
                 WhatsApp Status
               </CardTitle>
@@ -240,22 +240,22 @@ const HostOverview = () => {
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Connection Status:</span>
+                  <span className="text-sm text-gray-500">Connection Status:</span>
                   <span className={`text-sm font-medium ${
-                    whatsappSession?.status === 'connected' ? 'text-green-600' : 'text-gray-500'
+                    whatsappSession?.status === 'connected' ? 'text-green-600' : 'text-yellow-600'
                   }`}>
                     {whatsappSession?.status === 'connected' ? 'Connected' : 'Not Connected'}
                   </span>
                 </div>
                 <div className="space-y-2">
-                  <Button asChild variant="outline" className="w-full">
+                  <Button asChild variant="outline" className="w-full border-green-400 text-green-700 hover:bg-green-50 hover:text-green-800">
                     <Link to="/host-dashboard/whatsapp">
                       <MessageCircle className="mr-2 h-4 w-4" />
                       Manage WhatsApp
                     </Link>
                   </Button>
                   {whatsappSession?.status === 'connected' && (
-                    <Button asChild size="sm" className="w-full bg-green-600 hover:bg-green-700">
+                    <Button asChild size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-white">
                       <Link to="/host-dashboard/whatsapp?tab=broadcasts">
                         <MessageCircle className="mr-2 h-4 w-4" />
                         Send Broadcast
@@ -278,3 +278,4 @@ const HostOverview = () => {
 };
 
 export default HostOverview;
+

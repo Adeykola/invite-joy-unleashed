@@ -45,37 +45,37 @@ const HostDashboardLayout = ({ children }: HostDashboardLayoutProps) => {
     {
       name: "Overview",
       href: "/host-dashboard/overview",
-      icon: <Eye className="h-5 w-5" />,
+      icon: <Eye className="h-5 w-5 text-green-700" />,
     },
     {
       name: "My Events",
       href: "/host-dashboard/events",
-      icon: <Calendar className="h-5 w-5" />,
+      icon: <Calendar className="h-5 w-5 text-green-700" />,
     },
     {
       name: "Guest Management",
       href: "/host-dashboard/guests",
-      icon: <Users className="h-5 w-5" />,
+      icon: <Users className="h-5 w-5 text-yellow-700" />,
     },
     {
       name: "Calendar",
       href: "/host-dashboard/calendar",
-      icon: <Calendar className="h-5 w-5" />,
+      icon: <Calendar className="h-5 w-5 text-yellow-700" />,
     },
     {
       name: "Check-in",
       href: "/host-dashboard/check-in",
-      icon: <CheckSquare className="h-5 w-5" />,
+      icon: <CheckSquare className="h-5 w-5 text-green-700" />,
     },
     {
       name: "WhatsApp",
       href: "/host-dashboard/whatsapp",
-      icon: <MessageSquare className="h-5 w-5" />,
+      icon: <MessageSquare className="h-5 w-5 text-green-500" />,
     },
     {
       name: "Settings",
       href: "/host-dashboard/settings",
-      icon: <Settings className="h-5 w-5" />,
+      icon: <Settings className="h-5 w-5 text-yellow-600" />,
     },
   ];
 
@@ -98,13 +98,13 @@ const HostDashboardLayout = ({ children }: HostDashboardLayoutProps) => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-yellow-50">
       {/* Sidebar for desktop */}
       <div className="hidden md:flex md:flex-shrink-0">
         <div className="flex w-64 flex-col">
-          <div className="flex flex-col flex-grow border-r border-gray-200 bg-white pt-5 pb-4 overflow-y-auto">
+          <div className="flex flex-col flex-grow border-r border-green-200 bg-white pt-5 pb-4 overflow-y-auto">
             <div className="flex items-center flex-shrink-0 px-4">
-              <Link to="/" className="text-xl font-bold text-indigo-600">RSVPlatform</Link>
+              <Link to="/" className="text-xl font-bold text-green-700">RSVPlatform</Link>
             </div>
             <div className="mt-8 flex-grow flex flex-col">
               <nav className="flex-1 px-2 space-y-1">
@@ -114,9 +114,9 @@ const HostDashboardLayout = ({ children }: HostDashboardLayoutProps) => {
                     to={item.href}
                     className={cn(
                       location.pathname === item.href
-                        ? "bg-indigo-50 text-indigo-600"
-                        : "text-gray-600 hover:bg-indigo-50 hover:text-indigo-600",
-                      "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors"
+                        ? "bg-green-50 text-green-700 font-semibold"
+                        : "text-yellow-700 hover:bg-green-100 hover:text-green-800",
+                      "group flex items-center px-2 py-2 text-sm rounded-md transition-colors"
                     )}
                   >
                     {item.icon}
@@ -128,10 +128,10 @@ const HostDashboardLayout = ({ children }: HostDashboardLayoutProps) => {
             <div className="px-2 mt-4">
               <Button 
                 variant="outline" 
-                className="w-full justify-start text-gray-600 hover:text-indigo-600"
+                className="w-full justify-start border-green-400 text-green-700 hover:text-yellow-700 hover:border-yellow-400"
                 onClick={handleLogout}
               >
-                <LogOut className="mr-2 h-5 w-5" />
+                <LogOut className="mr-2 h-5 w-5 text-yellow-600" />
                 Logout
               </Button>
             </div>
@@ -141,12 +141,12 @@ const HostDashboardLayout = ({ children }: HostDashboardLayoutProps) => {
       
       {/* Mobile sidebar */}
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-        <SheetContent side="left" className="w-[240px] sm:w-[300px] p-0">
+        <SheetContent side="left" className="w-[240px] sm:w-[300px] p-0 bg-yellow-50">
           <div className="flex flex-col h-full">
             <div className="flex items-center justify-between p-4 border-b">
-              <Link to="/" className="text-xl font-bold text-indigo-600" onClick={() => setIsSidebarOpen(false)}>RSVPlatform</Link>
+              <Link to="/" className="text-xl font-bold text-green-700" onClick={() => setIsSidebarOpen(false)}>RSVPlatform</Link>
               <Button variant="ghost" size="sm" onClick={() => setIsSidebarOpen(false)}>
-                <X className="h-5 w-5" />
+                <X className="h-5 w-5 text-yellow-700" />
               </Button>
             </div>
             <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
@@ -156,9 +156,9 @@ const HostDashboardLayout = ({ children }: HostDashboardLayoutProps) => {
                   to={item.href}
                   className={cn(
                     location.pathname === item.href
-                      ? "bg-indigo-50 text-indigo-600"
-                      : "text-gray-600 hover:bg-indigo-50 hover:text-indigo-600",
-                    "group flex items-center px-3 py-3 text-base font-medium rounded-md transition-colors"
+                      ? "bg-green-50 text-green-700 font-semibold"
+                      : "text-yellow-700 hover:bg-green-100 hover:text-green-800",
+                    "group flex items-center px-3 py-3 text-base rounded-md transition-colors"
                   )}
                   onClick={() => setIsSidebarOpen(false)}
                 >
@@ -170,10 +170,10 @@ const HostDashboardLayout = ({ children }: HostDashboardLayoutProps) => {
             <div className="p-4 border-t">
               <Button 
                 variant="outline" 
-                className="w-full justify-start text-gray-600 hover:text-indigo-600"
+                className="w-full justify-start border-green-400 text-green-700 hover:text-yellow-700 hover:border-yellow-400"
                 onClick={handleLogout}
               >
-                <LogOut className="mr-2 h-5 w-5" />
+                <LogOut className="mr-2 h-5 w-5 text-yellow-600" />
                 Logout
               </Button>
             </div>
@@ -184,32 +184,32 @@ const HostDashboardLayout = ({ children }: HostDashboardLayoutProps) => {
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Topbar */}
-        <div className="flex-shrink-0 flex h-16 bg-white border-b border-gray-200">
+        <div className="flex-shrink-0 flex h-16 bg-white border-b border-yellow-200">
           <button
             type="button"
-            className="md:hidden px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+            className="md:hidden px-4 border-r border-yellow-200 text-yellow-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-600"
             onClick={() => setIsSidebarOpen(true)}
           >
             <span className="sr-only">Open sidebar</span>
-            <Menu className="h-6 w-6" />
+            <Menu className="h-6 w-6 text-green-700" />
           </button>
           <div className="flex-1 flex justify-between px-4 md:px-0">
             <div className="flex-1 flex md:ml-6 items-center">
-              <h1 className="text-lg font-semibold text-gray-800 md:ml-6">
+              <h1 className="text-lg font-semibold text-green-700 md:ml-6">
                 Host Dashboard
               </h1>
             </div>
             <div className="ml-4 flex items-center md:ml-6 space-x-4">
-              <Button variant="ghost" size="icon" className="rounded-full">
+              <Button variant="ghost" size="icon" className="rounded-full text-yellow-500">
                 <Bell className="h-5 w-5" />
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center space-x-1">
-                    <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                      <User className="h-4 w-4 text-indigo-600" />
+                    <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                      <User className="h-4 w-4 text-green-700" />
                     </div>
-                    <ChevronDown className="h-4 w-4" />
+                    <ChevronDown className="h-4 w-4 text-yellow-700" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -220,7 +220,7 @@ const HostDashboardLayout = ({ children }: HostDashboardLayoutProps) => {
                   <DropdownMenuItem>Profile</DropdownMenuItem>
                   <DropdownMenuItem>Settings</DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+                  <DropdownMenuItem className="text-yellow-700" onClick={handleLogout}>Logout</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -228,7 +228,7 @@ const HostDashboardLayout = ({ children }: HostDashboardLayoutProps) => {
         </div>
         
         {/* Main content area */}
-        <div className="flex-1 overflow-auto p-4 md:p-6 bg-gray-50">
+        <div className="flex-1 overflow-auto p-4 md:p-6 bg-yellow-50">
           {children}
         </div>
       </div>
@@ -237,3 +237,4 @@ const HostDashboardLayout = ({ children }: HostDashboardLayoutProps) => {
 };
 
 export default HostDashboardLayout;
+
