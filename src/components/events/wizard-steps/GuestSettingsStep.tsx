@@ -1,13 +1,14 @@
-
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Calendar } from "lucide-react";
+import { Calendar, Gem } from "lucide-react";
 import { FormItem, FormLabel, FormControl, FormDescription } from "@/components/ui/form";
 import { EventFormData } from "../EventWizard";
-import { useWatch } from "react-hook-form";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
 
 export function GuestSettingsStep() {
   const { register, control, formState: { errors } } = useFormContext<EventFormData>();
@@ -82,13 +83,13 @@ export function GuestSettingsStep() {
           <div className="space-y-0.5">
             <FormLabel className="text-base">Allow Plus Ones</FormLabel>
             <FormDescription>
-              Let guests bring additional attendees with them
+              Let guests bring additional attendees with them.
             </FormDescription>
           </div>
           <FormControl>
             <Switch
               checked={allowPlusOnes}
-              onCheckedChange={(value) => register("allowPlusOnes").onChange({ target: { value } })}
+              onCheckedChange={(checked) => setValue("allowPlusOnes", checked)}
             />
           </FormControl>
         </FormItem>
@@ -100,13 +101,28 @@ export function GuestSettingsStep() {
               <div className="space-y-4 pt-2">
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Private Event</FormLabel>
+                    <FormLabel className="text-base flex items-center">
+                      Private Event
+                      <Badge variant="outline" className="ml-2 border-yellow-400 text-yellow-600">
+                        <Gem className="h-3 w-3 mr-1" />
+                        Premium
+                      </Badge>
+                    </FormLabel>
                     <FormDescription>
-                      Make this event visible only to invited guests
+                      Make this event visible only to invited guests.
                     </FormDescription>
                   </div>
                   <FormControl>
-                    <Switch defaultChecked />
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                           <Switch disabled />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>This is a premium feature. Please upgrade to use.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </FormControl>
                 </FormItem>
 
@@ -114,7 +130,7 @@ export function GuestSettingsStep() {
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">Require Approval</FormLabel>
                     <FormDescription>
-                      Manually approve each RSVP before confirming attendance
+                      Manually approve each RSVP before confirming attendance.
                     </FormDescription>
                   </div>
                   <FormControl>
