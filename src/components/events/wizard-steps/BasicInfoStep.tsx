@@ -1,4 +1,3 @@
-
 import { useFormContext } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -6,10 +5,24 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "lucide-react";
 import { EventFormData } from "../EventWizard";
 import { FormItem, FormLabel, FormControl, FormMessage, FormField } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Calendar as ShadcnCalendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
+
+const eventTypes = [
+  { value: "social", label: "Social" },
+  { value: "corporate", label: "Corporate" },
+  { value: "wedding", label: "Wedding" },
+  { value: "conference", label: "Conference" },
+  { value: "workshop", label: "Workshop" },
+  { value: "other", label: "Other" },
+];
 
 export function BasicInfoStep() {
-  const { register, formState: { errors }, control } = useFormContext<EventFormData>();
+  const { register, formState: { errors }, control, setValue, watch } = useFormContext<EventFormData>();
+  const selectedDate = watch("date");
 
   return (
     <div className="space-y-6">
@@ -49,39 +62,63 @@ export function BasicInfoStep() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Event Type <span className="text-destructive">*</span></FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select event type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="social">Social Gathering</SelectItem>
-                  <SelectItem value="corporate">Corporate Event</SelectItem>
-                  <SelectItem value="wedding">Wedding</SelectItem>
-                  <SelectItem value="conference">Conference</SelectItem>
-                  <SelectItem value="workshop">Workshop/Training</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl>
+                <ToggleGroup
+                  type="single"
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  className="flex flex-wrap"
+                >
+                  {eventTypes.map((type) => (
+                    <ToggleGroupItem key={type.value} value={type.value} aria-label={type.label}>
+                      {type.label}
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
         <div className="space-y-2">
-          <Label htmlFor="date">Date and Time <span className="text-destructive">*</span></Label>
-          <div className="relative">
-            <Input
-              id="date"
-              type="datetime-local"
-              {...register("date", { required: "Event date is required" })}
-            />
-            <Calendar className="absolute right-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
-          </div>
+          <Label>Date and Time <span className="text-destructive">*</span></Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={"outline"}
+                className="w-full justify-start text-left font-normal"
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                {selectedDate ? format(new Date(selectedDate), "PPP p") : <span>Pick a date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <ShadcnCalendar
+                mode="single"
+                selected={new Date(selectedDate)}
+                onSelect={(date) => {
+                  if (date) {
+                    const time = selectedDate ? new Date(selectedDate).toTimeString().split(' ')[0] : '00:00';
+                    const newDate = new Date(date.toDateString() + ' ' + time);
+                    setValue("date", newDate.toISOString().slice(0, 16));
+                  }
+                }}
+                initialFocus
+              />
+               <div className="p-3 border-t border-border">
+                <Input
+                    type="time"
+                    value={selectedDate ? new Date(selectedDate).toTimeString().split(' ')[0] : ''}
+                    onChange={(e) => {
+                        const newTime = e.target.value;
+                        const datePart = selectedDate ? new Date(selectedDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+                        setValue("date", `${datePart}T${newTime}`);
+                    }}
+                />
+              </div>
+            </PopoverContent>
+          </Popover>
           {errors.date && (
             <p className="text-sm text-destructive">{errors.date.message}</p>
           )}
