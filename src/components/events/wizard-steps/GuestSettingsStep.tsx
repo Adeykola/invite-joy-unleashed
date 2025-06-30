@@ -1,4 +1,4 @@
-import { useFormContext, useWatch } from "react-hook-form";
+import { useFormContext, useWatch, Controller } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -7,13 +7,11 @@ import { FormItem, FormLabel, FormControl, FormDescription } from "@/components/
 import { EventFormData } from "../EventWizard";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function GuestSettingsStep() {
   const { register, control, formState: { errors } } = useFormContext<EventFormData>();
   const eventDate = useWatch({ control, name: "date" });
-  const allowPlusOnes = useWatch({ control, name: "allowPlusOnes" });
 
   // Validate RSVP deadline is before event date
   const validateRsvpDeadline = (value: string) => {
@@ -79,20 +77,26 @@ export function GuestSettingsStep() {
           </p>
         </div>
 
-        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-          <div className="space-y-0.5">
-            <FormLabel className="text-base">Allow Plus Ones</FormLabel>
-            <FormDescription>
-              Let guests bring additional attendees with them.
-            </FormDescription>
-          </div>
-          <FormControl>
-            <Switch
-              checked={allowPlusOnes}
-              onCheckedChange={(checked) => setValue("allowPlusOnes", checked)}
-            />
-          </FormControl>
-        </FormItem>
+        <FormField
+          control={control}
+          name="allowPlusOnes"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">Allow Plus Ones</FormLabel>
+                <FormDescription>
+                  Let guests bring additional attendees with them.
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
 
         <Accordion type="single" collapsible>
           <AccordionItem value="advanced-options">
@@ -130,7 +134,7 @@ export function GuestSettingsStep() {
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">Require Approval</FormLabel>
                     <FormDescription>
-                      Manually approve each RSVP before confirming attendance.
+                      Manually approve each RSVP before confirming attendance
                     </FormDescription>
                   </div>
                   <FormControl>
