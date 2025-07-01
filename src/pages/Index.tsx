@@ -39,14 +39,14 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row justify-center gap-4 mb-4">
               {user ? (
                 <Link to={getDashboardLink()}>
-                  <Button size="lg" className="bg-yellow-400 text-green-900 hover:bg-yellow-300 text-lg px-8 py-4 font-semibold transform hover:scale-105 transition-transform">
+                  <Button size="lg" className="bg-blue-600 text-white hover:bg-blue-700 text-lg px-8 py-4 font-semibold transform hover:scale-105 transition-transform">
                     <Zap className="w-5 h-5 mr-2" />
                     Go to Dashboard
                   </Button>
                 </Link>
               ) : (
                 <Link to="/signup">
-                  <Button size="lg" className="bg-yellow-400 text-green-900 hover:bg-yellow-300 text-lg px-8 py-4 font-semibold transform hover:scale-105 transition-transform">
+                  <Button size="lg" className="bg-blue-600 text-white hover:bg-blue-700 text-lg px-8 py-4 font-semibold transform hover:scale-105 transition-transform">
                     <ArrowRight className="w-5 h-5 mr-2" />
                     Get Started Free
                   </Button>
@@ -72,7 +72,7 @@ const Index = () => {
             </div>
             <div className="grid md:grid-cols-3 gap-12 text-center">
               <div>
-                <PartyPopper className="h-12 w-12 mx-auto mb-4 text-yellow-500" />
+                <PartyPopper className="h-12 w-12 mx-auto mb-4 text-blue-500" />
                 <h3 className="text-2xl font-poppins font-bold text-gray-800 mb-4">Effortless Planning</h3>
                 <p className="text-gray-600 text-lg font-sans">From guest lists to reminders, we automate the tedious tasks so you can focus on the fun.</p>
               </div>
@@ -82,7 +82,7 @@ const Index = () => {
                 <p className="text-gray-600 text-lg font-sans">Beautiful, interactive invitations and event pages that your guests will love.</p>
               </div>
               <div>
-                <CheckCircle className="h-12 w-12 mx-auto mb-4 text-blue-500" />
+                <CheckCircle className="h-12 w-12 mx-auto mb-4 text-yellow-500" />
                 <h3 className="text-2xl font-poppins font-bold text-gray-800 mb-4">Seamless Management</h3>
                 <p className="text-gray-600 text-lg font-sans">Track RSVPs, manage updates, and get real-time insights all in one place.</p>
               </div>
@@ -104,7 +104,7 @@ const Index = () => {
             
             <div className="grid md:grid-cols-3 gap-12">
               <div className="text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 transform hover:scale-110 transition-transform">
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 transform hover:scale-110 transition-transform">
                   <span className="text-2xl font-poppins font-bold text-white">1</span>
                 </div>
                 <h3 className="text-2xl font-poppins font-bold text-gray-800 mb-4">Create Your Event</h3>
@@ -112,7 +112,7 @@ const Index = () => {
               </div>
               
               <div className="text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6 transform hover:scale-110 transition-transform">
+                <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 transform hover:scale-110 transition-transform">
                   <span className="text-2xl font-poppins font-bold text-white">2</span>
                 </div>
                 <h3 className="text-2xl font-poppins font-bold text-gray-800 mb-4">Invite Your Guests</h3>
@@ -120,7 +120,7 @@ const Index = () => {
               </div>
               
               <div className="text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 transform hover:scale-110 transition-transform">
+                <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6 transform hover:scale-110 transition-transform">
                   <span className="text-2xl font-poppins font-bold text-white">3</span>
                 </div>
                 <h3 className="text-2xl font-poppins font-bold text-gray-800 mb-4">Manage & Track</h3>
@@ -193,22 +193,22 @@ const Index = () => {
 
 
         {/* CTA Section */}
-        <section className="bg-gradient-to-r from-green-600 to-yellow-500 py-20 text-white">
+        <section className="bg-gradient-to-r from-blue-600 to-indigo-600 py-20 text-white">
           <div className="container mx-auto px-4 text-center">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-4xl md:text-5xl font-poppins font-bold mb-6">Ready to Create Joyful Events?</h2>
-              <p className="text-xl mb-8 text-green-100 max-w-2xl mx-auto leading-relaxed font-sans">
+              <p className="text-xl mb-8 text-blue-100 max-w-2xl mx-auto leading-relaxed font-sans">
                 Start planning your next memorable event with InviteJoy today.
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4 mb-4">
                 <Link to="/signup">
-                  <Button size="lg" className="bg-white text-green-700 hover:bg-gray-100 text-lg px-8 py-4 font-semibold transform hover:scale-105 transition-transform">
+                  <Button size="lg" className="bg-white text-blue-700 hover:bg-gray-100 text-lg px-8 py-4 font-semibold transform hover:scale-105 transition-transform">
                     <ArrowRight className="w-5 h-5 mr-2" />
                     Start for Free
                   </Button>
                 </Link>
               </div>
-               <p className="text-sm text-green-200">Free forever plan available. No credit card required.</p>
+               <p className="text-sm text-blue-200">Free forever plan available. No credit card required.</p>
             </div>
           </div>
         </section>
