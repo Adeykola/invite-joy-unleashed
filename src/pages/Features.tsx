@@ -1,80 +1,172 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import FeatureSection from "@/components/FeatureSection";
-import PageLayout from "@/components/layouts/PageLayout";
+import PageLayout from "@/components/PageLayout";
 import { Link } from "react-router-dom";
+import { Calendar, Users, Mail, BarChart, Shield, Zap, Smartphone, Globe, CreditCard, QrCode, Bell, Settings } from "lucide-react";
 
 const Features = () => {
   const featureCategories = [
     {
-      title: "Create",
-      description: "All you need to create and customize stunning events, plus custom branding.",
+      title: "Create Beautiful Events",
+      description: "Design stunning event pages that capture your brand and excite your guests.",
+      icon: Calendar,
       features: [
-        { title: "Event Registration", description: "Beautiful, branded, mobile-friendly forms for any event type." },
-        { title: "Online RSVP", description: "Collect responses easily through our intuitive platform." },
-        { title: "Flexible Ticketing", description: "Set up ticket sales with pricing tiers and guest limits." },
-        { title: "Virtual Event Support", description: "Host online events with integrated green/yellow styled video calls." },
-        { title: "Event Website Builder", description: "Create custom event websites with our drag-and-drop builder." },
-        { title: "Design & Customization", description: "Every detail reflects your unique identity and colors." },
-        { title: "Secondary Events", description: "Add rehearsal dinners, after-parties, and more with a click." },
-        { title: "Custom Questions", description: "Collect dietary needs, t-shirt sizes, and more from guests." },
-        { title: "Meal & Menu Choices", description: "Let guests select preferences, allergies, or meal types." }
+        { title: "Custom Event Pages", description: "Beautiful, mobile-responsive pages with your branding", icon: Globe },
+        { title: "Flexible Registration", description: "Collect exactly the information you need from guests", icon: Settings },
+        { title: "Multiple Event Types", description: "Conferences, weddings, parties, and everything in between", icon: Calendar },
+        { title: "Rich Media Support", description: "Add photos, videos, and documents to your event pages", icon: Zap }
       ]
     },
     {
-      title: "Invite",
-      description: "Send, manage, and track invitations with our integrated communication tools.",
+      title: "Invite & Communicate",
+      description: "Reach your guests where they are with multi-channel invitations.",
+      icon: Mail,
       features: [
-        { title: "Guest List Management", description: "Organize contacts, track RSVPs, and see real-time status." },
-        { title: "Online Invitations", description: "Send digital invites in a fresh green/yellow style." },
-        { title: "QR Codes", description: "Generate QR codes for check-in with zero extra work." },
-        { title: "Form Embeds", description: "Add RSVP forms anywhere—your website, emails, or social." },
-        { title: "Contact Tagging", description: "Tag and group guests for perfect personalization." }
+        { title: "Email Invitations", description: "Beautiful, branded email invites with tracking", icon: Mail },
+        { title: "SMS Notifications", description: "Send reminders and updates via text message", icon: Smartphone },
+        { title: "Social Sharing", description: "Let guests share your event on social media", icon: Globe },
+        { title: "Automated Reminders", description: "Set up automatic follow-ups and reminders", icon: Bell }
       ]
     },
     {
-      title: "Manage",
-      description: "The best dashboard to keep everything running like clockwork.",
+      title: "Manage Like a Pro",
+      description: "Powerful tools to handle everything from RSVPs to check-in.",
+      icon: Users,
       features: [
-        { title: "Donations & Gifts", description: "Seamlessly accept donations, sell merch, and manage gifts." },
-        { title: "Check-In", description: "Streamline arrivals with instant green or yellow touch-free check-in." },
-        { title: "Dynamic Seating Charts", description: "Drag and drop tables; see it all in green/yellow accents." },
-        { title: "Live Dashboards", description: "Real-time analytics, guest lists, and revenue all in one view." },
-        { title: "Automated Reminders", description: "Schedule reminders, updates, or thank-yous with ease." },
-        { title: "Scheduling", description: "Let attendees book time slots or reserve special activities." },
-        { title: "Data Imports/Exports", description: "Upload spreadsheets or export everything as needed." },
-        { title: "Zapier Integration", description: "Connect to thousands of apps for total automation." }
+        { title: "Guest List Management", description: "Organize, tag, and track all your attendees", icon: Users },
+        { title: "QR Code Check-in", description: "Fast, contactless check-in for smooth entry", icon: QrCode },
+        { title: "Payment Processing", description: "Collect ticket sales and donations securely", icon: CreditCard },
+        { title: "Real-time Analytics", description: "Track RSVPs, attendance, and engagement", icon: BarChart }
       ]
+    }
+  ];
+
+  const additionalFeatures = [
+    {
+      title: "Enterprise Security",
+      description: "Bank-level security with GDPR compliance and data protection.",
+      icon: Shield
+    },
+    {
+      title: "Team Collaboration",
+      description: "Work together with your team to plan perfect events.",
+      icon: Users
+    },
+    {
+      title: "API Integration",
+      description: "Connect with your favorite tools via our robust API.",
+      icon: Settings
+    },
+    {
+      title: "24/7 Support",
+      description: "Get help when you need it with our dedicated support team.",
+      icon: Bell
     }
   ];
 
   return (
     <PageLayout>
-      <div className="container mx-auto py-16 px-4 sm:px-6 md:px-8">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-600 to-yellow-400 bg-clip-text text-transparent mb-6">
-            The Only Event Platform in Green & Yellow
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-blue-50 to-indigo-100 pt-20 pb-16">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-5xl font-bold text-gray-900 mb-6">
+            Everything you need for
+            <span className="text-blue-600 block">amazing events</span>
           </h1>
-          <p className="text-xl text-green-700 max-w-3xl mx-auto">
-            Everything you need to create, invite, and manage awesome events—styled and branded in refreshing green and yellow.
+          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+            From small gatherings to large conferences, InviteJoy has all the tools
+            you need to create memorable experiences.
           </p>
+          <Link to="/signup">
+            <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold">
+              Start Free Trial
+            </Button>
+          </Link>
         </div>
-        {featureCategories.map((category, index) => (
-          <FeatureSection 
-            key={index}
-            title={category.title}
-            description={category.description}
-            features={category.features}
-            isAlternate={index % 2 !== 0}
-          />
-        ))}
-        <div className="text-center mt-20">
-          <h2 className="text-3xl font-bold mb-6 text-green-700">Ready to host in fresh colors?</h2>
-          <Button asChild size="lg" className="bg-gradient-to-r from-green-600 to-yellow-500 text-white px-8 py-6 text-lg shadow-lg hover:from-green-700 hover:to-yellow-400 transition">
-            <Link to="/signup">Get Started for Free</Link>
-          </Button>
+      </section>
+
+      {/* Main Feature Categories */}
+      {featureCategories.map((category, index) => (
+        <section key={index} className={`py-20 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+          <div className="container mx-auto px-4">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-16">
+                <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-6">
+                  <category.icon className="w-8 h-8 text-blue-600" />
+                </div>
+                <h2 className="text-4xl font-bold text-gray-900 mb-4">{category.title}</h2>
+                <p className="text-xl text-gray-600 max-w-2xl mx-auto">{category.description}</p>
+              </div>
+              <div className="grid md:grid-cols-2 gap-8">
+                {category.features.map((feature, featureIndex) => (
+                  <Card key={featureIndex} className="border border-gray-200 hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                        <feature.icon className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <CardTitle className="text-xl font-semibold text-gray-900">{feature.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <CardDescription className="text-gray-600 text-base leading-relaxed">
+                        {feature.description}
+                      </CardDescription>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      ))}
+
+      {/* Additional Features Grid */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Plus so much more
+            </h2>
+            <p className="text-xl text-gray-600">
+              Advanced features to take your events to the next level
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+            {additionalFeatures.map((feature, index) => (
+              <div key={index} className="text-center">
+                <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-6">
+                  <feature.icon className="w-8 h-8 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="bg-blue-600 py-20 text-white">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-4xl font-bold mb-4">Ready to create your first event?</h2>
+          <p className="text-xl mb-8 text-blue-100 max-w-2xl mx-auto">
+            Join thousands of event organizers who trust InviteJoy to create amazing experiences.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/signup">
+              <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold">
+                Start Free Trial
+              </Button>
+            </Link>
+            <Link to="/pricing">
+              <Button variant="outline" size="lg" className="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 text-lg font-semibold">
+                View Pricing
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
     </PageLayout>
   );
 };
