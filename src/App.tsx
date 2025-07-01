@@ -36,6 +36,7 @@ import UserFavorites from "./pages/user/UserFavorites";
 import UserReviews from "./pages/user/UserReviews";
 import PublicEvents from "./pages/PublicEvents";
 import AdminSendTestInvitation from "./pages/admin/AdminSendTestInvitation";
+import Pricing from "./pages/Pricing";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/features" element={<Features />} />
+            <Route path="/pricing" element={<Pricing />} />
             <Route path="/events" element={<PublicEvents />} />
             <Route path="/event/:id" element={<Event />} />
             <Route path="/login" element={<Login />} />

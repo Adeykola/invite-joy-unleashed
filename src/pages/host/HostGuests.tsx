@@ -110,20 +110,18 @@ const HostGuests = () => {
                         <TableCell>{rsvpStats?.[event.id]?.total || 0}</TableCell>
                         <TableCell className="text-green-600">{rsvpStats?.[event.id]?.confirmed || 0}</TableCell>
                         <TableCell className="text-red-600">{rsvpStats?.[event.id]?.declined || 0}</TableCell>
-                        <TableCell>
-                          {/* Example: Show # of VIPs */}
-                          {(event.guests || []).filter((g: any) => g.is_vip).length ?? 0}
-                        </TableCell>
-                        <TableCell>
-                          {/* Example: Show Paid Badge; replace with real logic as payment data is implemented */}
-                          <PaymentStatusBadge status={event.is_paid ? "pending" : "n/a"} />
-                        </TableCell>
-                        <TableCell>
-                          {/* Example QR for Host's first guest */}
-                          {event.guests && event.guests[0]?.ticket_code && (
-                            <Button variant="ghost" size="sm" onClick={() => setQrDialog({ guest: event.guests[0] })}>Show QR</Button>
-                          )}
-                        </TableCell>
+                         <TableCell>
+                           {/* VIP count - will be implemented when guest management is added */}
+                           0
+                         </TableCell>
+                         <TableCell>
+                           {/* Payment status - will be implemented when payment features are added */}
+                           <PaymentStatusBadge status="n/a" />
+                         </TableCell>
+                         <TableCell>
+                           {/* QR codes - will be implemented when ticketing is added */}
+                           -
+                         </TableCell>
                         <TableCell>
                           <Button
                             variant="outline"
