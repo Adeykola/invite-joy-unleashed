@@ -1,10 +1,9 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import PageLayout from "@/components/layouts/PageLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowRight, Calendar, Users, Shield, Zap, BarChart, Mail, Smartphone, Star, CheckCircle, Clock, Globe, Lock, Headphones, Mobile, Settings } from "lucide-react";
+import { ArrowRight, Calendar, Users, Shield, Zap, BarChart, Mail, Smartphone, Star, CheckCircle, Clock, Globe, Lock, Headphones, Settings } from "lucide-react";
 
 const Index = () => {
   const { user, profile } = useAuth();
@@ -19,7 +18,7 @@ const Index = () => {
   const automationFeatures = [
     {
       icon: Mail,
-      title: "Smart Invitations",
+      title: "Smart Invitations", 
       description: "Automatically send personalized invites and track responses in real-time"
     },
     {
@@ -338,7 +337,7 @@ const Index = () => {
                 </p>
                 <div className="flex space-x-4">
                   <Button className="bg-dark-gray hover:bg-dark-gray/90 text-white px-6 py-3 rounded-xl">
-                    <Mobile className="w-5 h-5 mr-2" />
+                    <Smartphone className="w-5 h-5 mr-2" />
                     Download App
                   </Button>
                 </div>
