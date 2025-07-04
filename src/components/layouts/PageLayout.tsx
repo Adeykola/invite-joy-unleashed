@@ -31,7 +31,6 @@ const PageLayout = ({
     { name: "Features", href: "/features" },
     { name: "Pricing", href: "/pricing" },
     { name: "Resources", href: "/resources" },
-    { name: "About", href: "/about" },
   ];
 
   const handleBack = () => {
@@ -45,10 +44,10 @@ const PageLayout = ({
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-40 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 shadow-sm">
+      <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center">
-            <Link to="/" className="flex items-center text-2xl font-bold text-blue-600 mr-8">
+            <Link to="/" className="flex items-center text-2xl font-bold text-purple-primary mr-8">
               <Calendar className="h-8 w-8 mr-2" />
               InviteJoy
             </Link>
@@ -59,7 +58,7 @@ const PageLayout = ({
                 {navigation.map((item) => (
                   <NavigationMenuItem key={item.name}>
                     <Link to={item.href}>
-                      <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "text-gray-700 hover:text-blue-600 font-medium")}>
+                      <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "text-dark-gray hover:text-purple-primary font-medium")}>
                         {item.name}
                       </NavigationMenuLink>
                     </Link>
@@ -70,10 +69,10 @@ const PageLayout = ({
           </div>
           
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" asChild className="text-gray-700 hover:text-blue-600 font-medium">
+            <Button variant="ghost" asChild className="text-dark-gray hover:text-purple-primary font-medium">
               <Link to="/login">Sign In</Link>
             </Button>
-            <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm">
+            <Button asChild className="bg-purple-primary hover:bg-purple-600 text-white font-semibold rounded-lg shadow-sm">
               <Link to="/signup">Get Started</Link>
             </Button>
           </div>
@@ -81,7 +80,7 @@ const PageLayout = ({
           {/* Mobile menu button */}
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden text-gray-700 hover:text-indigo-600">
+              <Button variant="ghost" size="icon" className="md:hidden text-dark-gray hover:text-purple-primary">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle menu</span>
               </Button>
@@ -89,11 +88,11 @@ const PageLayout = ({
             <SheetContent side="right" className="bg-white">
               <div className="flex flex-col h-full">
                 <div className="flex items-center justify-between border-b py-4">
-                  <Link to="/" className="text-2xl font-bold text-blue-600">
+                  <Link to="/" className="text-2xl font-bold text-purple-primary">
                     InviteJoy
                   </Link>
                   <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="text-gray-700 hover:text-indigo-600">
+                    <Button variant="ghost" size="icon" className="text-dark-gray hover:text-purple-primary">
                       <X className="h-5 w-5" />
                       <span className="sr-only">Close</span>
                     </Button>
@@ -104,17 +103,17 @@ const PageLayout = ({
                     <Link
                       key={item.name}
                       to={item.href}
-                      className="text-lg font-medium px-2 py-1 text-gray-700 hover:text-blue-600 transition-colors"
+                      className="text-lg font-medium px-2 py-1 text-dark-gray hover:text-purple-primary transition-colors"
                     >
                       {item.name}
                     </Link>
                   ))}
                 </nav>
                 <div className="mt-auto border-t py-6 space-y-4">
-                  <Button variant="outline" className="w-full border-blue-300 text-blue-600 hover:bg-blue-50" asChild>
+                  <Button variant="outline" className="w-full border-purple-300 text-purple-primary hover:bg-light-purple" asChild>
                     <Link to="/login">Sign In</Link>
                   </Button>
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" asChild>
+                  <Button className="w-full bg-purple-primary hover:bg-purple-600 text-white" asChild>
                     <Link to="/signup">Get Started</Link>
                   </Button>
                 </div>
@@ -131,7 +130,7 @@ const PageLayout = ({
             variant="outline" 
             size="sm" 
             onClick={handleBack} 
-            className="flex items-center border-gray-300 text-gray-700 hover:text-blue-600 hover:border-blue-300"
+            className="flex items-center border-gray-300 text-dark-gray hover:text-purple-primary hover:border-purple-300"
           >
             <ChevronLeft className="mr-1 h-4 w-4" />
             {backButtonLabel}
@@ -145,7 +144,7 @@ const PageLayout = ({
       </main>
       
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-300">
+      <footer className="bg-dark-gray text-gray-300">
         <div className="container mx-auto py-16 px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="lg:col-span-1">
