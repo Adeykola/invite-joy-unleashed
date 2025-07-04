@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, ArrowLeft, AlertCircle } from "lucide-react";
+import { Mail, ArrowLeft, AlertCircle, Calendar, CheckCircle } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 const ResetPassword = () => {
@@ -15,7 +15,6 @@ const ResetPassword = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
 
-  // Check if Supabase is configured properly
   const supabaseConfigured = isSupabaseConfigured();
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -32,7 +31,7 @@ const ResetPassword = () => {
     
     if (!email) {
       toast({
-        title: "Error",
+        title: "Email required",
         description: "Please enter your email address",
         variant: "destructive",
       });
@@ -52,7 +51,7 @@ const ResetPassword = () => {
       
       setIsSuccess(true);
       toast({
-        title: "Email sent",
+        title: "Reset link sent",
         description: "Check your inbox for the password reset link",
       });
     } catch (error) {
@@ -68,73 +67,99 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4">
-      <Card className="w-full max-w-md shadow-xl border-0 shadow-indigo-100/50">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold text-gray-900">Reset Password</CardTitle>
-          <CardDescription className="text-gray-600">
-            {!isSuccess 
-              ? "Enter your email address and we'll send you a link to reset your password" 
-              : "Password reset email sent. Check your inbox for further instructions."}
-          </CardDescription>
-          {!supabaseConfigured && !isSuccess && (
-            <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-md p-3 mt-2 flex items-center text-sm">
-              <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
-              <span>Supabase environment variables are not configured. Reset password functionality will be limited.</span>
+    <div className="min-h-screen bg-gradient-to-br from-light-purple to-white flex items-center justify-center p-4">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-gradient-to-br from-light-purple/50 to-white opacity-90"></div>
+      
+      <div className="relative w-full max-w-md">
+        {/* Back to Login Link */}
+        <Link 
+          to="/login" 
+          className="inline-flex items-center text-purple-primary hover:text-purple-600 transition-colors mb-6 font-medium"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to sign in
+        </Link>
+
+        <Card className="backdrop-blur-sm bg-white/90 shadow-2xl border-0 shadow-purple-primary/10">
+          <CardHeader className="text-center pb-8">
+            <div className="flex items-center justify-center mb-6">
+              <div className="w-12 h-12 bg-purple-primary/10 rounded-2xl flex items-center justify-center">
+                {isSuccess ? (
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                ) : (
+                  <Calendar className="w-6 h-6 text-purple-primary" />
+                )}
+              </div>
             </div>
-          )}
-        </CardHeader>
-        
-        {!isSuccess ? (
-          <>
-            <CardContent>
-              <form onSubmit={handleResetPassword}>
-                <div className="space-y-4">
+            <CardTitle className="text-3xl font-bold text-dark-gray mb-2">
+              {isSuccess ? "Check your email" : "Reset password"}
+            </CardTitle>
+            <CardDescription className="text-dark-gray/70 text-lg">
+              {isSuccess 
+                ? "We've sent a password reset link to your email address" 
+                : "Enter your email and we'll send you a reset link"}
+            </CardDescription>
+            {!supabaseConfigured && !isSuccess && (
+              <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl p-4 mt-4 flex items-start text-sm">
+                <AlertCircle className="h-4 w-4 mr-3 mt-0.5 flex-shrink-0" />
+                <span>Supabase environment variables are not configured. Reset password functionality will be limited.</span>
+              </div>
+            )}
+          </CardHeader>
+          
+          {!isSuccess ? (
+            <>
+              <CardContent>
+                <form onSubmit={handleResetPassword} className="space-y-6">
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-gray-700">Email</Label>
+                    <Label htmlFor="email" className="text-dark-gray font-medium">Email address</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-dark-gray/40" />
                       <Input
                         id="email"
                         type="email"
-                        placeholder="you@example.com"
+                        placeholder="Enter your email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                        className="pl-12 h-12 border-gray-200 focus:border-purple-primary focus:ring-purple-primary/20 rounded-xl text-base"
                         required
                       />
                     </div>
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
                     disabled={isLoading}
+                    className="w-full h-12 bg-purple-primary hover:bg-purple-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-base"
                   >
-                    {isLoading ? "Sending..." : "Send Reset Link"}
+                    {isLoading ? "Sending..." : "Send reset link"}
                   </Button>
-                </div>
-              </form>
-            </CardContent>
-          </>
-        ) : (
-          <CardContent className="text-center">
-            <div className="flex items-center justify-center my-4">
-              <div className="rounded-full bg-green-100 p-3">
-                <Mail className="h-8 w-8 text-green-600" />
+                </form>
+              </CardContent>
+            </>
+          ) : (
+            <CardContent className="text-center py-8">
+              <div className="max-w-sm mx-auto">
+                <p className="text-dark-gray/70 mb-6">
+                  If an account with that email exists, you'll receive instructions to reset your password shortly.
+                </p>
+                <p className="text-sm text-dark-gray/60">
+                  Didn't receive the email? Check your spam folder or try again.
+                </p>
               </div>
-            </div>
-            <p className="mt-4 text-gray-600">
-              If an account exists with this email, you'll receive instructions to reset your password.
-            </p>
-          </CardContent>
-        )}
-        
-        <CardFooter className="flex justify-center">
-          <Link to="/login" className="flex items-center text-sm text-indigo-600 hover:text-indigo-500">
-            <ArrowLeft className="mr-1 h-4 w-4" /> Back to Login
-          </Link>
-        </CardFooter>
-      </Card>
+            </CardContent>
+          )}
+          
+          <CardFooter className="pt-6">
+            <Link 
+              to="/login" 
+              className="w-full text-center text-purple-primary hover:text-purple-600 transition-colors font-medium"
+            >
+              Back to sign in
+            </Link>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 };
