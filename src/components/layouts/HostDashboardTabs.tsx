@@ -5,11 +5,35 @@ import { EventTemplateManager } from "@/components/events/EventTemplateManager";
 import { EmailTemplateManager } from "@/components/events/EmailTemplateManager";
 import { NotificationCenter } from "@/components/events/NotificationCenter";
 import { QRCheckInSystem } from "@/components/events/QRCheckInSystem";
+import { RealAnalyticsDashboard } from "@/components/analytics/RealAnalyticsDashboard";
 import { Calendar, FileText, Mail, Bell, QrCode, BarChart3 } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function HostDashboardTabs() {
   const [selectedEventId, setSelectedEventId] = useState<string>("");
+  const { user } = useAuth();
+
+  // Fetch user's events for check-in selection
+  const { data: events } = useQuery({
+    queryKey: ["host-events", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+
+      const { data, error } = await supabase
+        .from("events")
+        .select("id, title, date")
+        .eq("host_id", user.id)
+        .order("date", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
 
   return (
     <Tabs defaultValue="events" className="w-full">
@@ -60,25 +84,25 @@ export function HostDashboardTabs() {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2">Select Event for Check-In</label>
-            <select 
-              value={selectedEventId}
-              onChange={(e) => setSelectedEventId(e.target.value)}
-              className="w-full p-2 border rounded-md"
-            >
-              <option value="">Select an event...</option>
-              {/* This would be populated with actual events */}
-            </select>
+            <Select value={selectedEventId} onValueChange={setSelectedEventId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select an event..." />
+              </SelectTrigger>
+              <SelectContent>
+                {events?.map((event) => (
+                  <SelectItem key={event.id} value={event.id}>
+                    {event.title} - {new Date(event.date).toLocaleDateString()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           {selectedEventId && <QRCheckInSystem eventId={selectedEventId} />}
         </div>
       </TabsContent>
       
       <TabsContent value="analytics" className="mt-6">
-        <div className="text-center py-8 text-muted-foreground">
-          <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <h3 className="text-lg font-medium mb-2">Analytics Dashboard</h3>
-          <p>Advanced analytics and reporting features coming soon...</p>
-        </div>
+        <RealAnalyticsDashboard />
       </TabsContent>
     </Tabs>
   );

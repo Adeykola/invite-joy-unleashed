@@ -159,6 +159,75 @@ export type Database = {
         }
         Relationships: []
       }
+      communication_logs: {
+        Row: {
+          content: string
+          created_at: string | null
+          delivered_at: string | null
+          error_message: string | null
+          event_id: string | null
+          id: string
+          message_type: string
+          metadata: Json | null
+          recipient_email: string | null
+          recipient_phone: string | null
+          sent_at: string | null
+          status: string
+          subject: string | null
+          template_id: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          event_id?: string | null
+          id?: string
+          message_type: string
+          metadata?: Json | null
+          recipient_email?: string | null
+          recipient_phone?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          template_id?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          event_id?: string | null
+          id?: string
+          message_type?: string
+          metadata?: Json | null
+          recipient_email?: string | null
+          recipient_phone?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          template_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_logs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_logs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_templates: {
         Row: {
           content: string
@@ -230,6 +299,13 @@ export type Database = {
           phone_number?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "event_guests_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_performance"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "event_guests_event_id_fkey"
             columns: ["event_id"]
@@ -427,7 +503,81 @@ export type Database = {
             foreignKeyName: "notifications_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "event_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          event_id: string
+          id: string
+          metadata: Json | null
+          payment_method: string | null
+          rsvp_id: string | null
+          status: string
+          stripe_payment_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          event_id: string
+          id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          rsvp_id?: string | null
+          status?: string
+          stripe_payment_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          event_id?: string
+          id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          rsvp_id?: string | null
+          status?: string
+          stripe_payment_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_rsvp_id_fkey"
+            columns: ["rsvp_id"]
+            isOneToOne: false
+            referencedRelation: "rsvps"
             referencedColumns: ["id"]
           },
         ]
@@ -525,6 +675,13 @@ export type Database = {
             foreignKeyName: "rsvps_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "event_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rsvps_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -614,6 +771,13 @@ export type Database = {
             foreignKeyName: "fk_whatsapp_broadcasts_event_id"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "event_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_whatsapp_broadcasts_event_id"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -622,6 +786,13 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "message_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_broadcasts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_performance"
             referencedColumns: ["id"]
           },
           {
@@ -875,12 +1046,48 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      event_performance: {
+        Row: {
+          capacity: number | null
+          checked_in_count: number | null
+          confirmed_rsvps: number | null
+          date: string | null
+          declined_rsvps: number | null
+          fill_rate: number | null
+          id: string | null
+          pending_rsvps: number | null
+          response_rate: number | null
+          title: string | null
+          total_rsvps: number | null
+        }
+        Relationships: []
+      }
+      platform_analytics: {
+        Row: {
+          active_hosts: number | null
+          past_events: number | null
+          total_checked_in: number | null
+          total_confirmed_rsvps: number | null
+          total_events: number | null
+          total_users: number | null
+          upcoming_events: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_rsvp_checkin_columns: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      bulk_check_in: {
+        Args: { p_ticket_codes: string[]; p_event_id: string }
+        Returns: {
+          ticket_code: string
+          guest_name: string
+          status: string
+          message: string
+        }[]
       }
       create_admin_user: {
         Args: { admin_email: string; admin_password: string }
@@ -895,6 +1102,15 @@ export type Database = {
         Returns: {
           column_name: string
           data_type: string
+        }[]
+      }
+      get_event_check_in_stats: {
+        Args: { p_event_id: string }
+        Returns: {
+          total_rsvps: number
+          confirmed_rsvps: number
+          checked_in_count: number
+          check_in_rate: number
         }[]
       }
       get_event_guests: {

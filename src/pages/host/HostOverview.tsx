@@ -18,53 +18,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { WhatsAppConnection } from "@/components/whatsapp/WhatsAppConnection";
+import { RealAnalyticsDashboard } from "@/components/analytics/RealAnalyticsDashboard";
 
 const HostOverview = () => {
   const { user } = useAuth();
-
-  // Fetch comprehensive stats combining dashboard and analytics
-  const { data: overviewStats } = useQuery({
-    queryKey: ["host-overview", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-
-      const [eventsResult, rsvpsResult] = await Promise.all([
-        supabase
-          .from("events")
-          .select("id, created_at, title, date")
-          .eq("host_id", user.id),
-        supabase
-          .from("rsvps")
-          .select("id, response_status, created_at, event_id, events!inner(host_id)")
-          .eq("events.host_id", user.id)
-      ]);
-
-      const events = eventsResult.data || [];
-      const rsvps = rsvpsResult.data || [];
-
-      const now = new Date();
-      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      
-      const totalEvents = events.length;
-      const upcomingEvents = events.filter(e => new Date(e.date) > now).length;
-      const eventsThisMonth = events.filter(e => new Date(e.created_at) > thirtyDaysAgo).length;
-      const totalRsvps = rsvps.length;
-      const confirmedRsvps = rsvps.filter(r => r.response_status === 'confirmed').length;
-      const pendingRsvps = rsvps.filter(r => r.response_status === 'pending').length;
-      const conversionRate = rsvps.length > 0 ? Math.round((confirmedRsvps / rsvps.length) * 100) : 0;
-
-      return {
-        totalEvents,
-        upcomingEvents,
-        eventsThisMonth,
-        totalRsvps,
-        confirmedRsvps,
-        pendingRsvps,
-        conversionRate
-      };
-    },
-    enabled: !!user?.id,
-  });
 
   // Fetch WhatsApp session status
   const { data: whatsappSession } = useQuery({
@@ -91,108 +48,11 @@ const HostOverview = () => {
       <div className="space-y-8">
         <div>
           <h1 className="text-3xl font-bold text-green-800">Overview</h1>
-          <p className="text-yellow-600 mt-2">Complete dashboard with analytics and quick actions</p>
+          <p className="text-yellow-600 mt-2">Complete dashboard with real-time analytics and quick actions</p>
         </div>
 
-        {/* Key Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-green-700">Total Events</CardTitle>
-              <CalendarDays className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{overviewStats?.totalEvents || 0}</div>
-              <p className="text-xs text-yellow-600 font-semibold">
-                +{overviewStats?.eventsThisMonth || 0} this month
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-yellow-700">Upcoming Events</CardTitle>
-              <CalendarDays className="h-4 w-4 text-yellow-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-yellow-500">{overviewStats?.upcomingEvents || 0}</div>
-              <p className="text-xs text-gray-500">Scheduled ahead</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-green-700">Total RSVPs</CardTitle>
-              <Users className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{overviewStats?.totalRsvps || 0}</div>
-              <p className="text-xs text-gray-500">All time responses</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-green-700">Confirmed</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{overviewStats?.confirmedRsvps || 0}</div>
-              <p className="text-xs text-gray-500">Will attend</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Analytics Section */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-green-800">
-                <Activity className="h-5 w-5 text-green-500" />
-                RSVP Analytics
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between">
-                <span className="text-sm text-green-600">Confirmed</span>
-                <span className="font-medium text-green-700">{overviewStats?.confirmedRsvps || 0}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-yellow-600">Pending</span>
-                <span className="font-medium text-yellow-700">{overviewStats?.pendingRsvps || 0}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-500">Conversion Rate</span>
-                <span className="font-medium text-green-800">{overviewStats?.conversionRate || 0}%</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-green-700">
-                <BarChart3 className="h-5 w-5 text-yellow-500" />
-                Event Performance
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-500">Events Created</span>
-                <span className="font-medium text-green-600">{overviewStats?.totalEvents || 0}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-yellow-600">This Month</span>
-                <span className="font-medium text-yellow-600">{overviewStats?.eventsThisMonth || 0}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-500">Avg. Attendance</span>
-                <span className="font-medium text-green-700">
-                  {overviewStats?.totalEvents ? Math.round((overviewStats.confirmedRsvps || 0) / overviewStats.totalEvents) : 0}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Real Analytics Dashboard */}
+        <RealAnalyticsDashboard />
 
         {/* Quick Actions and WhatsApp Status */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -278,4 +138,3 @@ const HostOverview = () => {
 };
 
 export default HostOverview;
-
