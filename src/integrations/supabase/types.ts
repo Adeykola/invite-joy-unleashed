@@ -159,6 +159,45 @@ export type Database = {
         }
         Relationships: []
       }
+      email_templates: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          subject: string
+          template_type: string | null
+          updated_at: string | null
+          user_id: string
+          variables: Json | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          subject: string
+          template_type?: string | null
+          updated_at?: string | null
+          user_id: string
+          variables?: Json | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          subject?: string
+          template_type?: string | null
+          updated_at?: string | null
+          user_id?: string
+          variables?: Json | null
+        }
+        Relationships: []
+      }
       event_guests: {
         Row: {
           created_at: string | null
@@ -200,17 +239,65 @@ export type Database = {
           },
         ]
       }
+      event_templates: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          event_data: Json
+          id: string
+          is_public: boolean | null
+          name: string
+          updated_at: string | null
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          event_data: Json
+          id?: string
+          is_public?: boolean | null
+          name: string
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          event_data?: Json
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           banner_image: string | null
           capacity: number | null
           created_at: string | null
+          custom_fields: Json | null
           date: string
           description: string | null
+          event_type: string | null
           host_id: string | null
           id: string
+          is_private: boolean | null
+          is_template: boolean | null
           location: string
+          max_guests_per_rsvp: number | null
           meta: Json | null
+          registration_deadline: string | null
+          require_approval: boolean | null
+          tags: string[] | null
+          template_name: string | null
           title: string
           updated_at: string | null
         }
@@ -218,12 +305,21 @@ export type Database = {
           banner_image?: string | null
           capacity?: number | null
           created_at?: string | null
+          custom_fields?: Json | null
           date: string
           description?: string | null
+          event_type?: string | null
           host_id?: string | null
           id?: string
+          is_private?: boolean | null
+          is_template?: boolean | null
           location: string
+          max_guests_per_rsvp?: number | null
           meta?: Json | null
+          registration_deadline?: string | null
+          require_approval?: boolean | null
+          tags?: string[] | null
+          template_name?: string | null
           title: string
           updated_at?: string | null
         }
@@ -231,12 +327,21 @@ export type Database = {
           banner_image?: string | null
           capacity?: number | null
           created_at?: string | null
+          custom_fields?: Json | null
           date?: string
           description?: string | null
+          event_type?: string | null
           host_id?: string | null
           id?: string
+          is_private?: boolean | null
+          is_template?: boolean | null
           location?: string
+          max_guests_per_rsvp?: number | null
           meta?: Json | null
+          registration_deadline?: string | null
+          require_approval?: boolean | null
+          tags?: string[] | null
+          template_name?: string | null
           title?: string
           updated_at?: string | null
         }
@@ -283,6 +388,50 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          event_id: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          event_id?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          event_id?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -309,40 +458,67 @@ export type Database = {
       }
       rsvps: {
         Row: {
+          amount_paid: number | null
           check_in_time: string | null
           checked_in: boolean | null
           comments: string | null
           created_at: string | null
+          custom_responses: Json | null
+          dietary_restrictions: string | null
           event_id: string | null
           guest_email: string
           guest_name: string
           id: string
+          meal_choice: string | null
+          needs_accommodation: boolean | null
+          payment_status: string | null
           phone_number: string | null
+          plus_one_count: number | null
+          qr_code_data: string | null
           response_status: string
+          ticket_code: string | null
         }
         Insert: {
+          amount_paid?: number | null
           check_in_time?: string | null
           checked_in?: boolean | null
           comments?: string | null
           created_at?: string | null
+          custom_responses?: Json | null
+          dietary_restrictions?: string | null
           event_id?: string | null
           guest_email: string
           guest_name: string
           id?: string
+          meal_choice?: string | null
+          needs_accommodation?: boolean | null
+          payment_status?: string | null
           phone_number?: string | null
+          plus_one_count?: number | null
+          qr_code_data?: string | null
           response_status: string
+          ticket_code?: string | null
         }
         Update: {
+          amount_paid?: number | null
           check_in_time?: string | null
           checked_in?: boolean | null
           comments?: string | null
           created_at?: string | null
+          custom_responses?: Json | null
+          dietary_restrictions?: string | null
           event_id?: string | null
           guest_email?: string
           guest_name?: string
           id?: string
+          meal_choice?: string | null
+          needs_accommodation?: boolean | null
+          payment_status?: string | null
           phone_number?: string | null
+          plus_one_count?: number | null
+          qr_code_data?: string | null
           response_status?: string
+          ticket_code?: string | null
         }
         Relationships: [
           {
@@ -709,6 +885,10 @@ export type Database = {
       create_admin_user: {
         Args: { admin_email: string; admin_password: string }
         Returns: undefined
+      }
+      generate_ticket_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       get_column_info: {
         Args: { target_table: string; target_column: string }
