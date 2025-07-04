@@ -353,12 +353,10 @@ export function EnhancedGuestList({ eventId }: EnhancedGuestListProps) {
       />
 
       <InviteGuestsDialog
-        open={isInviteDialogOpen}
-        onOpenChange={setIsInviteDialogOpen}
         eventId={eventId}
-        guests={guests || []}
-        onInvite={bulkInvite}
-        isLoading={false}
+        eventTitle="Event"
+        isOpen={isInviteDialogOpen}
+        onOpenChange={setIsInviteDialogOpen}
       />
 
       {qrDialogGuest && (
