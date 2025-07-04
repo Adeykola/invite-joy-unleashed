@@ -5,7 +5,7 @@ import { EventTemplateManager } from "@/components/events/EventTemplateManager";
 import { EmailTemplateManager } from "@/components/events/EmailTemplateManager";
 import { NotificationCenter } from "@/components/events/NotificationCenter";
 import { QRCheckInSystem } from "@/components/events/QRCheckInSystem";
-import { Calendar, Template, Mail, Bell, QrCode, BarChart3 } from "lucide-react";
+import { Calendar, FileText, Mail, Bell, QrCode, BarChart3 } from "lucide-react";
 import { useState } from "react";
 
 export function HostDashboardTabs() {
@@ -19,7 +19,7 @@ export function HostDashboardTabs() {
           <span>Events</span>
         </TabsTrigger>
         <TabsTrigger value="templates" className="flex items-center space-x-2">
-          <Template className="h-4 w-4" />
+          <FileText className="h-4 w-4" />
           <span>Templates</span>
         </TabsTrigger>
         <TabsTrigger value="communications" className="flex items-center space-x-2">

@@ -277,7 +277,7 @@ export function EnhancedRsvpForm({ event, onSuccess }: EnhancedRsvpFormProps) {
                   <Checkbox
                     id="needs-accommodation"
                     checked={needsAccommodation}
-                    onCheckedChange={setNeedsAccommodation}
+                    onCheckedChange={(checked) => setNeedsAccommodation(checked === true)}
                   />
                   <Label htmlFor="needs-accommodation">
                     I require special accommodations

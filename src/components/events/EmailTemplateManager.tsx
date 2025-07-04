@@ -55,9 +55,13 @@ export function EmailTemplateManager() {
       content: string;
       template_type: string;
     }) => {
+      const { data: userData } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from("email_templates")
-        .insert(templateData)
+        .insert({
+          ...templateData,
+          user_id: userData.user?.id,
+        })
         .select()
         .single();
 
@@ -312,7 +316,7 @@ Best regards,
                   className="font-mono text-sm"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Use variables like: {{guest_name}}, {{event_title}}, {{event_date}}, {{event_location}}, {{rsvp_link}}
+                  Use variables like: guest_name, event_title, event_date, event_location, rsvp_link
                 </p>
               </div>
               <div className="flex justify-end space-x-2">

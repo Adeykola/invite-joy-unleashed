@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Template, Save, Star, Users, Calendar } from "lucide-react";
+import { FileText, Save, Star, Users, Calendar } from "lucide-react";
 
 interface EventTemplate {
   id: string;
@@ -54,9 +54,13 @@ export function EventTemplateManager() {
       event_data: any;
       is_public: boolean;
     }) => {
+      const { data: userData } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from("event_templates")
-        .insert(templateData)
+        .insert({
+          ...templateData,
+          user_id: userData.user?.id,
+        })
         .select()
         .single();
 
@@ -122,7 +126,7 @@ export function EventTemplateManager() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold flex items-center">
-          <Template className="h-5 w-5 mr-2" />
+          <FileText className="h-5 w-5 mr-2" />
           Event Templates
         </h3>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -224,7 +228,7 @@ export function EventTemplateManager() {
       {templates?.length === 0 && (
         <Card>
           <CardContent className="p-8 text-center">
-            <Template className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-lg font-medium mb-2">No Templates Yet</h3>
             <p className="text-muted-foreground mb-4">
               Create your first event template to save time on future events.
