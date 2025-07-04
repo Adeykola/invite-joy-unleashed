@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,19 +6,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Send, Users } from 'lucide-react';
+import { Loader2, Send, Users, Calendar } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useRealCommunication } from '@/hooks/useRealCommunication';
 
 export const WhatsAppMessageSender = () => {
   const [message, setMessage] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<string>('');
-  const [isSending, setIsSending] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { sendWhatsApp, isSendingWhatsApp } = useRealCommunication();
 
   // Fetch user's events
   const { data: events } = useQuery({
@@ -35,6 +37,23 @@ export const WhatsAppMessageSender = () => {
       return data;
     },
     enabled: !!user?.id,
+  });
+
+  // Fetch event guests when an event is selected
+  const { data: eventGuests } = useQuery({
+    queryKey: ['event-guests-whatsapp', selectedEvent],
+    queryFn: async () => {
+      if (!selectedEvent) return [];
+      
+      const { data, error } = await supabase
+        .from('event_guests')
+        .select('*')
+        .eq('event_id', selectedEvent);
+
+      if (error) throw error;
+      return data.filter(guest => guest.phone_number);
+    },
+    enabled: !!selectedEvent,
   });
 
   // Fetch message templates
@@ -65,19 +84,11 @@ export const WhatsAppMessageSender = () => {
       return;
     }
 
-    setIsSending(true);
     try {
-      const { data, error } = await supabase.functions.invoke('whatsapp-session', {
-        body: {
-          action: 'send_message',
-          user_id: user?.id,
-          phone_number: phoneNumber,
-          message: message,
-          event_id: selectedEvent || null
-        }
+      await sendWhatsApp({
+        recipients: [{ phone: phoneNumber, name: 'Guest' }],
+        content: message
       });
-
-      if (error) throw error;
 
       toast({
         title: "Message Sent",
@@ -93,37 +104,34 @@ export const WhatsAppMessageSender = () => {
         description: error.message || "Failed to send message. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsSending(false);
     }
   };
 
   const sendToEventGuests = async () => {
-    if (!message.trim() || !selectedEvent) {
+    if (!message.trim() || !selectedEvent || !eventGuests?.length) {
       toast({
         title: "Missing Information",
-        description: "Please select an event and enter a message.",
+        description: "Please select an event with guests who have phone numbers and enter a message.",
         variant: "destructive",
       });
       return;
     }
 
-    setIsSending(true);
     try {
-      const { data, error } = await supabase.functions.invoke('whatsapp-session', {
-        body: {
-          action: 'broadcast_to_event',
-          user_id: user?.id,
-          message: message,
-          event_id: selectedEvent
-        }
-      });
+      const recipients = eventGuests.map(guest => ({
+        phone: guest.phone_number!,
+        name: guest.name
+      }));
 
-      if (error) throw error;
+      await sendWhatsApp({
+        eventId: selectedEvent,
+        recipients,
+        content: message
+      });
 
       toast({
         title: "Broadcast Sent",
-        description: `Message sent to all guests of the selected event!`,
+        description: `Message sent to ${recipients.length} guests!`,
       });
 
       setMessage('');
@@ -134,12 +142,10 @@ export const WhatsAppMessageSender = () => {
         description: error.message || "Failed to send broadcast. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsSending(false);
     }
   };
 
-  // Safe filtering for events - only keep events with valid IDs and titles
+  // Safe filtering for events
   const safeEvents = Array.isArray(events) ? events.filter(event => {
     return event && 
            event.id && 
@@ -150,7 +156,7 @@ export const WhatsAppMessageSender = () => {
            event.title.trim().length > 0;
   }) : [];
 
-  // Safe filtering for templates - only keep templates with valid IDs, titles, and content
+  // Safe filtering for templates
   const safeTemplates = Array.isArray(templates) ? templates.filter(template => {
     return template && 
            template.id && 
@@ -217,8 +223,8 @@ export const WhatsAppMessageSender = () => {
             />
           </div>
 
-          <Button onClick={sendMessage} disabled={isSending} className="w-full">
-            {isSending ? (
+          <Button onClick={sendMessage} disabled={isSendingWhatsApp} className="w-full">
+            {isSendingWhatsApp ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Sending...
@@ -255,12 +261,21 @@ export const WhatsAppMessageSender = () => {
                     
                     return (
                       <SelectItem key={event.id} value={event.id}>
-                        {event.title} - {eventDate}
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="h-4 w-4" />
+                          <span>{event.title}</span>
+                          <span className="text-sm text-muted-foreground">({eventDate})</span>
+                        </div>
                       </SelectItem>
                     );
                   })}
                 </SelectContent>
               </Select>
+              {selectedEvent && eventGuests && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  {eventGuests.length} guests with phone numbers will receive the message
+                </p>
+              )}
             </div>
           ) : (
             <div className="text-sm text-muted-foreground">
@@ -281,10 +296,10 @@ export const WhatsAppMessageSender = () => {
 
           <Button 
             onClick={sendToEventGuests} 
-            disabled={isSending || safeEvents.length === 0} 
+            disabled={isSendingWhatsApp || safeEvents.length === 0 || !eventGuests?.length} 
             className="w-full"
           >
-            {isSending ? (
+            {isSendingWhatsApp ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Broadcasting...
@@ -292,7 +307,7 @@ export const WhatsAppMessageSender = () => {
             ) : (
               <>
                 <Users className="w-4 h-4 mr-2" />
-                Send to All Guests
+                Send to {eventGuests?.length || 0} Guests
               </>
             )}
           </Button>

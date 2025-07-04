@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -46,6 +45,8 @@ serve(async (req) => {
         return await handleDisconnect(supabase, { ...params, user_id: userId });
       case 'send_message':
         return await handleSendMessage(supabase, { ...params, user_id: userId });
+      case 'send_bulk_message':
+        return await handleBulkMessage(supabase, { ...params, user_id: userId });
       default:
         throw new Error('Invalid action');
     }
@@ -60,6 +61,200 @@ serve(async (req) => {
     );
   }
 });
+
+async function handleSendMessage(supabase: any, params: any) {
+  const { user_id, to, message, media_id } = params;
+  
+  console.log('Sending WhatsApp message for user:', user_id);
+
+  // Check if user has an active WhatsApp session
+  const { data: session } = await supabase
+    .from('whatsapp_sessions')
+    .select('*')
+    .eq('user_id', user_id)
+    .eq('status', 'connected')
+    .maybeSingle();
+
+  if (!session) {
+    throw new Error('WhatsApp not connected. Please connect your WhatsApp first.');
+  }
+
+  try {
+    // Log the communication attempt
+    const { error: logError } = await supabase
+      .from('communication_logs')
+      .insert({
+        user_id: user_id,
+        recipient_phone: to,
+        message_type: 'whatsapp',
+        content: message,
+        status: 'pending'
+      });
+
+    if (logError) console.error('Failed to log communication:', logError);
+
+    // Get the active client
+    const client = activeClients.get(user_id);
+    
+    if (!client) {
+      throw new Error('WhatsApp client not found. Please reconnect.');
+    }
+
+    // Format phone number for WhatsApp
+    const chatId = to.includes('@c.us') ? to : `${to.replace(/[^\d]/g, '')}@c.us`;
+    
+    // Send the message using the real WhatsApp client
+    const sentMessage = await client.sendMessage(chatId, message);
+    
+    console.log('Message sent successfully:', sentMessage.id._serialized);
+
+    // Update communication log
+    await supabase
+      .from('communication_logs')
+      .update({
+        status: 'sent',
+        sent_at: new Date().toISOString()
+      })
+      .eq('user_id', user_id)
+      .eq('recipient_phone', to)
+      .eq('status', 'pending');
+    
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message_id: sentMessage.id._serialized,
+        status: 'sent',
+        timestamp: new Date().toISOString(),
+        message: 'Message sent successfully'
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error('Error sending message:', error);
+    
+    // Update communication log with error
+    await supabase
+      .from('communication_logs')
+      .update({
+        status: 'failed',
+        error_message: error.message
+      })
+      .eq('user_id', user_id)
+      .eq('recipient_phone', to)
+      .eq('status', 'pending');
+    
+    throw new Error(`Failed to send message: ${error.message}`);
+  }
+}
+
+async function handleBulkMessage(supabase: any, params: any) {
+  const { user_id, recipients, message, event_id, media_id } = params;
+  
+  console.log('Sending bulk WhatsApp messages for user:', user_id, 'to', recipients.length, 'recipients');
+
+  // Check if user has an active WhatsApp session
+  const { data: session } = await supabase
+    .from('whatsapp_sessions')
+    .select('*')
+    .eq('user_id', user_id)
+    .eq('status', 'connected')
+    .maybeSingle();
+
+  if (!session) {
+    throw new Error('WhatsApp not connected. Please connect your WhatsApp first.');
+  }
+
+  const client = activeClients.get(user_id);
+  if (!client) {
+    throw new Error('WhatsApp client not found. Please reconnect.');
+  }
+
+  const results = [];
+  
+  for (const recipient of recipients) {
+    try {
+      // Log the communication attempt
+      const { error: logError } = await supabase
+        .from('communication_logs')
+        .insert({
+          user_id: user_id,
+          event_id: event_id,
+          recipient_phone: recipient.phone,
+          message_type: 'whatsapp',
+          content: message,
+          status: 'pending'
+        });
+
+      if (logError) console.error('Failed to log communication:', logError);
+
+      // Format phone number for WhatsApp
+      const chatId = recipient.phone.includes('@c.us') 
+        ? recipient.phone 
+        : `${recipient.phone.replace(/[^\d]/g, '')}@c.us`;
+      
+      // Send the message
+      const sentMessage = await client.sendMessage(chatId, message);
+      
+      // Update communication log
+      await supabase
+        .from('communication_logs')
+        .update({
+          status: 'sent',
+          sent_at: new Date().toISOString()
+        })
+        .eq('user_id', user_id)
+        .eq('recipient_phone', recipient.phone)
+        .eq('status', 'pending');
+
+      results.push({
+        phone: recipient.phone,
+        name: recipient.name,
+        status: 'sent',
+        message_id: sentMessage.id._serialized
+      });
+
+      console.log(`Message sent to ${recipient.phone} (${recipient.name})`);
+      
+      // Add delay between messages to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+    } catch (error) {
+      console.error(`Failed to send message to ${recipient.phone}:`, error);
+      
+      // Update communication log with error
+      await supabase
+        .from('communication_logs')
+        .update({
+          status: 'failed',
+          error_message: error.message
+        })
+        .eq('user_id', user_id)
+        .eq('recipient_phone', recipient.phone)
+        .eq('status', 'pending');
+
+      results.push({
+        phone: recipient.phone,
+        name: recipient.name,
+        status: 'failed',
+        error: error.message
+      });
+    }
+  }
+
+  const successCount = results.filter(r => r.status === 'sent').length;
+  const failureCount = results.filter(r => r.status === 'failed').length;
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      total_sent: successCount,
+      total_failed: failureCount,
+      results: results,
+      message: `Bulk message completed: ${successCount} sent, ${failureCount} failed`
+    }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
 
 async function handleInitialize(supabase: any, params: any) {
   const { connection_type = 'web', user_id } = params;
@@ -414,53 +609,4 @@ async function handleDisconnect(supabase: any, params: any) {
     }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
-}
-
-async function handleSendMessage(supabase: any, params: any) {
-  const { user_id, to, message } = params;
-  
-  console.log('Sending WhatsApp message for user:', user_id);
-
-  // Check if user has an active WhatsApp session
-  const { data: session } = await supabase
-    .from('whatsapp_sessions')
-    .select('*')
-    .eq('user_id', user_id)
-    .eq('status', 'connected')
-    .maybeSingle();
-
-  if (!session) {
-    throw new Error('WhatsApp not connected. Please connect your WhatsApp first.');
-  }
-
-  try {
-    // Get the active client
-    const client = activeClients.get(user_id);
-    
-    if (!client) {
-      throw new Error('WhatsApp client not found. Please reconnect.');
-    }
-
-    // Format phone number for WhatsApp
-    const chatId = to.includes('@c.us') ? to : `${to.replace(/[^\d]/g, '')}@c.us`;
-    
-    // Send the message using the real WhatsApp client
-    const sentMessage = await client.sendMessage(chatId, message);
-    
-    console.log('Message sent successfully:', sentMessage.id._serialized);
-    
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message_id: sentMessage.id._serialized,
-        status: 'sent',
-        timestamp: new Date().toISOString(),
-        message: 'Message sent successfully'
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  } catch (error) {
-    console.error('Error sending message:', error);
-    throw new Error(`Failed to send message: ${error.message}`);
-  }
 }

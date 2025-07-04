@@ -24,6 +24,7 @@ import {
   Smartphone
 } from "lucide-react";
 import { useEnhancedWhatsApp } from "@/hooks/useEnhancedWhatsApp";
+import { useRealCommunication } from "@/hooks/useRealCommunication";
 import { MediaUploadComponent } from "./MediaUploadComponent";
 import { ContactManager } from "./ContactManager";
 import { EnhancedMessageComposer } from "./EnhancedMessageComposer";
@@ -47,6 +48,8 @@ export const EnhancedWhatsAppDashboard = () => {
     mediaUploads,
     refetchSession
   } = useEnhancedWhatsApp();
+
+  const { communicationLogs } = useRealCommunication();
 
   const getConnectionStatus = () => {
     if (sessionLoading) return { icon: Clock, text: "Loading...", color: "text-gray-500" };
@@ -94,14 +97,14 @@ export const EnhancedWhatsAppDashboard = () => {
     }
   };
 
-  // Calculate stats
+  // Calculate stats from real communication logs
   const stats = {
-    totalMessages: messageQueue.filter(m => m.status === 'sent').length,
-    pendingMessages: messageQueue.filter(m => m.status === 'pending').length,
-    failedMessages: messageQueue.filter(m => m.status === 'failed').length,
-    deliveryRate: messageQueue.length > 0 
-      ? ((messageQueue.filter(m => m.status === 'sent').length / messageQueue.length) * 100).toFixed(1)
-      : 0
+    totalMessages: communicationLogs?.filter(m => m.status === 'sent').length || 0,
+    pendingMessages: communicationLogs?.filter(m => m.status === 'pending').length || 0,
+    failedMessages: communicationLogs?.filter(m => m.status === 'failed').length || 0,
+    deliveryRate: communicationLogs?.length > 0 
+      ? (((communicationLogs.filter(m => m.status === 'sent').length / communicationLogs.length) * 100).toFixed(1))
+      : '0'
   };
 
   return (
@@ -256,17 +259,6 @@ export const EnhancedWhatsAppDashboard = () => {
                   </div>
                 </div>
               )}
-
-              {isConnecting && !qrCode && session?.status !== 'connecting' && (
-                <div className="mt-4 p-4 border rounded-lg bg-blue-50 text-center">
-                  <div className="flex items-center justify-center space-x-2">
-                    <Clock className="h-4 w-4 animate-spin text-blue-600" />
-                    <span className="text-blue-800">
-                      Initializing WhatsApp Web client...
-                    </span>
-                  </div>
-                </div>
-              )}
             </div>
           ) : (
             <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
@@ -384,10 +376,47 @@ export const EnhancedWhatsAppDashboard = () => {
               <CardTitle>Message Analytics</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                Analytics dashboard coming soon...
-                <br />
-                Track delivery rates, engagement, and campaign performance.
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">{stats.totalMessages}</div>
+                    <div className="text-sm text-muted-foreground">Total Sent</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">{stats.pendingMessages}</div>
+                    <div className="text-sm text-muted-foreground">Pending</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-red-600">{stats.failedMessages}</div>
+                    <div className="text-sm text-muted-foreground">Failed</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-600">{stats.deliveryRate}%</div>
+                    <div className="text-sm text-muted-foreground">Success Rate</div>
+                  </div>
+                </div>
+                
+                {communicationLogs && communicationLogs.length > 0 && (
+                  <div className="mt-6">
+                    <h4 className="font-medium mb-3">Recent Messages</h4>
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {communicationLogs.slice(0, 10).map((log) => (
+                        <div key={log.id} className="flex items-center justify-between p-2 border rounded">
+                          <div>
+                            <p className="text-sm font-medium">{log.recipient_phone}</p>
+                            <p className="text-xs text-muted-foreground truncate max-w-48">
+                              {log.content}
+                            </p>
+                          </div>
+                          <Badge variant={log.status === 'sent' ? 'secondary' : 
+                                         log.status === 'failed' ? 'destructive' : 'outline'}>
+                            {log.status}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -402,8 +431,8 @@ export const EnhancedWhatsAppDashboard = () => {
               <div>
                 <h3 className="font-medium text-blue-800">WhatsApp Web Integration</h3>
                 <p className="text-sm text-blue-700 mt-1">
-                  Click "WhatsApp Web" above to generate a QR code and connect your WhatsApp account.
-                  Once connected, you can send real messages to your event guests.
+                  Connect your WhatsApp to send real messages to event guests with phone numbers.
+                  All communications are logged and tracked for your records.
                 </p>
                 <p className="text-xs text-blue-600 mt-2">
                   Select WhatsApp Web above to start the integration process.

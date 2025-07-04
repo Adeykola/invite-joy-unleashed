@@ -25,52 +25,122 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { useEnhancedWhatsApp } from '@/hooks/useEnhancedWhatsApp';
+import { useRealCommunication } from '@/hooks/useRealCommunication';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const EnhancedMessageComposer = () => {
-  const [messageType, setMessageType] = useState<'single' | 'bulk'>('single');
+  const [messageType, setMessageType] = useState<'single' | 'bulk' | 'event'>('single');
   const [message, setMessage] = useState('');
   const [recipientPhone, setRecipientPhone] = useState('');
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<string>('');
   const [selectedMedia, setSelectedMedia] = useState<string>('none');
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduledTime, setScheduledTime] = useState('');
   const [personalizationEnabled, setPersonalizationEnabled] = useState(false);
 
+  const { user } = useAuth();
   const { 
     contacts, 
     mediaUploads, 
     sendMessage, 
+    isConnected,
     isSendingMessage 
   } = useEnhancedWhatsApp();
+  
+  const { sendWhatsApp, isSendingWhatsApp } = useRealCommunication();
 
-  const handleSendMessage = () => {
-    const recipients = messageType === 'single' 
-      ? [recipientPhone] 
-      : selectedContacts.map(contactId => {
+  // Fetch user's events for event-based messaging
+  const { data: events } = useQuery({
+    queryKey: ['user-events', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('host_id', user.id)
+        .order('date', { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  // Fetch event guests when an event is selected
+  const { data: eventGuests } = useQuery({
+    queryKey: ['event-guests', selectedEvent],
+    queryFn: async () => {
+      if (!selectedEvent) return [];
+      
+      const { data, error } = await supabase
+        .from('event_guests')
+        .select('*')
+        .eq('event_id', selectedEvent)
+        .is('phone_number', null);
+
+      if (error) throw error;
+      return data.filter(guest => guest.phone_number);
+    },
+    enabled: !!selectedEvent,
+  });
+
+  const handleSendMessage = async () => {
+    if (!isConnected) {
+      console.error('WhatsApp not connected');
+      return;
+    }
+
+    if (!message.trim()) return;
+
+    try {
+      if (messageType === 'single' && recipientPhone) {
+        await sendWhatsApp({
+          recipients: [{ phone: recipientPhone, name: 'Guest' }],
+          content: message,
+          mediaId: selectedMedia !== 'none' ? selectedMedia : undefined
+        });
+      } else if (messageType === 'bulk' && selectedContacts.length > 0) {
+        const recipients = selectedContacts.map(contactId => {
           const contact = contacts.find(c => c.id === contactId);
-          return contact?.phone_number || '';
-        }).filter(Boolean);
+          return {
+            phone: contact?.phone_number || '',
+            name: contact?.name || 'Guest'
+          };
+        }).filter(r => r.phone);
 
-    if (recipients.length === 0 || !message.trim()) return;
+        await sendWhatsApp({
+          recipients,
+          content: message,
+          mediaId: selectedMedia !== 'none' ? selectedMedia : undefined
+        });
+      } else if (messageType === 'event' && selectedEvent && eventGuests?.length) {
+        const recipients = eventGuests.map(guest => ({
+          phone: guest.phone_number!,
+          name: guest.name
+        }));
 
-    const messageData = {
-      to: recipients,
-      message,
-      media_id: selectedMedia !== 'none' ? selectedMedia : undefined,
-      scheduled_for: isScheduled ? scheduledTime : undefined,
-      personalization_data: personalizationEnabled ? {
-        enable_personalization: true
-      } : undefined
-    };
-
-    sendMessage(messageData);
-    
-    // Reset form
-    setMessage('');
-    setRecipientPhone('');
-    setSelectedContacts([]);
-    setSelectedMedia('none');
-    setScheduledTime('');
+        await sendWhatsApp({
+          eventId: selectedEvent,
+          recipients,
+          content: message,
+          mediaId: selectedMedia !== 'none' ? selectedMedia : undefined
+        });
+      }
+      
+      // Reset form
+      setMessage('');
+      setRecipientPhone('');
+      setSelectedContacts([]);
+      setSelectedEvent('');
+      setSelectedMedia('none');
+      setScheduledTime('');
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
   };
 
   const toggleContactSelection = (contactId: string) => {
@@ -86,6 +156,21 @@ export const EnhancedMessageComposer = () => {
     return mediaUploads.find(media => media.id === selectedMedia);
   };
 
+  const getRecipientCount = () => {
+    switch (messageType) {
+      case 'single':
+        return recipientPhone ? 1 : 0;
+      case 'bulk':
+        return selectedContacts.length;
+      case 'event':
+        return eventGuests?.length || 0;
+      default:
+        return 0;
+    }
+  };
+
+  const canSend = message.trim() && getRecipientCount() > 0 && isConnected;
+
   return (
     <Card>
       <CardHeader>
@@ -96,15 +181,19 @@ export const EnhancedMessageComposer = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Message Type Selection */}
-        <Tabs value={messageType} onValueChange={(value) => setMessageType(value as 'single' | 'bulk')}>
-          <TabsList className="grid w-full grid-cols-2">
+        <Tabs value={messageType} onValueChange={(value) => setMessageType(value as 'single' | 'bulk' | 'event')}>
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="single" className="flex items-center">
               <User className="w-4 h-4 mr-2" />
-              Single Message
+              Single
             </TabsTrigger>
             <TabsTrigger value="bulk" className="flex items-center">
               <Users className="w-4 h-4 mr-2" />
-              Bulk Message
+              Bulk
+            </TabsTrigger>
+            <TabsTrigger value="event" className="flex items-center">
+              <Calendar className="w-4 h-4 mr-2" />
+              Event
             </TabsTrigger>
           </TabsList>
 
@@ -146,7 +235,41 @@ export const EnhancedMessageComposer = () => {
                     </div>
                   </div>
                 ))}
+                {contacts.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No contacts available. Add contacts first.
+                  </p>
+                )}
               </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="event" className="space-y-4">
+            <div>
+              <Label>Select Event</Label>
+              <Select value={selectedEvent} onValueChange={setSelectedEvent}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose an event..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {events?.map((event) => (
+                    <SelectItem key={event.id} value={event.id}>
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="h-4 w-4" />
+                        <span>{event.title}</span>
+                        <span className="text-sm text-muted-foreground">
+                          ({new Date(event.date).toLocaleDateString()})
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedEvent && eventGuests && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  {eventGuests.length} guests with phone numbers will receive the message
+                </p>
+              )}
             </div>
           </TabsContent>
         </Tabs>
@@ -198,13 +321,9 @@ export const EnhancedMessageComposer = () => {
             onChange={(e) => setMessage(e.target.value)}
             rows={4}
           />
-          <div className="text-sm text-gray-500 mt-1">
-            {message.length} characters
-            {personalizationEnabled && (
-              <span className="ml-2 text-blue-600">
-                • Personalization enabled (use variables like: guest name, event details)
-              </span>
-            )}
+          <div className="text-sm text-gray-500 mt-1 flex justify-between">
+            <span>{message.length} characters</span>
+            <span>{getRecipientCount()} recipient{getRecipientCount() !== 1 ? 's' : ''}</span>
           </div>
         </div>
 
@@ -241,18 +360,20 @@ export const EnhancedMessageComposer = () => {
           )}
         </div>
 
+        {/* Connection Status Alert */}
+        {!isConnected && (
+          <div className="p-3 border rounded-lg bg-yellow-50 text-yellow-800">
+            <p className="text-sm">WhatsApp is not connected. Please connect first to send messages.</p>
+          </div>
+        )}
+
         {/* Send Button */}
         <Button 
           onClick={handleSendMessage}
-          disabled={
-            isSendingMessage || 
-            !message.trim() || 
-            (messageType === 'single' && !recipientPhone.trim()) ||
-            (messageType === 'bulk' && selectedContacts.length === 0)
-          }
+          disabled={!canSend || isSendingMessage || isSendingWhatsApp}
           className="w-full"
         >
-          {isSendingMessage ? (
+          {(isSendingMessage || isSendingWhatsApp) ? (
             'Sending...'
           ) : isScheduled ? (
             <>
@@ -262,7 +383,7 @@ export const EnhancedMessageComposer = () => {
           ) : (
             <>
               <Send className="w-4 h-4 mr-2" />
-              Send {messageType === 'bulk' ? `to ${selectedContacts.length} contacts` : 'Message'}
+              Send to {getRecipientCount()} recipient{getRecipientCount() !== 1 ? 's' : ''}
             </>
           )}
         </Button>
