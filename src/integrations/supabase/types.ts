@@ -269,34 +269,55 @@ export type Database = {
       }
       event_guests: {
         Row: {
+          category: string | null
           created_at: string | null
+          dietary_restrictions: string | null
           email: string
           event_id: string
           id: string
           invite_sent: boolean | null
           invited_at: string | null
+          is_vip: boolean | null
           name: string
+          notes: string | null
           phone_number: string | null
+          plus_one_allowed: boolean | null
+          plus_one_name: string | null
+          updated_at: string | null
         }
         Insert: {
+          category?: string | null
           created_at?: string | null
+          dietary_restrictions?: string | null
           email: string
           event_id: string
           id?: string
           invite_sent?: boolean | null
           invited_at?: string | null
+          is_vip?: boolean | null
           name: string
+          notes?: string | null
           phone_number?: string | null
+          plus_one_allowed?: boolean | null
+          plus_one_name?: string | null
+          updated_at?: string | null
         }
         Update: {
+          category?: string | null
           created_at?: string | null
+          dietary_restrictions?: string | null
           email?: string
           event_id?: string
           id?: string
           invite_sent?: boolean | null
           invited_at?: string | null
+          is_vip?: boolean | null
           name?: string
+          notes?: string | null
           phone_number?: string | null
+          plus_one_allowed?: boolean | null
+          plus_one_name?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -1089,6 +1110,14 @@ export type Database = {
           message: string
         }[]
       }
+      bulk_invite_guests: {
+        Args: { p_event_id: string; p_guest_emails: string[] }
+        Returns: {
+          email: string
+          status: string
+          message: string
+        }[]
+      }
       create_admin_user: {
         Args: { admin_email: string; admin_password: string }
         Returns: undefined
@@ -1113,6 +1142,19 @@ export type Database = {
           check_in_rate: number
         }[]
       }
+      get_event_guest_stats: {
+        Args: { p_event_id: string }
+        Returns: {
+          total_guests: number
+          invited_guests: number
+          rsvp_confirmed: number
+          rsvp_declined: number
+          rsvp_pending: number
+          vip_guests: number
+          checked_in_guests: number
+          pending_invites: number
+        }[]
+      }
       get_event_guests: {
         Args: { p_event_id: string }
         Returns: {
@@ -1121,6 +1163,28 @@ export type Database = {
           email: string
           invited_at: string
           invite_sent: boolean
+        }[]
+      }
+      get_event_guests_detailed: {
+        Args: { p_event_id: string }
+        Returns: {
+          id: string
+          name: string
+          email: string
+          phone_number: string
+          category: string
+          is_vip: boolean
+          plus_one_allowed: boolean
+          plus_one_name: string
+          dietary_restrictions: string
+          notes: string
+          invite_sent: boolean
+          invited_at: string
+          rsvp_status: string
+          rsvp_date: string
+          ticket_code: string
+          checked_in: boolean
+          payment_status: string
         }[]
       }
       log_admin_action: {

@@ -1,172 +1,234 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import HostDashboardLayout from "@/components/layouts/HostDashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { RsvpDialog } from "@/components/events/RsvpDialog";
-import { TicketQRCodeDialog } from "@/components/events/TicketQRCodeDialog";
-import { PaymentStatusBadge } from "@/components/events/payments/PaymentStatusBadge";
-import { PayTicketButton } from "@/components/events/payments/PayTicketButton";
-import QRCode from "@/components/QRCode";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { EnhancedGuestList } from "@/components/events/guests/EnhancedGuestList";
+import { useAuth } from "@/contexts/AuthContext";
 
 const HostGuests = () => {
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const [isRsvpDialogOpen, setIsRsvpDialogOpen] = useState(false);
-  const [qrDialog, setQrDialog] = useState<{ guest: any } | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string>("");
+  const { user } = useAuth();
 
+  // Fetch user's events
   const { data: events } = useQuery({
-    queryKey: ["host-events"],
+    queryKey: ["host-events", user?.id],
     queryFn: async () => {
+      if (!user?.id) return [];
+
       const { data, error } = await supabase
         .from("events")
-        .select("*")
+        .select("id, title, date, location")
+        .eq("host_id", user.id)
         .order("date", { ascending: false });
 
       if (error) throw error;
       return data || [];
     },
+    enabled: !!user?.id,
   });
 
-  const { data: rsvpStats } = useQuery({
-    queryKey: ["rsvp-stats"],
+  // Get event statistics
+  const { data: eventStats } = useQuery({
+    queryKey: ["host-event-stats", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (!user?.id) return [];
+
+      const { data: events, error: eventsError } = await supabase
+        .from("events")
+        .select("id, title, date")
+        .eq("host_id", user.id);
+
+      if (eventsError) throw eventsError;
+
+      const { data: guests, error: guestsError } = await supabase
+        .from("event_guests")
+        .select("id, event_id, invite_sent, is_vip")
+        .in("event_id", events?.map(e => e.id) || []);
+
+      if (guestsError) throw guestsError;
+
+      const { data: rsvps, error: rsvpsError } = await supabase
         .from("rsvps")
-        .select("event_id, response_status");
+        .select("id, event_id, response_status, checked_in")
+        .in("event_id", events?.map(e => e.id) || []);
 
-      if (error) throw error;
-      
-      // Group RSVPs by event and count responses
-      const stats = (data || []).reduce((acc: Record<string, any>, rsvp) => {
-        if (!acc[rsvp.event_id]) {
-          acc[rsvp.event_id] = { confirmed: 0, declined: 0, maybe: 0, total: 0 };
-        }
+      if (rsvpsError) throw rsvpsError;
+
+      return events?.map(event => {
+        const eventGuests = guests?.filter(g => g.event_id === event.id) || [];
+        const eventRsvps = rsvps?.filter(r => r.event_id === event.id) || [];
         
-        acc[rsvp.event_id][rsvp.response_status] += 1;
-        acc[rsvp.event_id].total += 1;
-        
-        return acc;
-      }, {});
-      
-      return stats;
+        return {
+          ...event,
+          totalGuests: eventGuests.length,
+          invitedGuests: eventGuests.filter(g => g.invite_sent).length,
+          vipGuests: eventGuests.filter(g => g.is_vip).length,
+          confirmedRsvps: eventRsvps.filter(r => r.response_status === 'confirmed').length,
+          checkedInGuests: eventRsvps.filter(r => r.checked_in).length,
+        };
+      }) || [];
     },
+    enabled: !!user?.id,
   });
 
-  // New function to get ticket code and payment info. This is just simulated for now.
-  const getGuestExtraInfo = (guest: any) => ({
-    ticketCode: guest.ticket_code || guest.id || "",
-    paymentStatus: guest.payment_status || "pending",
-    isVIP: guest.is_vip,
-    category: guest.category,
-    plusOne: guest.plus_one_name || (guest.plus_one_allowed ? "Allowed" : "-"),
-  });
+  const upcomingEvents = eventStats?.filter(event => new Date(event.date) >= new Date()) || [];
+  const pastEvents = eventStats?.filter(event => new Date(event.date) < new Date()) || [];
 
   return (
     <HostDashboardLayout>
       <div className="space-y-8">
-        <h2 className="text-2xl font-bold">Guest Lists</h2>
-        
+        <div>
+          <h2 className="text-2xl font-bold text-green-800">Guest Management</h2>
+          <p className="text-yellow-600 mt-2">Manage your event guests, track RSVPs, and send invitations</p>
+        </div>
+
+        {/* Event Selection */}
         <Card>
           <CardHeader>
-            <CardTitle>Event Guest Lists</CardTitle>
+            <CardTitle>Select Event</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="all">
-              <TabsList>
-                <TabsTrigger value="all">All Events</TabsTrigger>
-                <TabsTrigger value="upcoming">Upcoming Events</TabsTrigger>
-                <TabsTrigger value="past">Past Events</TabsTrigger>
-              </TabsList>
-              <TabsContent value="all" className="mt-4">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Event</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Total Guests</TableHead>
-                      <TableHead>Confirmed</TableHead>
-                      <TableHead>Declined</TableHead>
-                      <TableHead>VIPs</TableHead>
-                      <TableHead>Paid</TableHead>
-                      <TableHead>Tickets</TableHead>
-                      <TableHead>Guest List</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {events?.map((event) => (
-                      <TableRow key={event.id}>
-                        <TableCell>{event.title}</TableCell>
-                        <TableCell>{new Date(event.date).toLocaleDateString()}</TableCell>
-                        <TableCell>{rsvpStats?.[event.id]?.total || 0}</TableCell>
-                        <TableCell className="text-green-600">{rsvpStats?.[event.id]?.confirmed || 0}</TableCell>
-                        <TableCell className="text-red-600">{rsvpStats?.[event.id]?.declined || 0}</TableCell>
-                         <TableCell>
-                           {/* VIP count - will be implemented when guest management is added */}
-                           0
-                         </TableCell>
-                         <TableCell>
-                           {/* Payment status - will be implemented when payment features are added */}
-                           <PaymentStatusBadge status="n/a" />
-                         </TableCell>
-                         <TableCell>
-                           {/* QR codes - will be implemented when ticketing is added */}
-                           -
-                         </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedEventId(event.id);
-                              setIsRsvpDialogOpen(true);
-                            }}
-                          >
-                            View Guests
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TabsContent>
-              <TabsContent value="upcoming" className="mt-4">
-                {/* Similar table for upcoming events */}
-                <p className="text-muted-foreground">Filter for upcoming events</p>
-              </TabsContent>
-              <TabsContent value="past" className="mt-4">
-                {/* Similar table for past events */}
-                <p className="text-muted-foreground">Filter for past events</p>
-              </TabsContent>
-            </Tabs>
+            <Select value={selectedEventId} onValueChange={setSelectedEventId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Choose an event to manage guests..." />
+              </SelectTrigger>
+              <SelectContent>
+                {events?.map((event) => (
+                  <SelectItem key={event.id} value={event.id}>
+                    {event.title} - {new Date(event.date).toLocaleDateString()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </CardContent>
         </Card>
+
+        {selectedEventId ? (
+          <EnhancedGuestList eventId={selectedEventId} />
+        ) : (
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="upcoming">Upcoming Events</TabsTrigger>
+              <TabsTrigger value="past">Past Events</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="overview" className="mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-green-700">Total Events</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold">{eventStats?.length || 0}</div>
+                    <p className="text-sm text-muted-foreground">All your events</p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-yellow-700">Total Guests</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold">
+                      {eventStats?.reduce((sum, event) => sum + event.totalGuests, 0) || 0}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Across all events</p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-green-700">Confirmed RSVPs</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold">
+                      {eventStats?.reduce((sum, event) => sum + event.confirmedRsvps, 0) || 0}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Ready to attend</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="upcoming" className="mt-6">
+              <div className="grid gap-4">
+                {upcomingEvents.map((event) => (
+                  <Card key={event.id} className="cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => setSelectedEventId(event.id)}>
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-semibold text-lg">{event.title}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(event.date).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-green-600">{event.totalGuests}</div>
+                          <div className="text-xs text-muted-foreground">guests</div>
+                        </div>
+                      </div>
+                      <div className="flex gap-4 mt-3 text-sm">
+                        <span>Invited: {event.invitedGuests}</span>
+                        <span>Confirmed: {event.confirmedRsvps}</span>
+                        <span>VIP: {event.vipGuests}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                {upcomingEvents.length === 0 && (
+                  <Card>
+                    <CardContent className="p-8 text-center">
+                      <p className="text-muted-foreground">No upcoming events</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="past" className="mt-6">
+              <div className="grid gap-4">
+                {pastEvents.map((event) => (
+                  <Card key={event.id} className="cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => setSelectedEventId(event.id)}>
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-semibold text-lg">{event.title}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(event.date).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-blue-600">{event.checkedInGuests}</div>
+                          <div className="text-xs text-muted-foreground">attended</div>
+                        </div>
+                      </div>
+                      <div className="flex gap-4 mt-3 text-sm">
+                        <span>Total Guests: {event.totalGuests}</span>
+                        <span>Confirmed: {event.confirmedRsvps}</span>
+                        <span>Checked In: {event.checkedInGuests}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                {pastEvents.length === 0 && (
+                  <Card>
+                    <CardContent className="p-8 text-center">
+                      <p className="text-muted-foreground">No past events</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        )}
       </div>
-
-      {qrDialog && (
-        <TicketQRCodeDialog
-          open={!!qrDialog}
-          onOpenChange={() => setQrDialog(null)}
-          ticketCode={getGuestExtraInfo(qrDialog.guest).ticketCode}
-          guestName={qrDialog.guest.name}
-          guestEmail={qrDialog.guest.email}
-        />
-      )}
-
-      <RsvpDialog
-        eventId={selectedEventId}
-        isOpen={isRsvpDialogOpen}
-        onOpenChange={setIsRsvpDialogOpen}
-      />
     </HostDashboardLayout>
   );
 };
