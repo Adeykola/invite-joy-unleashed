@@ -37,6 +37,11 @@ import UserReviews from "./pages/user/UserReviews";
 import PublicEvents from "./pages/PublicEvents";
 import AdminSendTestInvitation from "./pages/admin/AdminSendTestInvitation";
 import Pricing from "./pages/Pricing";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import Resources from "./pages/Resources";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +56,11 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/features" element={<Features />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/resources" element={<Resources />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
             <Route path="/events" element={<PublicEvents />} />
             <Route path="/event/:id" element={<Event />} />
             <Route path="/login" element={<Login />} />
