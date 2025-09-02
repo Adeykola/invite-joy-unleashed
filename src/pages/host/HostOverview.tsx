@@ -18,7 +18,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { WhatsAppConnection } from "@/components/whatsapp/WhatsAppConnection";
-import { RealAnalyticsDashboard } from "@/components/analytics/RealAnalyticsDashboard";
 
 const HostOverview = () => {
   const { user } = useAuth();
@@ -50,9 +49,6 @@ const HostOverview = () => {
           <h1 className="text-3xl font-bold text-green-800">Overview</h1>
           <p className="text-yellow-600 mt-2">Complete dashboard with real-time analytics and quick actions</p>
         </div>
-
-        {/* Real Analytics Dashboard */}
-        <RealAnalyticsDashboard />
 
         {/* Quick Actions and WhatsApp Status */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

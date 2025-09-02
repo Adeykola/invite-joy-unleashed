@@ -5,7 +5,6 @@ import { EventTemplateManager } from "@/components/events/EventTemplateManager";
 import { EmailTemplateManager } from "@/components/events/EmailTemplateManager";
 import { NotificationCenter } from "@/components/events/NotificationCenter";
 import { QRCheckInSystem } from "@/components/events/QRCheckInSystem";
-import { RealAnalyticsDashboard } from "@/components/analytics/RealAnalyticsDashboard";
 import { Calendar, FileText, Mail, Bell, QrCode, BarChart3 } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -102,7 +101,11 @@ export function HostDashboardTabs() {
       </TabsContent>
       
       <TabsContent value="analytics" className="mt-6">
-        <RealAnalyticsDashboard />
+        <div className="text-center py-8">
+          <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">Analytics Coming Soon</h3>
+          <p className="text-muted-foreground">Host-specific analytics will be available here.</p>
+        </div>
       </TabsContent>
     </Tabs>
   );
