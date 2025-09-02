@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.12 (cd3cf9e)"
+  }
   public: {
     Tables: {
       audit_logs: {
@@ -708,6 +713,137 @@ export type Database = {
           },
         ]
       }
+      seat_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          id: string
+          rsvp_id: string
+          seat_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          rsvp_id: string
+          seat_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          rsvp_id?: string
+          seat_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seat_assignments_rsvp_id_fkey"
+            columns: ["rsvp_id"]
+            isOneToOne: true
+            referencedRelation: "rsvps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seat_assignments_seat_id_fkey"
+            columns: ["seat_id"]
+            isOneToOne: true
+            referencedRelation: "seats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seating_charts: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          layout_data: Json
+          name: string
+          updated_at: string
+          venue_height: number | null
+          venue_width: number | null
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          layout_data?: Json
+          name?: string
+          updated_at?: string
+          venue_height?: number | null
+          venue_width?: number | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          layout_data?: Json
+          name?: string
+          updated_at?: string
+          venue_height?: number | null
+          venue_width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seating_charts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seating_charts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seats: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          position_x: number
+          position_y: number
+          seat_number: string
+          seat_type: string
+          seating_chart_id: string
+          table_number: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          position_x: number
+          position_y: number
+          seat_number: string
+          seat_type?: string
+          seating_chart_id: string
+          table_number?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          position_x?: number
+          position_y?: number
+          seat_number?: string
+          seat_type?: string
+          seating_chart_id?: string
+          table_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seats_seating_chart_id_fkey"
+            columns: ["seating_chart_id"]
+            isOneToOne: false
+            referencedRelation: "seating_charts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_metrics: {
         Row: {
           id: string
@@ -1102,20 +1238,20 @@ export type Database = {
         Returns: boolean
       }
       bulk_check_in: {
-        Args: { p_ticket_codes: string[]; p_event_id: string }
+        Args: { p_event_id: string; p_ticket_codes: string[] }
         Returns: {
-          ticket_code: string
           guest_name: string
-          status: string
           message: string
+          status: string
+          ticket_code: string
         }[]
       }
       bulk_invite_guests: {
         Args: { p_event_id: string; p_guest_emails: string[] }
         Returns: {
           email: string
-          status: string
           message: string
+          status: string
         }[]
       }
       create_admin_user: {
@@ -1126,8 +1262,17 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_available_seats: {
+        Args: { p_event_id: string }
+        Returns: {
+          seat_id: string
+          seat_number: string
+          seat_type: string
+          table_number: string
+        }[]
+      }
       get_column_info: {
-        Args: { target_table: string; target_column: string }
+        Args: { target_column: string; target_table: string }
         Returns: {
           column_name: string
           data_type: string
@@ -1136,71 +1281,91 @@ export type Database = {
       get_event_check_in_stats: {
         Args: { p_event_id: string }
         Returns: {
-          total_rsvps: number
-          confirmed_rsvps: number
-          checked_in_count: number
           check_in_rate: number
+          checked_in_count: number
+          confirmed_rsvps: number
+          total_rsvps: number
         }[]
       }
       get_event_guest_stats: {
         Args: { p_event_id: string }
         Returns: {
-          total_guests: number
+          checked_in_guests: number
           invited_guests: number
+          pending_invites: number
           rsvp_confirmed: number
           rsvp_declined: number
           rsvp_pending: number
+          total_guests: number
           vip_guests: number
-          checked_in_guests: number
-          pending_invites: number
         }[]
       }
       get_event_guests: {
         Args: { p_event_id: string }
         Returns: {
-          id: string
-          name: string
           email: string
-          invited_at: string
+          id: string
           invite_sent: boolean
+          invited_at: string
+          name: string
         }[]
       }
       get_event_guests_detailed: {
         Args: { p_event_id: string }
         Returns: {
-          id: string
-          name: string
-          email: string
-          phone_number: string
           category: string
-          is_vip: boolean
-          plus_one_allowed: boolean
-          plus_one_name: string
+          checked_in: boolean
           dietary_restrictions: string
-          notes: string
+          email: string
+          id: string
           invite_sent: boolean
           invited_at: string
-          rsvp_status: string
-          rsvp_date: string
-          ticket_code: string
-          checked_in: boolean
+          is_vip: boolean
+          name: string
+          notes: string
           payment_status: string
+          phone_number: string
+          plus_one_allowed: boolean
+          plus_one_name: string
+          rsvp_date: string
+          rsvp_status: string
+          ticket_code: string
+        }[]
+      }
+      get_seating_chart_details: {
+        Args: { p_event_id: string }
+        Returns: {
+          assigned_rsvp_id: string
+          chart_id: string
+          chart_name: string
+          guest_email: string
+          guest_name: string
+          layout_data: Json
+          position_x: number
+          position_y: number
+          seat_id: string
+          seat_notes: string
+          seat_number: string
+          seat_type: string
+          table_number: string
+          venue_height: number
+          venue_width: number
         }[]
       }
       log_admin_action: {
         Args: {
           p_action: string
-          p_resource_type: string
-          p_resource_id?: string
           p_details?: Json
+          p_resource_id?: string
+          p_resource_type: string
         }
         Returns: undefined
       }
       record_system_metric: {
         Args: {
           p_metric_name: string
-          p_metric_value: number
           p_metric_unit?: string
+          p_metric_value: number
         }
         Returns: undefined
       }
@@ -1214,21 +1379,25 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
@@ -1246,14 +1415,16 @@ export type Tables<
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
@@ -1269,14 +1440,16 @@ export type TablesInsert<
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
@@ -1292,14 +1465,16 @@ export type TablesUpdate<
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
@@ -1307,14 +1482,16 @@ export type Enums<
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
