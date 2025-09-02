@@ -5,15 +5,19 @@ import { EventTemplateManager } from "@/components/events/EventTemplateManager";
 import { EmailTemplateManager } from "@/components/events/EmailTemplateManager";
 import { NotificationCenter } from "@/components/events/NotificationCenter";
 import { QRCheckInSystem } from "@/components/events/QRCheckInSystem";
-import { Calendar, FileText, Mail, Bell, QrCode, BarChart3 } from "lucide-react";
+import { Calendar, FileText, Mail, Bell, QrCode, BarChart3, MapPin } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { SeatingChartDesigner } from "@/components/seating/SeatingChartDesigner";
+import { SeatAssignmentDialog } from "@/components/seating/SeatAssignmentDialog";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function HostDashboardTabs() {
   const [selectedEventId, setSelectedEventId] = useState<string>("");
+  const [isSeatingAssignmentOpen, setIsSeatingAssignmentOpen] = useState(false);
   const { user } = useAuth();
 
   // Fetch user's events for check-in selection
@@ -35,8 +39,9 @@ export function HostDashboardTabs() {
   });
 
   return (
-    <Tabs defaultValue="events" className="w-full">
-      <TabsList className="grid w-full grid-cols-6">
+    <>
+      <Tabs defaultValue="events" className="w-full">
+        <TabsList className="grid w-full grid-cols-7">
         <TabsTrigger value="events" className="flex items-center space-x-2">
           <Calendar className="h-4 w-4" />
           <span>Events</span>
@@ -52,6 +57,10 @@ export function HostDashboardTabs() {
         <TabsTrigger value="notifications" className="flex items-center space-x-2">
           <Bell className="h-4 w-4" />
           <span>Notifications</span>
+        </TabsTrigger>
+        <TabsTrigger value="seating" className="flex items-center space-x-2">
+          <MapPin className="h-4 w-4" />
+          <span>Seating</span>
         </TabsTrigger>
         <TabsTrigger value="checkin" className="flex items-center space-x-2">
           <QrCode className="h-4 w-4" />
@@ -77,6 +86,37 @@ export function HostDashboardTabs() {
       
       <TabsContent value="notifications" className="mt-6">
         <NotificationCenter />
+      </TabsContent>
+      
+      <TabsContent value="seating" className="mt-6">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">Select Event for Seating Management</label>
+            <Select value={selectedEventId} onValueChange={setSelectedEventId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select an event..." />
+              </SelectTrigger>
+              <SelectContent>
+                {events?.map((event) => (
+                  <SelectItem key={event.id} value={event.id}>
+                    {event.title} - {new Date(event.date).toLocaleDateString()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {selectedEventId && (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Seating Chart</h3>
+                <Button onClick={() => setIsSeatingAssignmentOpen(true)} variant="outline">
+                  Manage Assignments
+                </Button>
+              </div>
+              <SeatingChartDesigner eventId={selectedEventId} />
+            </div>
+          )}
+        </div>
       </TabsContent>
       
       <TabsContent value="checkin" className="mt-6">
@@ -108,5 +148,12 @@ export function HostDashboardTabs() {
         </div>
       </TabsContent>
     </Tabs>
+    
+    <SeatAssignmentDialog
+      open={isSeatingAssignmentOpen}
+      onOpenChange={setIsSeatingAssignmentOpen}
+      eventId={selectedEventId}
+    />
+    </>
   );
 }

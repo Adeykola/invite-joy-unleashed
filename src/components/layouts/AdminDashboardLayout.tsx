@@ -2,23 +2,26 @@ import { ReactNode, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
-  LayoutDashboard,
-  Calendar,
-  Users,
-  Settings,
+  LayoutDashboard, 
+  Users, 
+  Calendar, 
+  BarChart3, 
+  Settings, 
+  Mail, 
+  Shield, 
+  Database,
+  UserPlus,
+  Globe,
+  MapPin,
   LogOut,
   Menu,
   X,
   Bell,
   User,
   ChevronDown,
-  BarChart3,
   MessageSquare,
-  Shield,
-  Database,
   UserCheck,
-  Zap,
-  Mail
+  Zap
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -57,9 +60,9 @@ const AdminDashboardLayout = ({ children }: AdminDashboardLayoutProps) => {
       icon: <BarChart3 className="h-5 w-5" />,
     },
     {
-      name: "All Events",
-      href: "/admin-dashboard/events",
-      icon: <Calendar className="h-5 w-5" />,
+      name: "Seating",
+      href: "/admin-dashboard/seating", 
+      icon: <MapPin className="h-5 w-5" />,
     },
     {
       name: "Users Management",
