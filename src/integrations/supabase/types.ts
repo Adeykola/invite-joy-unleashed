@@ -384,6 +384,7 @@ export type Database = {
         Row: {
           banner_image: string | null
           capacity: number | null
+          completion_checklist: Json | null
           created_at: string | null
           custom_fields: Json | null
           date: string
@@ -398,6 +399,7 @@ export type Database = {
           meta: Json | null
           registration_deadline: string | null
           require_approval: boolean | null
+          status: string | null
           tags: string[] | null
           template_name: string | null
           title: string
@@ -406,6 +408,7 @@ export type Database = {
         Insert: {
           banner_image?: string | null
           capacity?: number | null
+          completion_checklist?: Json | null
           created_at?: string | null
           custom_fields?: Json | null
           date: string
@@ -420,6 +423,7 @@ export type Database = {
           meta?: Json | null
           registration_deadline?: string | null
           require_approval?: boolean | null
+          status?: string | null
           tags?: string[] | null
           template_name?: string | null
           title: string
@@ -428,6 +432,7 @@ export type Database = {
         Update: {
           banner_image?: string | null
           capacity?: number | null
+          completion_checklist?: Json | null
           created_at?: string | null
           custom_fields?: Json | null
           date?: string
@@ -442,6 +447,7 @@ export type Database = {
           meta?: Json | null
           registration_deadline?: string | null
           require_approval?: boolean | null
+          status?: string | null
           tags?: string[] | null
           template_name?: string | null
           title?: string

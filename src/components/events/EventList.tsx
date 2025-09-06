@@ -11,12 +11,15 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { Calendar, MapPin, Users, FileText, CheckCircle } from "lucide-react";
 import { RsvpDialog } from "./RsvpDialog";
 import { EventActions } from "./EventActions";
 
 type EventListProps = {
-  filter?: "upcoming" | "past" | "all";
+  filter?: "upcoming" | "past" | "all" | "drafts" | "published";
 };
 
 export function EventList({ filter = "all" }: EventListProps) {
@@ -31,9 +34,13 @@ export function EventList({ filter = "all" }: EventListProps) {
       // Apply filter
       const today = new Date().toISOString();
       if (filter === "upcoming") {
-        query = query.gt("date", today);
+        query = query.gt("date", today).eq("status", "published");
       } else if (filter === "past") {
-        query = query.lte("date", today);
+        query = query.lte("date", today).eq("status", "published");
+      } else if (filter === "drafts") {
+        query = query.eq("status", "draft");
+      } else if (filter === "published") {
+        query = query.eq("status", "published");
       }
       
       // Sort events
@@ -61,47 +68,59 @@ export function EventList({ filter = "all" }: EventListProps) {
 
   return (
     <>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Location</TableHead>
-            <TableHead>Capacity</TableHead>
-            <TableHead>RSVPs</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {events?.map((event) => (
-            <TableRow key={event.id}>
-              <TableCell>{event.title}</TableCell>
-              <TableCell>{format(new Date(event.date), "PPP")}</TableCell>
-              <TableCell>{event.location}</TableCell>
-              <TableCell>{event.capacity || "Unlimited"}</TableCell>
-              <TableCell>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedEventId(event.id);
-                    setIsViewingRsvps(true);
-                  }}
-                >
-                  View RSVPs
-                </Button>
-              </TableCell>
-              <TableCell>
-                <EventActions 
-                  eventId={event.id} 
-                  eventTitle={event.title} 
-                  onDelete={refetch} 
-                />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <div className="space-y-4">
+        {events?.map((event) => (
+          <Card key={event.id} className="hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-lg">{event.title}</CardTitle>
+                  {event.status === 'draft' ? (
+                    <Badge variant="outline" className="text-orange-600 border-orange-600">
+                      <FileText className="h-3 w-3 mr-1" />
+                      Draft
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-green-600 border-green-600">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Published
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <EventActions 
+                    eventId={event.id}
+                    eventTitle={event.title}
+                    onDelete={refetch}
+                    event={event}
+                  />
+                </div>
+              </div>
+              {event.description && (
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {event.description}
+                </p>
+              )}
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  {format(new Date(event.date), "PPP")}
+                </div>
+                <div className="flex items-center">
+                  <MapPin className="h-4 w-4 mr-2" />
+                  {event.location}
+                </div>
+                <div className="flex items-center">
+                  <Users className="h-4 w-4 mr-2" />
+                  {event.capacity || "Unlimited"} capacity
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       <RsvpDialog
         eventId={selectedEventId}

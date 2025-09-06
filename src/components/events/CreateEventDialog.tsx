@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { EventWizard } from "./EventWizard";
+import { CreateEventWizard } from "./CreateEventWizard";
 import { useToast } from "@/hooks/use-toast";
 import { checkStorageAvailability } from "@/lib/storage";
 import { Loader2, RefreshCw } from "lucide-react";
@@ -154,10 +154,10 @@ export function CreateEventDialog({ storageInitialized = false }: CreateEventDia
                 </Button>
               </AlertDescription>
             </Alert>
-            <EventWizard onSuccess={handleSuccess} />
+            <CreateEventWizard onSuccess={handleSuccess} />
           </div>
         ) : (
-          <EventWizard onSuccess={handleSuccess} />
+          <CreateEventWizard onSuccess={handleSuccess} />
         )}
       </DialogContent>
     </Dialog>

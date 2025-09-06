@@ -19,10 +19,11 @@ interface EventActionsProps {
   eventTitle: string;
   onEdit?: () => void;
   onDelete?: () => void;
+  event?: any; // For accessing event status and other properties
 }
 
 // Component implementation
-export function EventActions({ eventId, eventTitle, onEdit, onDelete }: EventActionsProps) {
+export function EventActions({ eventId, eventTitle, onEdit, onDelete, event }: EventActionsProps) {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   
   return (
