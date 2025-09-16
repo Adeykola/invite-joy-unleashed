@@ -63,11 +63,9 @@ export const FabricSeatingChart: React.FC<FabricSeatingChartProps> = ({ eventId 
     // Create seating chart if it doesn't exist
     if (!seatingChart && !isCreatingChart) {
       createChart({
-        eventId,
         name: 'Main Seating Chart',
-        layoutData: {},
-        venueWidth: 1200,
-        venueHeight: 800
+        venue_width: 1200,
+        venue_height: 800
       });
     }
 
@@ -310,10 +308,9 @@ export const FabricSeatingChart: React.FC<FabricSeatingChartProps> = ({ eventId 
       const canvasData = fabricCanvas.toJSON();
       
       await updateChart({
-        id: seatingChart.id,
-        layoutData: canvasData,
-        venueWidth: fabricCanvas.width!,
-        venueHeight: fabricCanvas.height!
+        layout_data: canvasData,
+        venue_width: fabricCanvas.width!,
+        venue_height: fabricCanvas.height!
       });
 
       toast.success('Layout saved successfully');
