@@ -78,7 +78,13 @@ export const FabricSeatingChart: React.FC<FabricSeatingChartProps> = ({ eventId 
   useEffect(() => {
     if (!fabricCanvas || !seatingChart?.seats) return;
 
-    fabricCanvas.clear();
+    // Ensure canvas context is ready before clearing
+    try {
+      fabricCanvas.clear();
+    } catch (error) {
+      console.warn('Canvas not ready yet, skipping clear:', error);
+      return;
+    }
     
     // Group seats by table and create table objects
     const tableGroups = seatingChart.seats.reduce((acc, seat) => {
