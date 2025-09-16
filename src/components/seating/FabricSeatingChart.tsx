@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Canvas as FabricCanvas, Circle, Rect, Group, Text, FabricObject, Shadow } from 'fabric';
+import { Canvas as FabricCanvas, Circle, Rect, Group, Text, FabricObject } from 'fabric';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -119,23 +119,12 @@ export const FabricSeatingChart: React.FC<FabricSeatingChartProps> = ({ eventId 
     // Create table surface
     let tableSurface: FabricObject;
     
-    const tableShadow = new Shadow({
-      color: 'rgba(0,0,0,0.1)',
-      blur: 10,
-      offsetX: 0,
-      offsetY: 2,
-      affectStroke: false,
-      includeDefaultValues: true,
-      nonScaling: false
-    });
-    
     if (config.type === 'round') {
       tableSurface = new Circle({
         radius: 60,
         fill: 'hsl(var(--card))',
         stroke: 'hsl(var(--border))',
-        strokeWidth: 2,
-        shadow: tableShadow
+        strokeWidth: 2
       });
     } else {
       tableSurface = new Rect({
@@ -145,8 +134,7 @@ export const FabricSeatingChart: React.FC<FabricSeatingChartProps> = ({ eventId 
         stroke: 'hsl(var(--border))',
         strokeWidth: 2,
         rx: 8,
-        ry: 8,
-        shadow: tableShadow
+        ry: 8
       });
     }
 
@@ -197,16 +185,6 @@ export const FabricSeatingChart: React.FC<FabricSeatingChartProps> = ({ eventId 
   };
 
   const createChair = (x: number, y: number, seatData?: any) => {
-    const chairShadow = new Shadow({
-      color: 'rgba(0,0,0,0.1)',
-      blur: 5,
-      offsetX: 0,
-      offsetY: 1,
-      affectStroke: false,
-      includeDefaultValues: true,
-      nonScaling: false
-    });
-
     const chair = new Circle({
       radius: 15,
       left: x,
@@ -216,8 +194,7 @@ export const FabricSeatingChart: React.FC<FabricSeatingChartProps> = ({ eventId 
       strokeWidth: 1,
       selectable: true,
       hasControls: false,
-      hasBorders: false,
-      shadow: chairShadow
+      hasBorders: false
     });
 
     // Store seat data

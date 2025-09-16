@@ -158,11 +158,11 @@ const AdminSeating = () => {
                     <SelectValue placeholder="Select an event to manage..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {events?.map((event) => (
-                      <SelectItem key={event.id} value={event.id}>
-                        {event.title} - {new Date(event.date).toLocaleDateString()}
-                      </SelectItem>
-                    ))}
+                  {events?.map((event) => (
+                    <SelectItem key={`event-${event.id}`} value={event.id}>
+                      {event.title} - {new Date(event.date).toLocaleDateString()}
+                    </SelectItem>
+                  ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -206,7 +206,7 @@ const AdminSeating = () => {
           <CardContent>
             <div className="space-y-4">
               {seatingStats.map((stat) => (
-                <div key={stat.eventId} className="flex items-center justify-between p-4 border rounded-lg">
+                <div key={`stat-${stat.eventId}`} className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
                     <h4 className="font-medium">{stat.eventTitle}</h4>
                     <p className="text-sm text-muted-foreground">
