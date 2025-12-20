@@ -221,13 +221,6 @@ export type Database = {
             foreignKeyName: "communication_logs_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
-            referencedRelation: "event_performance"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "communication_logs_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -325,13 +318,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "event_guests_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "event_performance"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "event_guests_event_id_fkey"
             columns: ["event_id"]
@@ -535,13 +521,6 @@ export type Database = {
             foreignKeyName: "notifications_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
-            referencedRelation: "event_performance"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -591,13 +570,6 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "payments_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "event_performance"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "payments_event_id_fkey"
             columns: ["event_id"]
@@ -707,13 +679,6 @@ export type Database = {
             foreignKeyName: "rsvps_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
-            referencedRelation: "event_performance"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "rsvps_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -794,13 +759,6 @@ export type Database = {
             foreignKeyName: "seating_charts_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
-            referencedRelation: "event_performance"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "seating_charts_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -874,6 +832,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       whatsapp_broadcasts: {
         Row: {
           created_at: string
@@ -934,13 +916,6 @@ export type Database = {
             foreignKeyName: "fk_whatsapp_broadcasts_event_id"
             columns: ["event_id"]
             isOneToOne: false
-            referencedRelation: "event_performance"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_whatsapp_broadcasts_event_id"
-            columns: ["event_id"]
-            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -949,13 +924,6 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "message_templates"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "whatsapp_broadcasts_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "event_performance"
             referencedColumns: ["id"]
           },
           {
@@ -1209,34 +1177,7 @@ export type Database = {
       }
     }
     Views: {
-      event_performance: {
-        Row: {
-          capacity: number | null
-          checked_in_count: number | null
-          confirmed_rsvps: number | null
-          date: string | null
-          declined_rsvps: number | null
-          fill_rate: number | null
-          id: string | null
-          pending_rsvps: number | null
-          response_rate: number | null
-          title: string | null
-          total_rsvps: number | null
-        }
-        Relationships: []
-      }
-      platform_analytics: {
-        Row: {
-          active_hosts: number | null
-          past_events: number | null
-          total_checked_in: number | null
-          total_confirmed_rsvps: number | null
-          total_events: number | null
-          total_users: number | null
-          upcoming_events: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       add_rsvp_checkin_columns: { Args: never; Returns: boolean }
@@ -1332,6 +1273,34 @@ export type Database = {
           ticket_code: string
         }[]
       }
+      get_host_event_performance: {
+        Args: { p_event_id?: string }
+        Returns: {
+          capacity: number
+          checked_in_count: number
+          confirmed_rsvps: number
+          declined_rsvps: number
+          event_date: string
+          fill_rate: number
+          id: string
+          pending_rsvps: number
+          response_rate: number
+          title: string
+          total_rsvps: number
+        }[]
+      }
+      get_platform_analytics: {
+        Args: never
+        Returns: {
+          active_hosts: number
+          past_events: number
+          total_checked_in: number
+          total_confirmed_rsvps: number
+          total_events: number
+          total_users: number
+          upcoming_events: number
+        }[]
+      }
       get_seating_chart_details: {
         Args: { p_event_id: string }
         Returns: {
@@ -1352,6 +1321,17 @@ export type Database = {
           venue_width: number
         }[]
       }
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["user_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       log_admin_action: {
         Args: {
           p_action: string
@@ -1367,6 +1347,10 @@ export type Database = {
           p_metric_unit?: string
           p_metric_value: number
         }
+        Returns: undefined
+      }
+      update_user_role: {
+        Args: { p_new_role: string; p_user_id: string }
         Returns: undefined
       }
     }

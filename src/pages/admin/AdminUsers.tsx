@@ -72,13 +72,13 @@ const AdminUsers = () => {
     },
   });
 
-  // Update user role mutation
+  // Update user role mutation - Uses secure RPC function
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, newRole }: { userId: string; newRole: UserRole }) => {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ role: newRole })
-        .eq("id", userId);
+      const { error } = await supabase.rpc('update_user_role', {
+        p_user_id: userId,
+        p_new_role: newRole
+      });
 
       if (error) throw error;
     },
@@ -93,7 +93,7 @@ const AdminUsers = () => {
       console.error("Error updating user role:", error);
       toast({
         title: "Error",
-        description: "Failed to update user role.",
+        description: error instanceof Error ? error.message : "Failed to update user role.",
         variant: "destructive",
       });
     },
