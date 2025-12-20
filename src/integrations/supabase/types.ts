@@ -20,7 +20,7 @@ export type Database = {
           created_at: string
           details: Json | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           resource_id: string | null
           resource_type: string
           user_agent: string | null
@@ -31,7 +31,7 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           resource_id?: string | null
           resource_type: string
           user_agent?: string | null
@@ -42,7 +42,7 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           resource_id?: string | null
           resource_type?: string
           user_agent?: string | null
@@ -1239,10 +1239,7 @@ export type Database = {
       }
     }
     Functions: {
-      add_rsvp_checkin_columns: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      add_rsvp_checkin_columns: { Args: never; Returns: boolean }
       bulk_check_in: {
         Args: { p_event_id: string; p_ticket_codes: string[] }
         Returns: {
@@ -1264,10 +1261,7 @@ export type Database = {
         Args: { admin_email: string; admin_password: string }
         Returns: undefined
       }
-      generate_ticket_code: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_ticket_code: { Args: never; Returns: string }
       get_available_seats: {
         Args: { p_event_id: string }
         Returns: {

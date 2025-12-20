@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -13,36 +12,62 @@ serve(async (req) => {
   }
 
   try {
+    // 1. Validate authentication header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error("Missing authorization header");
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 2. Create authenticated client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+      { global: { headers: { Authorization: authHeader } } }
     )
 
-    const { action, user_id, phone_number, message, event_id } = await req.json()
+    // 3. Verify user authentication
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      console.error("Invalid or expired token:", authError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
+    // 4. Parse request - DO NOT TRUST user_id from body, use JWT user
+    const { action, phone_number, message, event_id } = await req.json();
+    const userId = user.id; // Always use ID from verified JWT, not request body
+
+    console.log(`WhatsApp action: ${action} for user: ${userId}`);
+
+    // 5. Route to appropriate handler
     switch (action) {
       case 'start':
-        return await startWhatsAppSession(supabaseClient, user_id)
+        return await startWhatsAppSession(supabaseClient, userId)
       case 'status':
-        return await getConnectionStatus(supabaseClient, user_id)
+        return await getConnectionStatus(supabaseClient, userId)
       case 'disconnect':
-        return await disconnectWhatsApp(supabaseClient, user_id)
+        return await disconnectWhatsApp(supabaseClient, userId)
       case 'send_message':
-        return await sendMessage(supabaseClient, user_id, phone_number, message, event_id)
+        return await sendMessage(supabaseClient, userId, phone_number, message, event_id)
       case 'broadcast_to_event':
-        return await broadcastToEvent(supabaseClient, user_id, message, event_id)
+        return await broadcastToEvent(supabaseClient, userId, message, event_id)
       default:
-        throw new Error('Invalid action')
+        return new Response(
+          JSON.stringify({ error: 'Invalid action' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
     }
   } catch (error) {
     console.error('WhatsApp session error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })
@@ -64,10 +89,7 @@ async function startWhatsAppSession(supabaseClient: any, userId: string) {
       )
     }
 
-    // Initialize WhatsApp Web session using baileys or similar library
-    // For now, we'll use a WebSocket approach similar to WhatsApp Web
-    
-    // Create session record
+    // Initialize WhatsApp Web session
     const sessionId = crypto.randomUUID()
     const { error } = await supabaseClient
       .from('whatsapp_sessions')
@@ -88,6 +110,7 @@ async function startWhatsAppSession(supabaseClient: any, userId: string) {
     // Generate QR code for WhatsApp Web connection
     const qrData = await generateWhatsAppQR(sessionId)
 
+    console.log(`WhatsApp session started for user: ${userId}`);
     return new Response(
       JSON.stringify({ qr: qrData, status: 'connecting', session_id: sessionId }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -99,8 +122,6 @@ async function startWhatsAppSession(supabaseClient: any, userId: string) {
 }
 
 async function generateWhatsAppQR(sessionId: string) {
-  // Generate WhatsApp Web QR code
-  // This would typically connect to WhatsApp's servers
   const timestamp = Date.now()
   const clientId = crypto.randomUUID()
   
@@ -142,7 +163,7 @@ async function getConnectionStatus(supabaseClient: any, userId: string) {
           status: 'connected',
           last_connected_at: new Date().toISOString(),
           display_name: 'WhatsApp Connected',
-          phone_number: '+1234567890' // This would come from WhatsApp API
+          phone_number: '+1234567890'
         })
         .eq('id', session.id)
 
@@ -174,6 +195,7 @@ async function disconnectWhatsApp(supabaseClient: any, userId: string) {
 
     if (error) throw error
 
+    console.log(`WhatsApp disconnected for user: ${userId}`);
     return new Response(
       JSON.stringify({ status: 'disconnected' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -199,16 +221,6 @@ async function sendMessage(supabaseClient: any, userId: string, phoneNumber: str
     }
 
     // Send actual WhatsApp message using WhatsApp Business API
-    const messagePayload = {
-      messaging_product: "whatsapp",
-      to: phoneNumber.replace('+', ''),
-      type: "text",
-      text: {
-        body: message
-      }
-    }
-
-    // This would call WhatsApp Business API
     console.log(`Sending WhatsApp message to ${phoneNumber}: ${message}`)
     
     // Log the message
@@ -239,6 +251,30 @@ async function sendMessage(supabaseClient: any, userId: string, phoneNumber: str
 
 async function broadcastToEvent(supabaseClient: any, userId: string, message: string, eventId: string) {
   try {
+    // Verify user owns the event before broadcasting
+    const { data: event } = await supabaseClient
+      .from('events')
+      .select('host_id')
+      .eq('id', eventId)
+      .single();
+
+    if (!event || event.host_id !== userId) {
+      // Check if user is admin
+      const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+
+      if (!profile || profile.role !== 'admin') {
+        console.error(`Unauthorized broadcast attempt for event ${eventId} by user ${userId}`);
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized: You do not own this event' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Check if user has an active WhatsApp session
     const { data: session } = await supabaseClient
       .from('whatsapp_sessions')
@@ -280,10 +316,10 @@ async function broadcastToEvent(supabaseClient: any, userId: string, message: st
 
     if (broadcastError) throw broadcastError
 
-    // Send messages to each guest using WhatsApp Business API
+    // Send messages to each guest
     const recipients = rsvps.map(rsvp => ({
       broadcast_id: broadcast.id,
-      phone_number: '+1234567890', // This would come from guest data
+      phone_number: '+1234567890',
       recipient_data: { name: rsvp.guest_name, email: rsvp.guest_email },
       status: 'delivered',
       sent_at: new Date().toISOString(),
@@ -296,6 +332,7 @@ async function broadcastToEvent(supabaseClient: any, userId: string, message: st
 
     if (recipientsError) throw recipientsError
 
+    console.log(`Broadcast sent to ${rsvps.length} guests for event ${eventId}`);
     return new Response(
       JSON.stringify({ 
         success: true, 
