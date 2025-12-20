@@ -28,33 +28,40 @@ export interface EventPerformance {
 }
 
 export const useRealAnalytics = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
+  // Platform analytics - Admin only via secure RPC
   const { data: platformAnalytics, isLoading: isLoadingPlatform } = useQuery({
     queryKey: ["platform-analytics"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("platform_analytics")
-        .select("*")
-        .single();
+      const { data, error } = await supabase.rpc('get_platform_analytics');
 
-      if (error) throw error;
-      return data as PlatformAnalytics;
+      if (error) {
+        // Non-admins will get an error, return null gracefully
+        console.log('Platform analytics not available:', error.message);
+        return null;
+      }
+      return data?.[0] as PlatformAnalytics | null;
     },
+    enabled: profile?.role === 'admin',
   });
 
+  // Event performance - Hosts see their events, Admins see all via secure RPC
   const { data: eventPerformance, isLoading: isLoadingEvents } = useQuery({
     queryKey: ["event-performance", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
 
-      const { data, error } = await supabase
-        .from("event_performance")
-        .select("*")
-        .order("date", { ascending: false });
+      const { data, error } = await supabase.rpc('get_host_event_performance');
 
-      if (error) throw error;
-      return data as EventPerformance[];
+      if (error) {
+        console.log('Event performance not available:', error.message);
+        return [];
+      }
+      return (data || []).map((item: any) => ({
+        ...item,
+        date: item.event_date, // Map event_date to date for compatibility
+      })) as EventPerformance[];
     },
     enabled: !!user?.id,
   });
