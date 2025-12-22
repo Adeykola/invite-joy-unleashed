@@ -1,4 +1,5 @@
-
+import { useState, useEffect } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import HostDashboardLayout from "@/components/layouts/HostDashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,12 +7,133 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
-import { Settings, User, Bell, Mail, Calendar } from "lucide-react";
+import { User, Bell, Mail, Calendar, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const HostSettings = () => {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Profile state
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [bio, setBio] = useState("");
+
+  // Event defaults state (stored in localStorage for now)
+  const [defaultLocation, setDefaultLocation] = useState("");
+  const [defaultCapacity, setDefaultCapacity] = useState("");
+  const [autoApprove, setAutoApprove] = useState(true);
+
+  // Notification preferences (stored in localStorage for now)
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [eventReminders, setEventReminders] = useState(true);
+  const [guestMessages, setGuestMessages] = useState(false);
+
+  // Communication settings
+  const [replyToEmail, setReplyToEmail] = useState("");
+  const [emailSignature, setEmailSignature] = useState("");
+
+  // Initialize state from profile and localStorage
+  useEffect(() => {
+    if (profile) {
+      setFullName(profile.full_name || "");
+      setEmail(profile.email || "");
+      setReplyToEmail(profile.email || "");
+    }
+
+    // Load settings from localStorage
+    const savedSettings = localStorage.getItem(`host_settings_${user?.id}`);
+    if (savedSettings) {
+      const settings = JSON.parse(savedSettings);
+      setBio(settings.bio || "");
+      setDefaultLocation(settings.defaultLocation || "");
+      setDefaultCapacity(settings.defaultCapacity || "");
+      setAutoApprove(settings.autoApprove ?? true);
+      setEmailNotifications(settings.emailNotifications ?? true);
+      setEventReminders(settings.eventReminders ?? true);
+      setGuestMessages(settings.guestMessages ?? false);
+      setEmailSignature(settings.emailSignature || "");
+    }
+  }, [profile, user?.id]);
+
+  // Save profile mutation
+  const saveProfileMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ full_name: fullName })
+        .eq("id", user.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      toast({
+        title: "Profile Updated",
+        description: "Your profile information has been saved.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Save settings to localStorage
+  const saveToLocalStorage = (key: string, updates: Record<string, any>) => {
+    const savedSettings = localStorage.getItem(`host_settings_${user?.id}`);
+    const settings = savedSettings ? JSON.parse(savedSettings) : {};
+    const newSettings = { ...settings, ...updates };
+    localStorage.setItem(`host_settings_${user?.id}`, JSON.stringify(newSettings));
+  };
+
+  const handleSaveProfile = () => {
+    saveToLocalStorage("bio", { bio });
+    saveProfileMutation.mutate();
+  };
+
+  const handleSaveDefaults = () => {
+    saveToLocalStorage("defaults", {
+      defaultLocation,
+      defaultCapacity,
+      autoApprove,
+    });
+    toast({
+      title: "Defaults Saved",
+      description: "Your event defaults have been saved.",
+    });
+  };
+
+  const handleSaveNotifications = () => {
+    saveToLocalStorage("notifications", {
+      emailNotifications,
+      eventReminders,
+      guestMessages,
+    });
+    toast({
+      title: "Preferences Saved",
+      description: "Your notification preferences have been saved.",
+    });
+  };
+
+  const handleSaveCommunication = () => {
+    saveToLocalStorage("communication", {
+      replyToEmail,
+      emailSignature,
+    });
+    toast({
+      title: "Settings Saved",
+      description: "Your communication settings have been saved.",
+    });
+  };
 
   return (
     <HostDashboardLayout>
@@ -35,20 +157,42 @@ const HostSettings = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="full-name">Full Name</Label>
-                <Input id="full-name" defaultValue={profile?.full_name || ""} />
+                <Input
+                  id="full-name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" defaultValue={profile?.email || ""} />
+                <Input
+                  id="email"
+                  value={email}
+                  disabled
+                  className="bg-muted"
+                />
               </div>
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="bio">Bio</Label>
-              <Textarea id="bio" placeholder="Tell your guests about yourself..." />
+              <Textarea
+                id="bio"
+                placeholder="Tell your guests about yourself..."
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+              />
             </div>
 
-            <Button>Save Profile</Button>
+            <Button
+              onClick={handleSaveProfile}
+              disabled={saveProfileMutation.isPending}
+            >
+              {saveProfileMutation.isPending && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              Save Profile
+            </Button>
           </CardContent>
         </Card>
 
@@ -63,12 +207,23 @@ const HostSettings = () => {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="default-location">Default Location</Label>
-              <Input id="default-location" placeholder="Your usual event location" />
+              <Input
+                id="default-location"
+                placeholder="Your usual event location"
+                value={defaultLocation}
+                onChange={(e) => setDefaultLocation(e.target.value)}
+              />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="default-capacity">Default Capacity</Label>
-              <Input id="default-capacity" type="number" placeholder="50" />
+              <Input
+                id="default-capacity"
+                type="number"
+                placeholder="50"
+                value={defaultCapacity}
+                onChange={(e) => setDefaultCapacity(e.target.value)}
+              />
             </div>
 
             <div className="flex items-center justify-between">
@@ -78,10 +233,13 @@ const HostSettings = () => {
                   Automatically confirm guest RSVPs without manual approval
                 </p>
               </div>
-              <Switch defaultChecked />
+              <Switch
+                checked={autoApprove}
+                onCheckedChange={setAutoApprove}
+              />
             </div>
 
-            <Button>Save Defaults</Button>
+            <Button onClick={handleSaveDefaults}>Save Defaults</Button>
           </CardContent>
         </Card>
 
@@ -101,7 +259,10 @@ const HostSettings = () => {
                   Receive notifications when guests RSVP
                 </p>
               </div>
-              <Switch defaultChecked />
+              <Switch
+                checked={emailNotifications}
+                onCheckedChange={setEmailNotifications}
+              />
             </div>
 
             <div className="flex items-center justify-between">
@@ -111,7 +272,10 @@ const HostSettings = () => {
                   Get reminded 24 hours before your events
                 </p>
               </div>
-              <Switch defaultChecked />
+              <Switch
+                checked={eventReminders}
+                onCheckedChange={setEventReminders}
+              />
             </div>
 
             <div className="flex items-center justify-between">
@@ -121,10 +285,13 @@ const HostSettings = () => {
                   Receive notifications for guest comments and questions
                 </p>
               </div>
-              <Switch />
+              <Switch
+                checked={guestMessages}
+                onCheckedChange={setGuestMessages}
+              />
             </div>
 
-            <Button>Save Preferences</Button>
+            <Button onClick={handleSaveNotifications}>Save Preferences</Button>
           </CardContent>
         </Card>
 
@@ -139,7 +306,11 @@ const HostSettings = () => {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="reply-to">Reply-to Email</Label>
-              <Input id="reply-to" defaultValue={profile?.email || ""} />
+              <Input
+                id="reply-to"
+                value={replyToEmail}
+                onChange={(e) => setReplyToEmail(e.target.value)}
+              />
               <p className="text-sm text-muted-foreground">
                 Guests will reply to this email address
               </p>
@@ -147,10 +318,17 @@ const HostSettings = () => {
 
             <div className="space-y-2">
               <Label htmlFor="signature">Email Signature</Label>
-              <Textarea id="signature" placeholder="Your event invitation signature..." />
+              <Textarea
+                id="signature"
+                placeholder="Your event invitation signature..."
+                value={emailSignature}
+                onChange={(e) => setEmailSignature(e.target.value)}
+              />
             </div>
 
-            <Button>Save Communication Settings</Button>
+            <Button onClick={handleSaveCommunication}>
+              Save Communication Settings
+            </Button>
           </CardContent>
         </Card>
       </div>

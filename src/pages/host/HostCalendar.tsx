@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Calendar as CalendarIcon, Clock, Info, MapPin } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { format, isToday, parseISO } from "date-fns";
@@ -10,21 +10,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import HostDashboardLayout from "@/components/layouts/HostDashboardLayout";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 
 const HostCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const { user } = useAuth();
   
   const { data: events, isLoading } = useQuery({
-    queryKey: ["host-events"],
+    queryKey: ["host-events-calendar", user?.id],
     queryFn: async () => {
+      if (!user?.id) return [];
+      
       const { data, error } = await supabase
         .from("events")
         .select("*")
+        .eq("host_id", user.id)
         .order("date", { ascending: true });
         
       if (error) throw error;
       return data || [];
-    }
+    },
+    enabled: !!user?.id
   });
   
   // Filter events for the selected date
@@ -124,18 +131,13 @@ const HostCalendar = () => {
                       
                       <Separator className="my-3" />
                       
-                      <div className="flex justify-end">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button variant="outline" size="sm" className="mr-2">Manage RSVPs</Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>View and manage guest responses</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to={`/host-dashboard/check-in/${event.id}`}>
+                            Check-in
+                          </Link>
+                        </Button>
+                        <Button variant="outline" size="sm">Manage RSVPs</Button>
                         <Button size="sm">Edit Event</Button>
                       </div>
                     </div>

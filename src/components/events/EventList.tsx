@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import { Calendar, MapPin, Users, FileText, CheckCircle } from "lucide-react";
 import { RsvpDialog } from "./RsvpDialog";
 import { EventActions } from "./EventActions";
+import { useAuth } from "@/contexts/AuthContext";
 
 type EventListProps = {
   filter?: "upcoming" | "past" | "all" | "drafts" | "published";
@@ -25,11 +26,14 @@ type EventListProps = {
 export function EventList({ filter = "all" }: EventListProps) {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isViewingRsvps, setIsViewingRsvps] = useState(false);
+  const { user } = useAuth();
 
   const { data: events, isLoading, refetch } = useQuery({
-    queryKey: ["events", filter],
+    queryKey: ["events", filter, user?.id],
     queryFn: async () => {
-      let query = supabase.from("events").select("*");
+      if (!user?.id) return [];
+      
+      let query = supabase.from("events").select("*").eq("host_id", user.id);
       
       // Apply filter
       const today = new Date().toISOString();
@@ -52,6 +56,7 @@ export function EventList({ filter = "all" }: EventListProps) {
       if (error) throw error;
       return data;
     },
+    enabled: !!user?.id
   });
 
   if (isLoading) {

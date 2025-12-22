@@ -89,6 +89,7 @@ const App = () => (
             <Route path="/host-dashboard/guests" element={<HostRoute><HostGuests /></HostRoute>} />
             <Route path="/host-dashboard/calendar" element={<HostRoute><HostCalendar /></HostRoute>} />
             <Route path="/host-dashboard/check-in" element={<HostRoute><CheckIn /></HostRoute>} />
+            <Route path="/host-dashboard/check-in/:eventId" element={<HostRoute><CheckIn /></HostRoute>} />
             <Route path="/host-dashboard/whatsapp" element={<HostRoute><HostWhatsApp /></HostRoute>} />
             <Route path="/host-dashboard/settings" element={<HostRoute><HostSettings /></HostRoute>} />
             
