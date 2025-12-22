@@ -59,8 +59,32 @@ export function CheckInSystem({ eventId }: CheckInSystemProps) {
         return;
       }
 
-      // In a real implementation, we would update a "checked_in" status
-      // For this demo, we'll just show success
+      // Check if already checked in
+      if (rsvpData.checked_in) {
+        toast({
+          title: "Already Checked In",
+          description: `${rsvpData.guest_name} was already checked in at ${rsvpData.check_in_time ? new Date(rsvpData.check_in_time).toLocaleTimeString() : 'earlier'}.`,
+        });
+        setLastCheckedGuest({
+          name: rsvpData.guest_name,
+          email: rsvpData.guest_email,
+          status: "already_checked_in",
+          checkedInAt: rsvpData.check_in_time || new Date().toISOString()
+        });
+        return;
+      }
+
+      // Update checked_in status in database
+      const { error: updateError } = await supabase
+        .from("rsvps")
+        .update({ 
+          checked_in: true, 
+          check_in_time: new Date().toISOString() 
+        })
+        .eq("id", rsvpData.id);
+
+      if (updateError) throw updateError;
+
       setLastCheckedGuest({
         name: rsvpData.guest_name,
         email: rsvpData.guest_email,
