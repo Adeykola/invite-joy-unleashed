@@ -33,6 +33,9 @@ export function CheckInSystem({ eventId }: CheckInSystemProps) {
   const [isScanning, setIsScanning] = useState(false);
   const [nfcSupported, setNfcSupported] = useState(false);
   const [nfcReading, setNfcReading] = useState(false);
+  const [justCheckedIn, setJustCheckedIn] = useState<string | null>(null);
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+  const [checkedInName, setCheckedInName] = useState("");
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -102,6 +105,18 @@ export function CheckInSystem({ eventId }: CheckInSystemProps) {
 
     try {
       await checkInMutation.mutateAsync(guest.id);
+      
+      // Trigger success animation
+      setCheckedInName(guest.guest_name);
+      setJustCheckedIn(guest.id);
+      setShowSuccessOverlay(true);
+      
+      // Clear animations after delay
+      setTimeout(() => {
+        setJustCheckedIn(null);
+        setShowSuccessOverlay(false);
+      }, 2000);
+      
       toast({
         title: "Check-In Successful",
         description: `${guest.guest_name} has been checked in.`,
@@ -239,7 +254,21 @@ export function CheckInSystem({ eventId }: CheckInSystemProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Success Overlay Animation */}
+      {showSuccessOverlay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fade-in">
+          <div className="bg-background rounded-2xl p-8 flex flex-col items-center gap-4 animate-scale-in shadow-2xl">
+            <div className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center animate-[pulse_0.5s_ease-in-out]">
+              <CheckCircle className="w-12 h-12 text-white" />
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-green-600">Checked In!</p>
+              <p className="text-muted-foreground">{checkedInName}</p>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Stats Cards */}
       <div className="grid grid-cols-3 gap-4">
         <Card>
@@ -312,10 +341,12 @@ export function CheckInSystem({ eventId }: CheckInSystemProps) {
                   {filteredGuests?.map((guest) => (
                     <div
                       key={guest.id}
-                      className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
-                        guest.checked_in 
-                          ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800' 
-                          : 'hover:bg-accent'
+                      className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all duration-300 ${
+                        justCheckedIn === guest.id
+                          ? 'bg-green-100 border-green-400 scale-[1.02] dark:bg-green-900/40 dark:border-green-600'
+                          : guest.checked_in 
+                            ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800' 
+                            : 'hover:bg-accent'
                       }`}
                       onClick={() => handleCheckIn(guest)}
                     >
