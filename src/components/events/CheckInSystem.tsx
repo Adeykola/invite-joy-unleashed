@@ -159,13 +159,13 @@ export function CheckInSystem({ eventId }: CheckInSystemProps) {
   };
 
   const stopQrScanner = async () => {
-    if (scannerRef.current) {
+    if (scannerRef.current && isScanning) {
       try {
         await scannerRef.current.stop();
-        scannerRef.current = null;
       } catch (error) {
-        console.error("Error stopping scanner:", error);
+        // Ignore - scanner may already be stopped
       }
+      scannerRef.current = null;
     }
     setIsScanning(false);
   };
@@ -173,11 +173,11 @@ export function CheckInSystem({ eventId }: CheckInSystemProps) {
   // Clean up scanner on unmount
   useEffect(() => {
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch(console.error);
+      if (scannerRef.current && isScanning) {
+        scannerRef.current.stop().catch(() => {});
       }
     };
-  }, []);
+  }, [isScanning]);
 
   // NFC Reader
   const startNfcReader = async () => {
