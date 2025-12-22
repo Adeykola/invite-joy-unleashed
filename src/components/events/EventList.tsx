@@ -2,21 +2,13 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Calendar, MapPin, Users, FileText, CheckCircle } from "lucide-react";
 import { RsvpDialog } from "./RsvpDialog";
 import { EventActions } from "./EventActions";
+import { EditEventDialog } from "./EditEventDialog";
 import { useAuth } from "@/contexts/AuthContext";
 
 type EventListProps = {
@@ -26,6 +18,8 @@ type EventListProps = {
 export function EventList({ filter = "all" }: EventListProps) {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isViewingRsvps, setIsViewingRsvps] = useState(false);
+  const [editEventId, setEditEventId] = useState<string | null>(null);
+  const [editEventTitle, setEditEventTitle] = useState<string>("");
   const { user } = useAuth();
 
   const { data: events, isLoading, refetch } = useQuery({
@@ -47,9 +41,10 @@ export function EventList({ filter = "all" }: EventListProps) {
         query = query.eq("status", "published");
       }
       
-      // Sort events
-      const sortOrder = filter === "past" ? { ascending: false } : { ascending: true };
-      query = query.order("date", sortOrder);
+      // Sort events: drafts first, then by created_at (newest first), then by date
+      query = query
+        .order("status", { ascending: true }) // 'draft' comes before 'published'
+        .order("created_at", { ascending: false }); // Newest first
       
       const { data, error } = await query;
 
@@ -96,6 +91,10 @@ export function EventList({ filter = "all" }: EventListProps) {
                   <EventActions 
                     eventId={event.id}
                     eventTitle={event.title}
+                    onEdit={() => {
+                      setEditEventId(event.id);
+                      setEditEventTitle(event.title);
+                    }}
                     onDelete={refetch}
                     event={event}
                   />
@@ -131,6 +130,17 @@ export function EventList({ filter = "all" }: EventListProps) {
         eventId={selectedEventId}
         isOpen={isViewingRsvps}
         onOpenChange={setIsViewingRsvps}
+      />
+
+      <EditEventDialog
+        eventId={editEventId || ""}
+        eventTitle={editEventTitle}
+        isOpen={!!editEventId}
+        onOpenChange={(open) => !open && setEditEventId(null)}
+        onSuccess={() => {
+          setEditEventId(null);
+          refetch();
+        }}
       />
     </>
   );
