@@ -300,12 +300,13 @@ export function EventWizard({ eventId: initialEventId, onSuccess }: EventWizardP
       let newEventId = initialEventId;
       
       if (initialEventId) {
-        // Update existing event
+        // Update existing event - set status to 'published' when saved
         console.log("Updating existing event:", initialEventId);
         const { error } = await supabase
           .from("events")
           .update({
             ...eventData,
+            status: 'published',
             updated_at: new Date().toISOString()
           })
           .eq("id", initialEventId);
