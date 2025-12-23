@@ -34,6 +34,7 @@ import UserEvents from "./pages/user/UserEvents";
 import UserProfile from "./pages/user/UserProfile";
 import UserFavorites from "./pages/user/UserFavorites";
 import UserReviews from "./pages/user/UserReviews";
+import UserSettings from "./pages/user/UserSettings";
 import PublicEvents from "./pages/PublicEvents";
 import AdminSendTestInvitation from "./pages/admin/AdminSendTestInvitation";
 import AdminSeating from "./pages/admin/AdminSeating";
@@ -99,6 +100,7 @@ const App = () => (
             <Route path="/user-dashboard/profile" element={<UserRoute><UserProfile /></UserRoute>} />
             <Route path="/user-dashboard/favorites" element={<UserRoute><UserFavorites /></UserRoute>} />
             <Route path="/user-dashboard/reviews" element={<UserRoute><UserReviews /></UserRoute>} />
+            <Route path="/user-dashboard/settings" element={<UserRoute><UserSettings /></UserRoute>} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
