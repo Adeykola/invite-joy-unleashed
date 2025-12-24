@@ -354,11 +354,17 @@ export function EventWizard({ eventId: initialEventId, onSuccess }: EventWizardP
           }
         }
         
-        // Prepare guest data for insertion
+        // Prepare guest data for insertion with all fields
         const guestData = data.guests.map(guest => ({
           event_id: newEventId,
           name: guest.name,
-          email: guest.email
+          email: guest.email,
+          category: guest.category || 'general',
+          is_vip: guest.is_vip || false,
+          plus_one_allowed: guest.plus_one_allowed || false,
+          plus_one_name: guest.plus_one_name || null,
+          dietary_restrictions: guest.dietary_restrictions || null,
+          notes: guest.notes || null
         }));
         
         // Insert new guests

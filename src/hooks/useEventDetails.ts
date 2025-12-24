@@ -12,6 +12,8 @@ export type EventType = {
   location: string;
   capacity?: number;
   host_id?: string;
+  banner_image?: string;
+  tags?: string[];
   meta?: Record<string, any> | null;
 };
 
@@ -61,6 +63,8 @@ export const useEventDetails = (id: string | undefined) => {
           location: data.location,
           capacity: data.capacity,
           host_id: data.host_id,
+          banner_image: data.banner_image,
+          tags: data.tags,
           // Convert meta to a proper object if needed
           meta: typeof data.meta === 'string' 
             ? JSON.parse(data.meta) 

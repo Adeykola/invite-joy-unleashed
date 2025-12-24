@@ -18,10 +18,22 @@ import { ensureStorageBuckets } from "@/lib/supabase";
 
 interface CreateEventDialogProps {
   storageInitialized?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
-export function CreateEventDialog({ storageInitialized = false }: CreateEventDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function CreateEventDialog({ 
+  storageInitialized = false, 
+  open: controlledOpen, 
+  onOpenChange: controlledOnOpenChange,
+  onSuccess: controlledOnSuccess
+}: CreateEventDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  
+  // Support both controlled and uncontrolled usage
+  const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setIsOpen = controlledOnOpenChange || setInternalOpen;
   const [storageReady, setStorageReady] = useState(false);
   const [isCheckingStorage, setIsCheckingStorage] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -106,6 +118,9 @@ export function CreateEventDialog({ storageInitialized = false }: CreateEventDia
 
   const handleSuccess = () => {
     setIsOpen(false);
+    if (controlledOnSuccess) {
+      controlledOnSuccess();
+    }
     toast({
       title: "Event Created",
       description: "Your event has been created successfully!",

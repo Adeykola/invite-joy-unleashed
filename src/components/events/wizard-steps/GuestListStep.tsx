@@ -14,6 +14,14 @@ import { X, Plus, Mail, Users } from "lucide-react";
 import { FormLabel } from "@/components/ui/form";
 import { ImportGuestsDialog } from "./ImportGuestsDialog";
 import { TicketQRCodeDialog } from "../TicketQRCodeDialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export interface Guest {
   id?: string;
@@ -24,12 +32,17 @@ export interface Guest {
   plus_one_name?: string;
   plus_one_allowed?: boolean;
   ticket_code?: string;
+  dietary_restrictions?: string;
+  notes?: string;
 }
 
 export function GuestListStep() {
   const { setValue, getValues } = useFormContext();
   const [newGuestName, setNewGuestName] = useState("");
   const [newGuestEmail, setNewGuestEmail] = useState("");
+  const [newGuestCategory, setNewGuestCategory] = useState("general");
+  const [newGuestVip, setNewGuestVip] = useState(false);
+  const [newGuestPlusOne, setNewGuestPlusOne] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [qrDialogGuest, setQrDialogGuest] = useState<Guest | null>(null);
   
@@ -67,10 +80,17 @@ export function GuestListStep() {
       return;
     }
     
+    // Generate a unique ticket code
+    const ticketCode = `TICKET-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+    
     const newGuest: Guest = {
-      id: crypto.randomUUID(), // This will be replaced when saved to database
+      id: crypto.randomUUID(),
       name: newGuestName,
       email: newGuestEmail,
+      category: newGuestCategory,
+      is_vip: newGuestVip,
+      plus_one_allowed: newGuestPlusOne,
+      ticket_code: ticketCode,
     };
     
     setValue("guests", [...guests, newGuest]);
@@ -78,6 +98,9 @@ export function GuestListStep() {
     // Clear input fields
     setNewGuestName("");
     setNewGuestEmail("");
+    setNewGuestCategory("general");
+    setNewGuestVip(false);
+    setNewGuestPlusOne(false);
   };
   
   const removeGuest = (index: number) => {
@@ -109,32 +132,70 @@ export function GuestListStep() {
         </p>
       </div>
       
-      <div className="flex items-end gap-3">
-        <div className="space-y-2 flex-1">
-          <FormLabel htmlFor="guestName">Name</FormLabel>
-          <Input
-            id="guestName"
-            placeholder="Guest Name"
-            value={newGuestName}
-            onChange={e => setNewGuestName(e.target.value)}
-          />
+      <div className="space-y-4">
+        <div className="flex items-end gap-3">
+          <div className="space-y-2 flex-1">
+            <FormLabel htmlFor="guestName">Name</FormLabel>
+            <Input
+              id="guestName"
+              placeholder="Guest Name"
+              value={newGuestName}
+              onChange={e => setNewGuestName(e.target.value)}
+            />
+          </div>
+          
+          <div className="space-y-2 flex-1">
+            <FormLabel htmlFor="guestEmail">Email</FormLabel>
+            <Input
+              id="guestEmail"
+              type="email"
+              placeholder="guest@example.com"
+              value={newGuestEmail}
+              onChange={e => setNewGuestEmail(e.target.value)}
+            />
+          </div>
         </div>
         
-        <div className="space-y-2 flex-1">
-          <FormLabel htmlFor="guestEmail">Email</FormLabel>
-          <Input
-            id="guestEmail"
-            type="email"
-            placeholder="guest@example.com"
-            value={newGuestEmail}
-            onChange={e => setNewGuestEmail(e.target.value)}
-          />
+        <div className="flex items-end gap-3">
+          <div className="space-y-2 flex-1">
+            <FormLabel htmlFor="guestCategory">Category</FormLabel>
+            <Select value={newGuestCategory} onValueChange={setNewGuestCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="general">General</SelectItem>
+                <SelectItem value="family">Family</SelectItem>
+                <SelectItem value="friend">Friend</SelectItem>
+                <SelectItem value="colleague">Colleague</SelectItem>
+                <SelectItem value="vip">VIP</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="flex items-center space-x-2 pb-2">
+            <Checkbox 
+              id="guestVip" 
+              checked={newGuestVip} 
+              onCheckedChange={(checked) => setNewGuestVip(checked === true)}
+            />
+            <label htmlFor="guestVip" className="text-sm font-medium">VIP</label>
+          </div>
+          
+          <div className="flex items-center space-x-2 pb-2">
+            <Checkbox 
+              id="guestPlusOne" 
+              checked={newGuestPlusOne} 
+              onCheckedChange={(checked) => setNewGuestPlusOne(checked === true)}
+            />
+            <label htmlFor="guestPlusOne" className="text-sm font-medium">Plus-One Allowed</label>
+          </div>
+          
+          <Button type="button" onClick={addGuest} className="mb-0.5">
+            <Plus className="h-4 w-4 mr-1" />
+            Add Guest
+          </Button>
         </div>
-        
-        <Button type="button" onClick={addGuest} className="mb-0.5">
-          <Plus className="h-4 w-4 mr-1" />
-          Add Guest
-        </Button>
       </div>
       
       {error && (

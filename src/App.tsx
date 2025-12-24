@@ -38,6 +38,7 @@ import UserSettings from "./pages/user/UserSettings";
 import PublicEvents from "./pages/PublicEvents";
 import AdminSendTestInvitation from "./pages/admin/AdminSendTestInvitation";
 import AdminSeating from "./pages/admin/AdminSeating";
+import GuestPortal from "./components/events/GuestPortal";
 import Pricing from "./pages/Pricing";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -65,6 +66,7 @@ const App = () => (
             <Route path="/terms" element={<Terms />} />
             <Route path="/events" element={<PublicEvents />} />
             <Route path="/event/:id" element={<Event />} />
+            <Route path="/guest-portal/:id" element={<GuestPortal />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/reset-password" element={<ResetPassword />} />
