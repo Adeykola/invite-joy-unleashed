@@ -11,11 +11,14 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import HostDashboardLayout from "@/components/layouts/HostDashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { CreateEventDialog } from "@/components/events/CreateEventDialog";
 
 const HostCalendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   const { data: events, isLoading } = useQuery({
     queryKey: ["host-events-calendar", user?.id],
@@ -144,9 +147,13 @@ const HostCalendar = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-gray-500">
                   <p>No events scheduled for this date.</p>
-                  <Button variant="outline" className="mt-4">
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={() => setShowCreateDialog(true)}
+                  >
                     Create New Event
                   </Button>
                 </div>
@@ -155,6 +162,15 @@ const HostCalendar = () => {
           </Card>
         </div>
       </div>
+      
+      <CreateEventDialog 
+        open={showCreateDialog} 
+        onOpenChange={setShowCreateDialog}
+        onSuccess={() => {
+          setShowCreateDialog(false);
+          navigate('/host-dashboard/events');
+        }}
+      />
     </HostDashboardLayout>
   );
 };

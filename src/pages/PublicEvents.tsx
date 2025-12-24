@@ -26,6 +26,7 @@ const PublicEvents = () => {
         .from("events")
         .select("*")
         .gt("date", today)
+        .or("is_private.is.null,is_private.eq.false")
         .order("date", { ascending: true });
 
       if (error) throw error;
