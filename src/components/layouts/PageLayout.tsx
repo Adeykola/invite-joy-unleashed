@@ -8,9 +8,18 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { Menu, X, ChevronLeft, Calendar } from "lucide-react";
+import { Menu, X, ChevronLeft, Calendar, User, LogOut } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PageLayoutProps {
   children: ReactNode;
@@ -26,10 +35,12 @@ const PageLayout = ({
   backTo 
 }: PageLayoutProps) => {
   const navigate = useNavigate();
+  const { user, profile, signOut } = useAuth();
   
   const navigation = [
     { name: "Features", href: "/features" },
     { name: "Pricing", href: "/pricing" },
+    { name: "Explore Events", href: "/events" },
     { name: "Resources", href: "/resources" },
   ];
 
@@ -39,6 +50,22 @@ const PageLayout = ({
     } else {
       navigate(-1);
     }
+  };
+
+  const getDashboardPath = () => {
+    if (profile?.role === "admin") return "/admin-dashboard";
+    if (profile?.role === "host") return "/host-dashboard";
+    return "/user-dashboard";
+  };
+
+  const getInitials = () => {
+    if (profile?.full_name) {
+      return profile.full_name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    }
+    if (user?.email) {
+      return user.email.charAt(0).toUpperCase();
+    }
+    return "U";
   };
 
   return (
@@ -69,12 +96,55 @@ const PageLayout = ({
           </div>
           
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" asChild className="text-dark-gray hover:text-purple-primary font-medium">
-              <Link to="/login">Sign In</Link>
-            </Button>
-            <Button asChild className="bg-purple-primary hover:bg-purple-600 text-white font-semibold rounded-lg shadow-sm">
-              <Link to="/signup">Get Started</Link>
-            </Button>
+            {user ? (
+              <>
+                <Button asChild variant="outline" className="border-purple-300 text-purple-primary hover:bg-light-purple">
+                  <Link to={getDashboardPath()}>Dashboard</Link>
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-purple-primary text-white">
+                          {getInitials()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <div className="flex items-center justify-start gap-2 p-2">
+                      <div className="flex flex-col space-y-1 leading-none">
+                        {profile?.full_name && (
+                          <p className="font-medium">{profile.full_name}</p>
+                        )}
+                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to={getDashboardPath()} className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={signOut} className="cursor-pointer text-red-600">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" asChild className="text-dark-gray hover:text-purple-primary font-medium">
+                  <Link to="/login">Sign In</Link>
+                </Button>
+                <Button asChild className="bg-purple-primary hover:bg-purple-600 text-white font-semibold rounded-lg shadow-sm">
+                  <Link to="/signup">Get Started</Link>
+                </Button>
+              </>
+            )}
           </div>
           
           {/* Mobile menu button */}
@@ -110,12 +180,39 @@ const PageLayout = ({
                   ))}
                 </nav>
                 <div className="mt-auto border-t py-6 space-y-4">
-                  <Button variant="outline" className="w-full border-purple-300 text-purple-primary hover:bg-light-purple" asChild>
-                    <Link to="/login">Sign In</Link>
-                  </Button>
-                  <Button className="w-full bg-purple-primary hover:bg-purple-600 text-white" asChild>
-                    <Link to="/signup">Get Started</Link>
-                  </Button>
+                  {user ? (
+                    <>
+                      <div className="flex items-center gap-3 px-2 py-2">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-purple-primary text-white">
+                            {getInitials()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          {profile?.full_name && (
+                            <p className="font-medium">{profile.full_name}</p>
+                          )}
+                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                        </div>
+                      </div>
+                      <Button className="w-full bg-purple-primary hover:bg-purple-600 text-white" asChild>
+                        <Link to={getDashboardPath()}>Go to Dashboard</Link>
+                      </Button>
+                      <Button variant="outline" onClick={signOut} className="w-full border-red-300 text-red-600 hover:bg-red-50">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Sign Out
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button variant="outline" className="w-full border-purple-300 text-purple-primary hover:bg-light-purple" asChild>
+                        <Link to="/login">Sign In</Link>
+                      </Button>
+                      <Button className="w-full bg-purple-primary hover:bg-purple-600 text-white" asChild>
+                        <Link to="/signup">Get Started</Link>
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </SheetContent>
