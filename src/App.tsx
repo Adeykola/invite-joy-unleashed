@@ -39,12 +39,14 @@ import PublicEvents from "./pages/PublicEvents";
 import AdminSendTestInvitation from "./pages/admin/AdminSendTestInvitation";
 import AdminSeating from "./pages/admin/AdminSeating";
 import GuestPortal from "./components/events/GuestPortal";
+import GuestCheckInConfirmation from "./pages/GuestCheckInConfirmation";
 import Pricing from "./pages/Pricing";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Resources from "./pages/Resources";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +69,7 @@ const App = () => (
             <Route path="/events" element={<PublicEvents />} />
             <Route path="/event/:id" element={<Event />} />
             <Route path="/guest-portal/:id" element={<GuestPortal />} />
+            <Route path="/check-in-confirmation/:id" element={<GuestCheckInConfirmation />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/reset-password" element={<ResetPassword />} />
@@ -103,6 +106,9 @@ const App = () => (
             <Route path="/user-dashboard/favorites" element={<UserRoute><UserFavorites /></UserRoute>} />
             <Route path="/user-dashboard/reviews" element={<UserRoute><UserReviews /></UserRoute>} />
             <Route path="/user-dashboard/settings" element={<UserRoute><UserSettings /></UserRoute>} />
+            
+            {/* Catch-all 404 route */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>

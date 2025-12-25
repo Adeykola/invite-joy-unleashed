@@ -1,5 +1,4 @@
-
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import UserDashboardLayout from "@/components/layouts/UserDashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,12 +13,28 @@ import {
   CheckCircle,
   XCircle,
   Eye,
-  AlertTriangle
+  AlertTriangle,
+  QrCode,
+  Ticket
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import QRCodeStyling from "qr-code-styling";
+import { useEffect, useRef, useState } from "react";
 
 const UserEvents = () => {
   const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: userRsvps, isLoading: rsvpsLoading, error } = useQuery({
     queryKey: ["user-events", user?.email],
@@ -40,7 +55,7 @@ const UserEvents = () => {
             date,
             location,
             host_id,
-            profiles!events_host_id_fkey(full_name, email)
+            banner_image
           )
         `)
         .eq("guest_email", user.email)
@@ -56,6 +71,32 @@ const UserEvents = () => {
     retry: 2,
   });
 
+  // Update RSVP mutation
+  const updateRsvpMutation = useMutation({
+    mutationFn: async ({ rsvpId, status }: { rsvpId: string; status: string }) => {
+      const { error } = await supabase
+        .from("rsvps")
+        .update({ response_status: status })
+        .eq("id", rsvpId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-events"] });
+      toast({
+        title: "RSVP Updated",
+        description: "Your response has been saved.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update RSVP. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "confirmed":
@@ -64,6 +105,8 @@ const UserEvents = () => {
         return <Badge variant="secondary">Pending</Badge>;
       case "declined":
         return <Badge variant="destructive">Declined</Badge>;
+      case "maybe":
+        return <Badge variant="outline" className="border-yellow-500 text-yellow-700">Maybe</Badge>;
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
@@ -204,14 +247,13 @@ const UserEvents = () => {
                   if (!rsvp.events) return null;
                   const event = rsvp.events;
                   const eventStatus = getEventStatus(event.date);
-                  const hostProfile = Array.isArray(event.profiles) ? event.profiles[0] : event.profiles;
                   
                   return (
                     <div key={rsvp.id} className="border rounded-lg p-4 space-y-3">
                       <div className="flex justify-between items-start">
                         <div className="space-y-1">
                           <h3 className="font-semibold text-lg">{event.title}</h3>
-                          <p className="text-muted-foreground">{event.description}</p>
+                          <p className="text-muted-foreground line-clamp-2">{event.description}</p>
                         </div>
                         <div className="flex space-x-2">
                           <Badge variant={eventStatus.variant}>{eventStatus.label}</Badge>
@@ -228,10 +270,12 @@ const UserEvents = () => {
                           <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
                           <span>{event.location}</span>
                         </div>
-                        <div className="flex items-center">
-                          <Users className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span>Host: {hostProfile?.full_name || "Unknown"}</span>
-                        </div>
+                        {rsvp.ticket_code && (
+                          <div className="flex items-center">
+                            <Ticket className="h-4 w-4 mr-2 text-muted-foreground" />
+                            <span className="font-mono text-xs">{rsvp.ticket_code}</span>
+                          </div>
+                        )}
                       </div>
                       
                       {rsvp.comments && (
@@ -240,20 +284,58 @@ const UserEvents = () => {
                         </div>
                       )}
                       
-                      <div className="flex justify-end space-x-2">
-                        <Button variant="outline" size="sm">
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => navigate(`/event/${event.id}`)}
+                        >
                           <Eye className="h-4 w-4 mr-1" />
                           View Details
                         </Button>
+                        
+                        {/* Show QR Code for confirmed guests */}
+                        {rsvp.response_status === "confirmed" && rsvp.ticket_code && (
+                          <TicketQRDialog ticketCode={rsvp.ticket_code} guestName={rsvp.guest_name} />
+                        )}
+                        
+                        {/* RSVP actions for pending */}
                         {rsvp.response_status === "pending" && (
                           <>
-                            <Button size="sm" variant="default">
+                            <Button 
+                              size="sm" 
+                              variant="default"
+                              onClick={() => updateRsvpMutation.mutate({ rsvpId: rsvp.id, status: "confirmed" })}
+                              disabled={updateRsvpMutation.isPending}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
                               Accept
                             </Button>
-                            <Button size="sm" variant="destructive">
+                            <Button 
+                              size="sm" 
+                              variant="destructive"
+                              onClick={() => updateRsvpMutation.mutate({ rsvpId: rsvp.id, status: "declined" })}
+                              disabled={updateRsvpMutation.isPending}
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
                               Decline
                             </Button>
                           </>
+                        )}
+                        
+                        {/* Allow changing response for confirmed/declined */}
+                        {(rsvp.response_status === "confirmed" || rsvp.response_status === "declined") && (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => updateRsvpMutation.mutate({ 
+                              rsvpId: rsvp.id, 
+                              status: rsvp.response_status === "confirmed" ? "declined" : "confirmed" 
+                            })}
+                            disabled={updateRsvpMutation.isPending}
+                          >
+                            {rsvp.response_status === "confirmed" ? "Cancel RSVP" : "Re-confirm"}
+                          </Button>
                         )}
                       </div>
                     </div>
@@ -264,6 +346,13 @@ const UserEvents = () => {
               <div className="text-center py-8 text-muted-foreground">
                 <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>You haven't been invited to any events yet.</p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => navigate("/events")}
+                >
+                  Explore Public Events
+                </Button>
               </div>
             )}
           </CardContent>
@@ -272,5 +361,61 @@ const UserEvents = () => {
     </UserDashboardLayout>
   );
 };
+
+// QR Code Dialog Component
+function TicketQRDialog({ ticketCode, guestName }: { ticketCode: string; guestName: string }) {
+  const qrRef = useRef<HTMLDivElement>(null);
+  const [qrGenerated, setQrGenerated] = useState(false);
+
+  useEffect(() => {
+    if (qrRef.current && !qrGenerated) {
+      const qrCode = new QRCodeStyling({
+        width: 200,
+        height: 200,
+        data: ticketCode,
+        dotsOptions: {
+          color: "#4f46e5",
+          type: "rounded"
+        },
+        backgroundOptions: {
+          color: "#ffffff",
+        },
+        cornersSquareOptions: {
+          type: "extra-rounded"
+        }
+      });
+      
+      qrRef.current.innerHTML = "";
+      qrCode.append(qrRef.current);
+      setQrGenerated(true);
+    }
+  }, [ticketCode, qrGenerated]);
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline">
+          <QrCode className="h-4 w-4 mr-1" />
+          Show Ticket
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Your Event Ticket</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col items-center space-y-4 py-4">
+          <div ref={qrRef} className="bg-white p-4 rounded-lg shadow" />
+          <div className="text-center">
+            <p className="font-medium">{guestName}</p>
+            <p className="text-sm text-muted-foreground font-mono">{ticketCode}</p>
+          </div>
+          <p className="text-sm text-muted-foreground text-center">
+            Show this QR code at the event entrance for check-in
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export default UserEvents;

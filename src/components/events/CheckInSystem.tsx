@@ -36,7 +36,9 @@ export function CheckInSystem({ eventId }: CheckInSystemProps) {
   const [justCheckedIn, setJustCheckedIn] = useState<string | null>(null);
   const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
   const [checkedInName, setCheckedInName] = useState("");
+  const [scannerReady, setScannerReady] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const scannerContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -132,6 +134,22 @@ export function CheckInSystem({ eventId }: CheckInSystemProps) {
 
   // QR Code Scanner
   const startQrScanner = async () => {
+    // Make sure the container is visible first
+    setScannerReady(true);
+    
+    // Wait for the DOM to update
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const scannerElement = document.getElementById("qr-reader");
+    if (!scannerElement) {
+      toast({
+        title: "Scanner Error",
+        description: "Could not initialize scanner. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const scanner = new Html5Qrcode("qr-reader");
       scannerRef.current = scanner;
@@ -165,6 +183,7 @@ export function CheckInSystem({ eventId }: CheckInSystemProps) {
       setIsScanning(true);
     } catch (error) {
       console.error("QR Scanner error:", error);
+      setScannerReady(false);
       toast({
         title: "Camera Error",
         description: "Failed to access camera. Please check permissions.",
@@ -183,6 +202,7 @@ export function CheckInSystem({ eventId }: CheckInSystemProps) {
       scannerRef.current = null;
     }
     setIsScanning(false);
+    setScannerReady(false);
   };
 
   // Clean up scanner on unmount
@@ -399,12 +419,18 @@ export function CheckInSystem({ eventId }: CheckInSystemProps) {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center">
+              {/* Scanner container - always in DOM but visibility controlled */}
               <div 
                 id="qr-reader" 
-                className={`w-full max-w-md ${isScanning ? '' : 'hidden'}`}
+                ref={scannerContainerRef}
+                className="w-full max-w-md mb-4"
+                style={{ 
+                  display: scannerReady ? 'block' : 'none',
+                  minHeight: isScanning ? '300px' : '0'
+                }}
               />
               
-              {!isScanning && (
+              {!scannerReady && (
                 <div className="w-48 h-48 bg-muted flex items-center justify-center rounded-lg mb-4">
                   <Camera className="w-16 h-16 text-muted-foreground" />
                 </div>
@@ -500,7 +526,7 @@ export function CheckInSystem({ eventId }: CheckInSystemProps) {
                         key={guest.id}
                         className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer ${
                           guest.checked_in 
-                            ? 'bg-green-50 border-green-200 dark:bg-green-950/20' 
+                            ? 'bg-green-50 border-green-200' 
                             : 'hover:bg-accent'
                         }`}
                         onClick={() => handleCheckIn(guest)}
@@ -509,20 +535,13 @@ export function CheckInSystem({ eventId }: CheckInSystemProps) {
                           <p className="font-medium">{guest.guest_name}</p>
                           <p className="text-sm text-muted-foreground">{guest.guest_email}</p>
                         </div>
-                        <Button 
-                          size="sm"
-                          variant={guest.checked_in ? "outline" : "default"}
-                          disabled={checkInMutation.isPending}
-                        >
-                          {guest.checked_in ? (
-                            <>
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Done
-                            </>
-                          ) : (
-                            "Check In"
-                          )}
-                        </Button>
+                        {guest.checked_in ? (
+                          <Badge variant="outline" className="text-green-600 border-green-600">
+                            Checked In
+                          </Badge>
+                        ) : (
+                          <Button size="sm">Check In</Button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -530,8 +549,7 @@ export function CheckInSystem({ eventId }: CheckInSystemProps) {
                 
                 {searchQuery && (!filteredGuests || filteredGuests.length === 0) && (
                   <div className="text-center py-4 text-muted-foreground">
-                    <XCircle className="h-8 w-8 mx-auto mb-2" />
-                    No guests found
+                    No guests found matching "{searchQuery}"
                   </div>
                 )}
               </div>
